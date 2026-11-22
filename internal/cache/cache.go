@@ -98,3 +98,6 @@ func (c *Client) SetJSON(ctx context.Context, key string, v any, ttl time.Durati
 func (c *Client) Delete(ctx context.Context, key string) error {
 	return c.c.Do(ctx, c.c.B().Del().Key(key).Build()).Error()
 }
+
+// Raw returns the underlying Valkey client (for the RPC bridge).
+func (c *Client) Raw() valkey.Client { return c.c }

@@ -34,6 +34,7 @@ import (
 	"github.com/nithron/nithro/internal/modules/moderation"
 	"github.com/nithron/nithro/internal/observability"
 	"github.com/nithron/nithro/internal/platform/discord"
+	"github.com/nithron/nithro/internal/rpc"
 	"github.com/nithron/nithro/internal/store"
 	"github.com/nithron/nithro/web"
 )
@@ -169,6 +170,11 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 		}
 		checks.Add("discord", b.Ready)
 		g.Go(func() error { return b.Run(ctx) })
+
+		host, _ := os.Hostname()
+		rpcServer := rpc.NewServer(kv.Raw(), fmt.Sprintf("%s-%d", host, os.Getpid()), log)
+		b.RegisterRPC(rpcServer)
+		g.Go(func() error { return rpcServer.Run(ctx) })
 	}
 
 	if role.API {
@@ -182,6 +188,8 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 			KV:        kv,
 			Guilds:    db,
 			Configs:   configs,
+			Cases:     db,
+			RPC:       rpc.NewClient(kv.Raw(), 10*time.Second),
 			Dashboard: web.Dist(),
 			Metrics:   metrics,
 		})

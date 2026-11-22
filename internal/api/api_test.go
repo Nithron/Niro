@@ -18,6 +18,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/nithro/internal/modules/moderation"
 )
 
 // ---- fakes ----------------------------------------------------------------
@@ -148,6 +149,8 @@ type harness struct {
 	h     http.Handler
 	kv    *memKV
 	oauth *fakeOAuth
+	rpc   *fakeRPC
+	cases *fakeCases
 }
 
 func newHarness(t *testing.T) *harness {
@@ -160,7 +163,9 @@ func newHarness(t *testing.T) *harness {
 		{ID: memberOnlyGuild, Name: "Gamma", Permissions: discord.PermissionSendMessages},
 	}}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	reg, _ := core.NewRegistry(core.DefaultModules()...)
+	reg, _ := core.NewRegistry(core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})...)
+	frpc := &fakeRPC{handlers: map[string]func(params any, out any) error{}}
+	fcases := &fakeCases{}
 	cfgs, _ := core.NewConfigService(reg, &fakeConfigStore{rows: map[core.ModuleID]core.StoredModuleState{}}, nopBus{}, log)
 
 	h, err := New(Deps{
@@ -168,12 +173,14 @@ func newHarness(t *testing.T) *harness {
 		Log:    log, OAuth: oauth, KV: kv,
 		Guilds:    fakeDir{active: map[snowflake.ID]bool{managedGuild: true}},
 		Configs:   cfgs,
+		Cases:     fcases,
+		RPC:       frpc,
 		Dashboard: fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &harness{t: t, h: h, kv: kv, oauth: oauth}
+	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases}
 }
 
 func (h *harness) do(method, target, body, cookie string, hdr map[string]string) *httptest.ResponseRecorder {

@@ -15,6 +15,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/nithron/nithro/internal/i18n"
+	"github.com/nithron/nithro/internal/modules/moderation"
 )
 
 func testBot(t *testing.T) *Bot {
@@ -198,5 +199,37 @@ func checkOptions(t *testing.T, cmd string, opts []discord.ApplicationCommandOpt
 		if sc, ok := o.(discord.ApplicationCommandOptionSubCommand); ok {
 			checkOptions(t, cmd+" "+sc.Name, sc.Options)
 		}
+	}
+}
+
+func TestAutoModRoundTrip(t *testing.T) {
+	for _, p := range moderation.AutoModPresets() {
+		in := p.Rule
+		in.AlertChannelID = 55
+		in.ExemptRoleIDs = []snowflake.ID{1, 2}
+		if err := in.Normalize(); err != nil {
+			t.Fatal(err)
+		}
+		meta, actions := toDiscordParts(in)
+		rule := discord.AutoModerationRule{
+			ID: 9, Name: in.Name, Enabled: in.Enabled, CreatorID: 99, TriggerType: triggerTypes[in.Trigger],
+			Actions: actions, ExemptRoles: in.ExemptRoleIDs, ExemptChannels: in.ExemptChannelIDs,
+		}
+		if meta != nil {
+			rule.TriggerMetadata = *meta
+		}
+		out, ok := fromDiscordRule(rule, 99)
+		if !ok || !out.CreatedByBot {
+			t.Fatalf("%s: not recognised", p.ID)
+		}
+		out.ID, out.CreatedByBot = 0, false
+		a, _ := json.Marshal(in)
+		b, _ := json.Marshal(out)
+		if string(a) != string(b) {
+			t.Errorf("%s: round trip changed the rule\n in: %s\nout: %s", p.ID, a, b)
+		}
+	}
+	if _, ok := fromDiscordRule(discord.AutoModerationRule{TriggerType: 99}, 1); ok {
+		t.Fatal("unsupported trigger types must be skipped")
 	}
 }

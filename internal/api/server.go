@@ -20,6 +20,7 @@ import (
 
 	"github.com/nithron/nithro/internal/api/apigen"
 	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/nithro/internal/modules/moderation"
 )
 
 // Config is what the API needs from the process configuration.
@@ -38,6 +39,8 @@ type Deps struct {
 	KV      KV
 	Guilds  core.GuildDirectory
 	Configs *core.ConfigService
+	Cases   moderation.CaseStore
+	RPC     RPCCaller
 	// Dashboard is the built SPA (index.html + assets); may be empty.
 	Dashboard fs.FS
 	Metrics   prometheus.Registerer
@@ -51,6 +54,8 @@ type Server struct {
 	sessions sessions
 	guilds   core.GuildDirectory
 	config   *core.ConfigService
+	cases    moderation.CaseStore
+	rpc      RPCCaller
 	spa      fs.FS
 	requests *prometheus.CounterVec
 }
@@ -59,7 +64,7 @@ type Server struct {
 func New(d Deps) (http.Handler, error) {
 	s := &Server{
 		cfg: d.Config, log: d.Log.With("component", "api"), oauth: d.OAuth, kv: d.KV,
-		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, spa: d.Dashboard,
+		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, cases: d.Cases, rpc: d.RPC, spa: d.Dashboard,
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "nithro_api_requests_total", Help: "API requests by route and status class.",
 		}, []string{"route", "status"}),
@@ -88,6 +93,11 @@ func New(d Deps) (http.Handler, error) {
 			writeError(w, http.StatusBadRequest, "bad_request", err.Error())
 		},
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			var ae *apiError
+			if errors.As(err, &ae) {
+				writeError(w, ae.status, string(ae.code), ae.msg)
+				return
+			}
 			s.log.ErrorContext(r.Context(), "api request failed", "path", r.URL.Path, "err", err)
 			writeError(w, http.StatusInternalServerError, "internal", "Something went wrong. Please try again.")
 		},

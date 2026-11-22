@@ -15,10 +15,120 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for AutoModRulePresets.
+const (
+	Profanity     AutoModRulePresets = "profanity"
+	SexualContent AutoModRulePresets = "sexual_content"
+	Slurs         AutoModRulePresets = "slurs"
+)
+
+// Valid indicates whether the value is a known member of the AutoModRulePresets enum.
+func (e AutoModRulePresets) Valid() bool {
+	switch e {
+	case Profanity:
+		return true
+	case SexualContent:
+		return true
+	case Slurs:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AutoModRuleTrigger.
+const (
+	Keyword       AutoModRuleTrigger = "keyword"
+	KeywordPreset AutoModRuleTrigger = "keyword_preset"
+	MentionSpam   AutoModRuleTrigger = "mention_spam"
+	Spam          AutoModRuleTrigger = "spam"
+)
+
+// Valid indicates whether the value is a known member of the AutoModRuleTrigger enum.
+func (e AutoModRuleTrigger) Valid() bool {
+	switch e {
+	case Keyword:
+		return true
+	case KeywordPreset:
+		return true
+	case MentionSpam:
+		return true
+	case Spam:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CaseSource.
+const (
+	Automod   CaseSource = "automod"
+	Dashboard CaseSource = "dashboard"
+	Guardian  CaseSource = "guardian"
+	Manual    CaseSource = "manual"
+	System    CaseSource = "system"
+)
+
+// Valid indicates whether the value is a known member of the CaseSource enum.
+func (e CaseSource) Valid() bool {
+	switch e {
+	case Automod:
+		return true
+	case Dashboard:
+		return true
+	case Guardian:
+		return true
+	case Manual:
+		return true
+	case System:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CaseAction.
+const (
+	Ban       CaseAction = "ban"
+	Kick      CaseAction = "kick"
+	Note      CaseAction = "note"
+	Purge     CaseAction = "purge"
+	Timeout   CaseAction = "timeout"
+	Unban     CaseAction = "unban"
+	Untimeout CaseAction = "untimeout"
+	Warn      CaseAction = "warn"
+)
+
+// Valid indicates whether the value is a known member of the CaseAction enum.
+func (e CaseAction) Valid() bool {
+	switch e {
+	case Ban:
+		return true
+	case Kick:
+		return true
+	case Note:
+		return true
+	case Purge:
+		return true
+	case Timeout:
+		return true
+	case Unban:
+		return true
+	case Untimeout:
+		return true
+	case Warn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ErrorCode.
 const (
 	ErrorCodeBadRequest     ErrorCode = "bad_request"
 	ErrorCodeBotNotInGuild  ErrorCode = "bot_not_in_guild"
+	ErrorCodeBotUnavailable ErrorCode = "bot_unavailable"
+	ErrorCodeDiscordError   ErrorCode = "discord_error"
 	ErrorCodeForbidden      ErrorCode = "forbidden"
 	ErrorCodeInternal       ErrorCode = "internal"
 	ErrorCodeModuleAlwaysOn ErrorCode = "module_always_on"
@@ -32,6 +142,10 @@ func (e ErrorCode) Valid() bool {
 	case ErrorCodeBadRequest:
 		return true
 	case ErrorCodeBotNotInGuild:
+		return true
+	case ErrorCodeBotUnavailable:
+		return true
+	case ErrorCodeDiscordError:
 		return true
 	case ErrorCodeForbidden:
 		return true
@@ -48,6 +162,122 @@ func (e ErrorCode) Valid() bool {
 	}
 }
 
+// Defines values for GuildMetaChannelsType.
+const (
+	Announcement GuildMetaChannelsType = "announcement"
+	Category     GuildMetaChannelsType = "category"
+	Forum        GuildMetaChannelsType = "forum"
+	Other        GuildMetaChannelsType = "other"
+	Text         GuildMetaChannelsType = "text"
+	Voice        GuildMetaChannelsType = "voice"
+)
+
+// Valid indicates whether the value is a known member of the GuildMetaChannelsType enum.
+func (e GuildMetaChannelsType) Valid() bool {
+	switch e {
+	case Announcement:
+		return true
+	case Category:
+		return true
+	case Forum:
+		return true
+	case Other:
+		return true
+	case Text:
+		return true
+	case Voice:
+		return true
+	default:
+		return false
+	}
+}
+
+// AutoModPreset defines model for AutoModPreset.
+type AutoModPreset struct {
+	Id   string      `json:"id"`
+	Rule AutoModRule `json:"rule"`
+}
+
+// AutoModRule defines model for AutoModRule.
+type AutoModRule struct {
+	// AlertChannelId Example: 1234567890123456789
+	AlertChannelId   *Snowflake   `json:"alertChannelId,omitempty"`
+	AllowList        *[]string    `json:"allowList,omitempty"`
+	BlockMessage     bool         `json:"blockMessage"`
+	CreatedByBot     *bool        `json:"createdByBot,omitempty"`
+	CustomMessage    *string      `json:"customMessage,omitempty"`
+	Enabled          bool         `json:"enabled"`
+	ExemptChannelIds *[]Snowflake `json:"exemptChannelIds,omitempty"`
+	ExemptRoleIds    *[]Snowflake `json:"exemptRoleIds,omitempty"`
+
+	// Id Example: 1234567890123456789
+	Id                    *Snowflake            `json:"id,omitempty"`
+	Keywords              *[]string             `json:"keywords,omitempty"`
+	MentionLimit          *int                  `json:"mentionLimit,omitempty"`
+	MentionRaidProtection *bool                 `json:"mentionRaidProtection,omitempty"`
+	Name                  string                `json:"name"`
+	Presets               *[]AutoModRulePresets `json:"presets,omitempty"`
+	RegexPatterns         *[]string             `json:"regexPatterns,omitempty"`
+	TimeoutSeconds        *int                  `json:"timeoutSeconds,omitempty"`
+	Trigger               AutoModRuleTrigger    `json:"trigger"`
+}
+
+// AutoModRulePresets defines model for AutoModRule.Presets.
+type AutoModRulePresets string
+
+// AutoModRuleTrigger defines model for AutoModRule.Trigger.
+type AutoModRuleTrigger string
+
+// Case defines model for Case.
+type Case struct {
+	Action CaseAction `json:"action"`
+
+	// ChannelId Example: 1234567890123456789
+	ChannelId *Snowflake `json:"channelId,omitempty"`
+	CreatedAt time.Time  `json:"createdAt"`
+
+	// DeletedMessages Purges: messages deleted; bans: seconds of history deleted
+	DeletedMessages *int       `json:"deletedMessages,omitempty"`
+	DmSent          bool       `json:"dmSent"`
+	DurationSeconds *int       `json:"durationSeconds,omitempty"`
+	ExpiresAt       *time.Time `json:"expiresAt,omitempty"`
+
+	// ModeratorId Example: 1234567890123456789
+	ModeratorId   Snowflake  `json:"moderatorId"`
+	ModeratorName string     `json:"moderatorName"`
+	Number        int        `json:"number"`
+	Reason        string     `json:"reason"`
+	Source        CaseSource `json:"source"`
+
+	// TargetId Example: 1234567890123456789
+	TargetId   *Snowflake `json:"targetId,omitempty"`
+	TargetName string     `json:"targetName"`
+	Temporary  *bool      `json:"temporary,omitempty"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+}
+
+// CaseSource defines model for Case.Source.
+type CaseSource string
+
+// CaseAction defines model for CaseAction.
+type CaseAction string
+
+// CaseList defines model for CaseList.
+type CaseList struct {
+	Items []Case `json:"items"`
+
+	// NextBefore Cursor for the next page
+	NextBefore *int `json:"nextBefore,omitempty"`
+
+	// Total Matching cases in total
+	Total int `json:"total"`
+}
+
+// CaseUpdate defines model for CaseUpdate.
+type CaseUpdate struct {
+	Reason string `json:"reason"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	// Code Stable machine-readable code
@@ -57,6 +287,34 @@ type Error struct {
 
 // ErrorCode Stable machine-readable code
 type ErrorCode string
+
+// GuildMeta defines model for GuildMeta.
+type GuildMeta struct {
+	Channels []struct {
+		// Id Example: 1234567890123456789
+		Id   Snowflake `json:"id"`
+		Name string    `json:"name"`
+
+		// ParentId Example: 1234567890123456789
+		ParentId *Snowflake            `json:"parentId,omitempty"`
+		Position int                   `json:"position"`
+		Type     GuildMetaChannelsType `json:"type"`
+	} `json:"channels"`
+	Roles []struct {
+		Color int `json:"color"`
+
+		// Id Example: 1234567890123456789
+		Id Snowflake `json:"id"`
+
+		// Managed Bot or integration role (can't be assigned)
+		Managed  bool   `json:"managed"`
+		Name     string `json:"name"`
+		Position int    `json:"position"`
+	} `json:"roles"`
+}
+
+// GuildMetaChannelsType defines model for GuildMeta.Channels.Type.
+type GuildMetaChannelsType string
 
 // GuildSummary defines model for GuildSummary.
 type GuildSummary struct {
@@ -75,6 +333,16 @@ type GuildSummary struct {
 // Invite defines model for Invite.
 type Invite struct {
 	Url string `json:"url"`
+}
+
+// ModerationSettings defines model for ModerationSettings.
+type ModerationSettings struct {
+	// DmUsers DM users about warnings
+	DmUsers bool `json:"dmUsers"`
+
+	// LogChannelId Channel for case logs; "0" disables the log
+	LogChannelId  string `json:"logChannelId"`
+	RequireReason bool   `json:"requireReason"`
 }
 
 // ModuleState defines model for ModuleState.
@@ -117,6 +385,9 @@ type GuildId = Snowflake
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
 
+// BotError defines model for BotError.
+type BotError = Error
+
 // BotNotInGuild defines model for BotNotInGuild.
 type BotNotInGuild = Error
 
@@ -129,29 +400,88 @@ type NotFound = Error
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
 
+// ListCasesParams defines parameters for ListCases.
+type ListCasesParams struct {
+	User      *Snowflake  `form:"user,omitempty" json:"user,omitempty"`
+	Moderator *Snowflake  `form:"moderator,omitempty" json:"moderator,omitempty"`
+	Action    *CaseAction `form:"action,omitempty" json:"action,omitempty"`
+
+	// Before Only cases numbered below this (pagination cursor)
+	Before *int `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // GetInviteParams defines parameters for GetInvite.
 type GetInviteParams struct {
 	// GuildId Preselect this server in Discord's install screen
 	GuildId *Snowflake `form:"guildId,omitempty" json:"guildId,omitempty"`
 }
 
+// CreateAutoModRuleJSONRequestBody defines body for CreateAutoModRule for application/json ContentType.
+type CreateAutoModRuleJSONRequestBody = AutoModRule
+
+// UpdateAutoModRuleJSONRequestBody defines body for UpdateAutoModRule for application/json ContentType.
+type UpdateAutoModRuleJSONRequestBody = AutoModRule
+
+// UpdateCaseJSONRequestBody defines body for UpdateCase for application/json ContentType.
+type UpdateCaseJSONRequestBody = CaseUpdate
+
 // UpdateGuildModuleJSONRequestBody defines body for UpdateGuildModule for application/json ContentType.
 type UpdateGuildModuleJSONRequestBody = ModuleUpdate
 
+// UpdateModerationSettingsJSONRequestBody defines body for UpdateModerationSettings for application/json ContentType.
+type UpdateModerationSettingsJSONRequestBody = ModerationSettings
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// ListAutoModPresets Ready-made AutoMod rules
+	// (GET /automod/presets)
+	ListAutoModPresets(w http.ResponseWriter, r *http.Request)
 	// ListGuilds Servers the user can manage
 	// (GET /guilds)
 	ListGuilds(w http.ResponseWriter, r *http.Request)
 	// GetGuild One server the user can manage
 	// (GET /guilds/{guildId})
 	GetGuild(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// ListAutoModRules The server's AutoMod rules (Discord's native AutoMod)
+	// (GET /guilds/{guildId}/automod/rules)
+	ListAutoModRules(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// CreateAutoModRule Create a rule
+	// (POST /guilds/{guildId}/automod/rules)
+	CreateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// DeleteAutoModRule Delete a rule
+	// (DELETE /guilds/{guildId}/automod/rules/{ruleId})
+	DeleteAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake)
+	// UpdateAutoModRule Replace a rule
+	// (PUT /guilds/{guildId}/automod/rules/{ruleId})
+	UpdateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake)
+	// ListCases Moderation cases, newest first
+	// (GET /guilds/{guildId}/cases)
+	ListCases(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListCasesParams)
+	// DeleteCase Delete a case from the history
+	// (DELETE /guilds/{guildId}/cases/{caseNumber})
+	DeleteCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int)
+	// GetCase One case
+	// (GET /guilds/{guildId}/cases/{caseNumber})
+	GetCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int)
+	// UpdateCase Change a case's reason
+	// (PATCH /guilds/{guildId}/cases/{caseNumber})
+	UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int)
+	// GetGuildMeta Channels and roles (for pickers)
+	// (GET /guilds/{guildId}/meta)
+	GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// ListGuildModules Module states for a server
 	// (GET /guilds/{guildId}/modules)
 	ListGuildModules(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string)
+	// GetModerationSettings Moderation settings
+	// (GET /guilds/{guildId}/settings/moderation)
+	GetModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// UpdateModerationSettings Save moderation settings
+	// (PUT /guilds/{guildId}/settings/moderation)
+	UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetInvite Link to add Nithro to a server
 	// (GET /invite)
 	GetInvite(w http.ResponseWriter, r *http.Request, params GetInviteParams)
@@ -162,6 +492,12 @@ type ServerInterface interface {
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 type Unimplemented struct{}
+
+// ListAutoModPresets Ready-made AutoMod rules
+// (GET /automod/presets)
+func (_ Unimplemented) ListAutoModPresets(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
 
 // ListGuilds Servers the user can manage
 // (GET /guilds)
@@ -175,6 +511,60 @@ func (_ Unimplemented) GetGuild(w http.ResponseWriter, r *http.Request, guildId 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// ListAutoModRules The server's AutoMod rules (Discord's native AutoMod)
+// (GET /guilds/{guildId}/automod/rules)
+func (_ Unimplemented) ListAutoModRules(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateAutoModRule Create a rule
+// (POST /guilds/{guildId}/automod/rules)
+func (_ Unimplemented) CreateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteAutoModRule Delete a rule
+// (DELETE /guilds/{guildId}/automod/rules/{ruleId})
+func (_ Unimplemented) DeleteAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateAutoModRule Replace a rule
+// (PUT /guilds/{guildId}/automod/rules/{ruleId})
+func (_ Unimplemented) UpdateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListCases Moderation cases, newest first
+// (GET /guilds/{guildId}/cases)
+func (_ Unimplemented) ListCases(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListCasesParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteCase Delete a case from the history
+// (DELETE /guilds/{guildId}/cases/{caseNumber})
+func (_ Unimplemented) DeleteCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetCase One case
+// (GET /guilds/{guildId}/cases/{caseNumber})
+func (_ Unimplemented) GetCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateCase Change a case's reason
+// (PATCH /guilds/{guildId}/cases/{caseNumber})
+func (_ Unimplemented) UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGuildMeta Channels and roles (for pickers)
+// (GET /guilds/{guildId}/meta)
+func (_ Unimplemented) GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ListGuildModules Module states for a server
 // (GET /guilds/{guildId}/modules)
 func (_ Unimplemented) ListGuildModules(w http.ResponseWriter, r *http.Request, guildId GuildId) {
@@ -184,6 +574,18 @@ func (_ Unimplemented) ListGuildModules(w http.ResponseWriter, r *http.Request, 
 // UpdateGuildModule Enable or disable a module
 // (PUT /guilds/{guildId}/modules/{moduleId})
 func (_ Unimplemented) UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetModerationSettings Moderation settings
+// (GET /guilds/{guildId}/settings/moderation)
+func (_ Unimplemented) GetModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateModerationSettings Save moderation settings
+// (PUT /guilds/{guildId}/settings/moderation)
+func (_ Unimplemented) UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -207,6 +609,20 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// ListAutoModPresets operation middleware
+func (siw *ServerInterfaceWrapper) ListAutoModPresets(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAutoModPresets(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // ListGuilds operation middleware
 func (siw *ServerInterfaceWrapper) ListGuilds(w http.ResponseWriter, r *http.Request) {
@@ -239,6 +655,353 @@ func (siw *ServerInterfaceWrapper) GetGuild(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetGuild(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAutoModRules operation middleware
+func (siw *ServerInterfaceWrapper) ListAutoModRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAutoModRules(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAutoModRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateAutoModRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAutoModRule(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAutoModRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAutoModRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId Snowflake
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAutoModRule(w, r, guildId, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAutoModRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAutoModRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId Snowflake
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", chi.URLParam(r, "ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAutoModRule(w, r, guildId, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCases operation middleware
+func (siw *ServerInterfaceWrapper) ListCases(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCasesParams
+
+	// ------------- Optional query parameter "user" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "user", r.URL.Query(), &params.User, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "moderator" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "moderator", r.URL.Query(), &params.Moderator, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "moderator"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "moderator", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "action" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "action", r.URL.Query(), &params.Action, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "action"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCases(w, r, guildId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCase operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "caseNumber" -------------
+	var caseNumber int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "caseNumber", chi.URLParam(r, "caseNumber"), &caseNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "caseNumber", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCase(w, r, guildId, caseNumber)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetCase operation middleware
+func (siw *ServerInterfaceWrapper) GetCase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "caseNumber" -------------
+	var caseNumber int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "caseNumber", chi.URLParam(r, "caseNumber"), &caseNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "caseNumber", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCase(w, r, guildId, caseNumber)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCase operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCase(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "caseNumber" -------------
+	var caseNumber int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "caseNumber", chi.URLParam(r, "caseNumber"), &caseNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "caseNumber", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCase(w, r, guildId, caseNumber)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGuildMeta operation middleware
+func (siw *ServerInterfaceWrapper) GetGuildMeta(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGuildMeta(w, r, guildId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -300,6 +1063,58 @@ func (siw *ServerInterfaceWrapper) UpdateGuildModule(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateGuildModule(w, r, guildId, moduleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetModerationSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetModerationSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetModerationSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateModerationSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateModerationSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateModerationSettings(w, r, guildId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -486,6 +1301,42 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/guilds/{guildId}/modules/{moduleId}", wrapper.UpdateGuildModule)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/meta", wrapper.GetGuildMeta)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/settings/moderation", wrapper.GetModerationSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/settings/moderation", wrapper.UpdateModerationSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/cases", wrapper.ListCases)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/cases/{caseNumber}", wrapper.DeleteCase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/cases/{caseNumber}", wrapper.GetCase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/guilds/{guildId}/cases/{caseNumber}", wrapper.UpdateCase)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/automod/rules", wrapper.ListAutoModRules)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/guilds/{guildId}/automod/rules", wrapper.CreateAutoModRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/automod/rules/{ruleId}", wrapper.DeleteAutoModRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/automod/rules/{ruleId}", wrapper.UpdateAutoModRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/automod/presets", wrapper.ListAutoModPresets)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/invite", wrapper.GetInvite)
 	})
 
@@ -494,6 +1345,8 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 type BadRequestJSONResponse Error
 
+type BotErrorJSONResponse Error
+
 type BotNotInGuildJSONResponse Error
 
 type ForbiddenJSONResponse Error
@@ -501,6 +1354,41 @@ type ForbiddenJSONResponse Error
 type NotFoundJSONResponse Error
 
 type UnauthorizedJSONResponse Error
+
+type ListAutoModPresetsRequestObject struct {
+}
+
+type ListAutoModPresetsResponseObject interface {
+	VisitListAutoModPresetsResponse(w http.ResponseWriter) error
+}
+
+type ListAutoModPresets200JSONResponse []AutoModPreset
+
+func (response ListAutoModPresets200JSONResponse) VisitListAutoModPresetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModPresets401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListAutoModPresets401JSONResponse) VisitListAutoModPresetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
 
 type ListGuildsRequestObject struct {
 }
@@ -583,6 +1471,789 @@ func (response GetGuild403JSONResponse) VisitGetGuildResponse(w http.ResponseWri
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModRulesRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type ListAutoModRulesResponseObject interface {
+	VisitListAutoModRulesResponse(w http.ResponseWriter) error
+}
+
+type ListAutoModRules200JSONResponse []AutoModRule
+
+func (response ListAutoModRules200JSONResponse) VisitListAutoModRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModRules401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListAutoModRules401JSONResponse) VisitListAutoModRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModRules403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListAutoModRules403JSONResponse) VisitListAutoModRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModRules409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListAutoModRules409JSONResponse) VisitListAutoModRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutoModRules502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response ListAutoModRules502JSONResponse) VisitListAutoModRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRuleRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *CreateAutoModRuleJSONRequestBody
+}
+
+type CreateAutoModRuleResponseObject interface {
+	VisitCreateAutoModRuleResponse(w http.ResponseWriter) error
+}
+
+type CreateAutoModRule201JSONResponse AutoModRule
+
+func (response CreateAutoModRule201JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRule400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response CreateAutoModRule400JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRule401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateAutoModRule401JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRule403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateAutoModRule403JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRule409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response CreateAutoModRule409JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutoModRule502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response CreateAutoModRule502JSONResponse) VisitCreateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutoModRuleRequestObject struct {
+	GuildId GuildId   `json:"guildId"`
+	RuleId  Snowflake `json:"ruleId"`
+}
+
+type DeleteAutoModRuleResponseObject interface {
+	VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error
+}
+
+type DeleteAutoModRule204Response struct {
+}
+
+func (response DeleteAutoModRule204Response) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAutoModRule401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteAutoModRule401JSONResponse) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutoModRule403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteAutoModRule403JSONResponse) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutoModRule404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteAutoModRule404JSONResponse) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutoModRule409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response DeleteAutoModRule409JSONResponse) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutoModRule502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response DeleteAutoModRule502JSONResponse) VisitDeleteAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRuleRequestObject struct {
+	GuildId GuildId   `json:"guildId"`
+	RuleId  Snowflake `json:"ruleId"`
+	Body    *UpdateAutoModRuleJSONRequestBody
+}
+
+type UpdateAutoModRuleResponseObject interface {
+	VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error
+}
+
+type UpdateAutoModRule200JSONResponse AutoModRule
+
+func (response UpdateAutoModRule200JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateAutoModRule400JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateAutoModRule401JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateAutoModRule403JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateAutoModRule404JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateAutoModRule409JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutoModRule502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response UpdateAutoModRule502JSONResponse) VisitUpdateAutoModRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCasesRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Params  ListCasesParams
+}
+
+type ListCasesResponseObject interface {
+	VisitListCasesResponse(w http.ResponseWriter) error
+}
+
+type ListCases200JSONResponse CaseList
+
+func (response ListCases200JSONResponse) VisitListCasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCases401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListCases401JSONResponse) VisitListCasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCases403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListCases403JSONResponse) VisitListCasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCases409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListCases409JSONResponse) VisitListCasesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCaseRequestObject struct {
+	GuildId    GuildId `json:"guildId"`
+	CaseNumber int     `json:"caseNumber"`
+}
+
+type DeleteCaseResponseObject interface {
+	VisitDeleteCaseResponse(w http.ResponseWriter) error
+}
+
+type DeleteCase204Response struct {
+}
+
+func (response DeleteCase204Response) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteCase401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteCase401JSONResponse) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCase403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteCase403JSONResponse) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCase404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteCase404JSONResponse) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCase409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response DeleteCase409JSONResponse) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCase502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response DeleteCase502JSONResponse) VisitDeleteCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCaseRequestObject struct {
+	GuildId    GuildId `json:"guildId"`
+	CaseNumber int     `json:"caseNumber"`
+}
+
+type GetCaseResponseObject interface {
+	VisitGetCaseResponse(w http.ResponseWriter) error
+}
+
+type GetCase200JSONResponse Case
+
+func (response GetCase200JSONResponse) VisitGetCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCase401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetCase401JSONResponse) VisitGetCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCase403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetCase403JSONResponse) VisitGetCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCase404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetCase404JSONResponse) VisitGetCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetCase409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetCase409JSONResponse) VisitGetCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCaseRequestObject struct {
+	GuildId    GuildId `json:"guildId"`
+	CaseNumber int     `json:"caseNumber"`
+	Body       *UpdateCaseJSONRequestBody
+}
+
+type UpdateCaseResponseObject interface {
+	VisitUpdateCaseResponse(w http.ResponseWriter) error
+}
+
+type UpdateCase200JSONResponse Case
+
+func (response UpdateCase200JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateCase400JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateCase401JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateCase403JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateCase404JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateCase409JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCase502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response UpdateCase502JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuildMetaRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetGuildMetaResponseObject interface {
+	VisitGetGuildMetaResponse(w http.ResponseWriter) error
+}
+
+type GetGuildMeta200JSONResponse GuildMeta
+
+func (response GetGuildMeta200JSONResponse) VisitGetGuildMetaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuildMeta401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetGuildMeta401JSONResponse) VisitGetGuildMetaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuildMeta403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetGuildMeta403JSONResponse) VisitGetGuildMetaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuildMeta409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetGuildMeta409JSONResponse) VisitGetGuildMetaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuildMeta502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response GetGuildMeta502JSONResponse) VisitGetGuildMetaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -745,6 +2416,149 @@ func (response UpdateGuildModule409JSONResponse) VisitUpdateGuildModuleResponse(
 	return err
 }
 
+type GetModerationSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetModerationSettingsResponseObject interface {
+	VisitGetModerationSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetModerationSettings200JSONResponse ModerationSettings
+
+func (response GetModerationSettings200JSONResponse) VisitGetModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetModerationSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetModerationSettings401JSONResponse) VisitGetModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetModerationSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetModerationSettings403JSONResponse) VisitGetModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetModerationSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetModerationSettings409JSONResponse) VisitGetModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateModerationSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *UpdateModerationSettingsJSONRequestBody
+}
+
+type UpdateModerationSettingsResponseObject interface {
+	VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateModerationSettings200JSONResponse ModerationSettings
+
+func (response UpdateModerationSettings200JSONResponse) VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateModerationSettings400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateModerationSettings400JSONResponse) VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateModerationSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateModerationSettings401JSONResponse) VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateModerationSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateModerationSettings403JSONResponse) VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateModerationSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateModerationSettings409JSONResponse) VisitUpdateModerationSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetInviteRequestObject struct {
 	Params GetInviteParams
 }
@@ -804,18 +2618,54 @@ func (response GetMe401JSONResponse) VisitGetMeResponse(w http.ResponseWriter) e
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// ListAutoModPresets Ready-made AutoMod rules
+	// (GET /automod/presets)
+	ListAutoModPresets(ctx context.Context, request ListAutoModPresetsRequestObject) (ListAutoModPresetsResponseObject, error)
 	// ListGuilds Servers the user can manage
 	// (GET /guilds)
 	ListGuilds(ctx context.Context, request ListGuildsRequestObject) (ListGuildsResponseObject, error)
 	// GetGuild One server the user can manage
 	// (GET /guilds/{guildId})
 	GetGuild(ctx context.Context, request GetGuildRequestObject) (GetGuildResponseObject, error)
+	// ListAutoModRules The server's AutoMod rules (Discord's native AutoMod)
+	// (GET /guilds/{guildId}/automod/rules)
+	ListAutoModRules(ctx context.Context, request ListAutoModRulesRequestObject) (ListAutoModRulesResponseObject, error)
+	// CreateAutoModRule Create a rule
+	// (POST /guilds/{guildId}/automod/rules)
+	CreateAutoModRule(ctx context.Context, request CreateAutoModRuleRequestObject) (CreateAutoModRuleResponseObject, error)
+	// DeleteAutoModRule Delete a rule
+	// (DELETE /guilds/{guildId}/automod/rules/{ruleId})
+	DeleteAutoModRule(ctx context.Context, request DeleteAutoModRuleRequestObject) (DeleteAutoModRuleResponseObject, error)
+	// UpdateAutoModRule Replace a rule
+	// (PUT /guilds/{guildId}/automod/rules/{ruleId})
+	UpdateAutoModRule(ctx context.Context, request UpdateAutoModRuleRequestObject) (UpdateAutoModRuleResponseObject, error)
+	// ListCases Moderation cases, newest first
+	// (GET /guilds/{guildId}/cases)
+	ListCases(ctx context.Context, request ListCasesRequestObject) (ListCasesResponseObject, error)
+	// DeleteCase Delete a case from the history
+	// (DELETE /guilds/{guildId}/cases/{caseNumber})
+	DeleteCase(ctx context.Context, request DeleteCaseRequestObject) (DeleteCaseResponseObject, error)
+	// GetCase One case
+	// (GET /guilds/{guildId}/cases/{caseNumber})
+	GetCase(ctx context.Context, request GetCaseRequestObject) (GetCaseResponseObject, error)
+	// UpdateCase Change a case's reason
+	// (PATCH /guilds/{guildId}/cases/{caseNumber})
+	UpdateCase(ctx context.Context, request UpdateCaseRequestObject) (UpdateCaseResponseObject, error)
+	// GetGuildMeta Channels and roles (for pickers)
+	// (GET /guilds/{guildId}/meta)
+	GetGuildMeta(ctx context.Context, request GetGuildMetaRequestObject) (GetGuildMetaResponseObject, error)
 	// ListGuildModules Module states for a server
 	// (GET /guilds/{guildId}/modules)
 	ListGuildModules(ctx context.Context, request ListGuildModulesRequestObject) (ListGuildModulesResponseObject, error)
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(ctx context.Context, request UpdateGuildModuleRequestObject) (UpdateGuildModuleResponseObject, error)
+	// GetModerationSettings Moderation settings
+	// (GET /guilds/{guildId}/settings/moderation)
+	GetModerationSettings(ctx context.Context, request GetModerationSettingsRequestObject) (GetModerationSettingsResponseObject, error)
+	// UpdateModerationSettings Save moderation settings
+	// (PUT /guilds/{guildId}/settings/moderation)
+	UpdateModerationSettings(ctx context.Context, request UpdateModerationSettingsRequestObject) (UpdateModerationSettingsResponseObject, error)
 	// GetInvite Link to add Nithro to a server
 	// (GET /invite)
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -866,6 +2716,30 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
+// ListAutoModPresets operation middleware
+func (sh *strictHandler) ListAutoModPresets(w http.ResponseWriter, r *http.Request) {
+	var request ListAutoModPresetsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListAutoModPresets(ctx, request.(ListAutoModPresetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAutoModPresets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAutoModPresetsResponseObject); ok {
+		if err := validResponse.VisitListAutoModPresetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListGuilds operation middleware
 func (sh *strictHandler) ListGuilds(w http.ResponseWriter, r *http.Request) {
 	var request ListGuildsRequestObject
@@ -909,6 +2783,267 @@ func (sh *strictHandler) GetGuild(w http.ResponseWriter, r *http.Request, guildI
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetGuildResponseObject); ok {
 		if err := validResponse.VisitGetGuildResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAutoModRules operation middleware
+func (sh *strictHandler) ListAutoModRules(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request ListAutoModRulesRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListAutoModRules(ctx, request.(ListAutoModRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAutoModRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAutoModRulesResponseObject); ok {
+		if err := validResponse.VisitListAutoModRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAutoModRule operation middleware
+func (sh *strictHandler) CreateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request CreateAutoModRuleRequestObject
+
+	request.GuildId = guildId
+
+	var body CreateAutoModRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.CreateAutoModRule(ctx, request.(CreateAutoModRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAutoModRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAutoModRuleResponseObject); ok {
+		if err := validResponse.VisitCreateAutoModRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAutoModRule operation middleware
+func (sh *strictHandler) DeleteAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake) {
+	var request DeleteAutoModRuleRequestObject
+
+	request.GuildId = guildId
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.DeleteAutoModRule(ctx, request.(DeleteAutoModRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAutoModRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAutoModRuleResponseObject); ok {
+		if err := validResponse.VisitDeleteAutoModRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAutoModRule operation middleware
+func (sh *strictHandler) UpdateAutoModRule(w http.ResponseWriter, r *http.Request, guildId GuildId, ruleId Snowflake) {
+	var request UpdateAutoModRuleRequestObject
+
+	request.GuildId = guildId
+	request.RuleId = ruleId
+
+	var body UpdateAutoModRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateAutoModRule(ctx, request.(UpdateAutoModRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAutoModRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAutoModRuleResponseObject); ok {
+		if err := validResponse.VisitUpdateAutoModRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCases operation middleware
+func (sh *strictHandler) ListCases(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListCasesParams) {
+	var request ListCasesRequestObject
+
+	request.GuildId = guildId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListCases(ctx, request.(ListCasesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCases")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCasesResponseObject); ok {
+		if err := validResponse.VisitListCasesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteCase operation middleware
+func (sh *strictHandler) DeleteCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	var request DeleteCaseRequestObject
+
+	request.GuildId = guildId
+	request.CaseNumber = caseNumber
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.DeleteCase(ctx, request.(DeleteCaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteCase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteCaseResponseObject); ok {
+		if err := validResponse.VisitDeleteCaseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetCase operation middleware
+func (sh *strictHandler) GetCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	var request GetCaseRequestObject
+
+	request.GuildId = guildId
+	request.CaseNumber = caseNumber
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetCase(ctx, request.(GetCaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetCase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetCaseResponseObject); ok {
+		if err := validResponse.VisitGetCaseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCase operation middleware
+func (sh *strictHandler) UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	var request UpdateCaseRequestObject
+
+	request.GuildId = guildId
+	request.CaseNumber = caseNumber
+
+	var body UpdateCaseJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateCase(ctx, request.(UpdateCaseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCase")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateCaseResponseObject); ok {
+		if err := validResponse.VisitUpdateCaseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGuildMeta operation middleware
+func (sh *strictHandler) GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetGuildMetaRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetGuildMeta(ctx, request.(GetGuildMetaRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGuildMeta")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGuildMetaResponseObject); ok {
+		if err := validResponse.VisitGetGuildMetaResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -969,6 +3104,65 @@ func (sh *strictHandler) UpdateGuildModule(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateGuildModuleResponseObject); ok {
 		if err := validResponse.VisitUpdateGuildModuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetModerationSettings operation middleware
+func (sh *strictHandler) GetModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetModerationSettingsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetModerationSettings(ctx, request.(GetModerationSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetModerationSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetModerationSettingsResponseObject); ok {
+		if err := validResponse.VisitGetModerationSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateModerationSettings operation middleware
+func (sh *strictHandler) UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request UpdateModerationSettingsRequestObject
+
+	request.GuildId = guildId
+
+	var body UpdateModerationSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateModerationSettings(ctx, request.(UpdateModerationSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateModerationSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateModerationSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateModerationSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
