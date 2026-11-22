@@ -112,7 +112,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 			return fmt.Errorf("migrating: %w", err)
 		}
 		for _, r := range results {
-			log.Info("migration applied", "version", r.Source.Version, "file", r.Source.Path, "duration", r.Duration)
+			log.Info("migration applied", "migration", r.Source.Version, "file", r.Source.Path, "duration", r.Duration)
 		}
 		if cmd == "migrate" {
 			log.Info("database is up to date")

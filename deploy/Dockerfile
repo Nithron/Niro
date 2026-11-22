@@ -3,7 +3,7 @@
 
 FROM node:26-alpine AS web
 WORKDIR /src/web
-RUN corepack enable
+RUN npm install -g pnpm@10.33.0
 COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY web/ ./

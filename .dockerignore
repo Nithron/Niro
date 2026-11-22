@@ -1,0 +1,13 @@
+.git
+.github
+.claude
+graphify-out
+bin
+web/node_modules
+web/dist
+**/*.log
+.env
+.env.*
+!.env.example
+assets/brand/concepts
+docs

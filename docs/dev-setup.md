@@ -36,4 +36,8 @@ make dev-deps     # start Postgres + Valkey in Docker
 make run          # build the dashboard, migrate, start bot + API on http://localhost:8080
 ```
 
-For dashboard work with hot reload, run `make run-api` and `make web-dev` (Vite on http://localhost:5173, which proxies API calls to :8080).
+For dashboard work with hot reload, set `NITHRO_DASHBOARD_URL=http://localhost:5173` in `.env`, then run `make run-api` and `make web-dev` (Vite on http://localhost:5173, which proxies API calls to :8080).
+
+Other useful targets: `make test` (Go tests, including Postgres/Valkey integration tests via Docker), `make lint`, `make generate` (after editing SQL queries or `api/openapi.yaml`), `make docker`, `make help`.
+
+To check the milestone, follow [the M0 demo checklist](milestones/m0-demo.md).

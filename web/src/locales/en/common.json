@@ -1,0 +1,53 @@
+{
+  "app": {
+    "name": "Nithro",
+    "tagline": "The security-first community bot",
+    "loading": "Loading…",
+    "retry": "Try again",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "login": {
+    "title": "Welcome to Nithro",
+    "body": "Log in with Discord to manage Nithro in your servers.",
+    "button": "Log in with Discord",
+    "privacy": "Nithro only reads your username, avatar and server list. It never sees your password or messages.",
+    "failed": "Login didn't work. Please try again.",
+    "cancelled": "Login was cancelled."
+  },
+  "nav": {
+    "servers": "Servers",
+    "logout": "Log out"
+  },
+  "servers": {
+    "title": "Your servers",
+    "subtitle": "Servers where you're the owner or have Manage Server.",
+    "manage": "Manage",
+    "add": "Add Nithro",
+    "owner": "Owner",
+    "empty": "You don't manage any servers yet. You need Manage Server permission in a server to set up Nithro there.",
+    "addedHint": "Just added Nithro? It can take up to a minute to show up here."
+  },
+  "guild": {
+    "back": "All servers",
+    "modulesTitle": "Modules",
+    "modulesSubtitle": "Turn features on or off. Changes apply in Discord immediately.",
+    "alwaysOn": "Always on",
+    "saved": "Saved",
+    "saveFailed": "Couldn't save that change. It was undone.",
+    "notInServerTitle": "Nithro isn't in this server yet",
+    "notInServerBody": "Add Nithro to start configuring it.",
+    "forbidden": "You can't manage this server."
+  },
+  "modules": {
+    "core": { "name": "Core", "description": "Basic commands like /ping, /about and /modules." },
+    "moderation": { "name": "Moderation", "description": "Warnings, timeouts, kicks and bans with a numbered case history, plus Discord AutoMod management." },
+    "guardian": { "name": "Guardian", "description": "Stops hacked accounts, scam links and raids, and audits dangerous permissions." },
+    "logging": { "name": "Logging", "description": "Logs message edits and deletions, member changes and server changes to the channels you choose." },
+    "roles": { "name": "Role panels", "description": "Buttons and menus that let members pick their own roles." },
+    "welcome": { "name": "Welcome", "description": "Greets new members and says goodbye, with optional automatic roles." },
+    "tickets": { "name": "Tickets", "description": "Private support tickets with staff roles and transcripts." }
+  },
+  "status": {
+    "comingSoon": "Settings arrive in a later milestone"
+  }
+}

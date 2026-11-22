@@ -148,7 +148,7 @@ func (s *Server) logRequests(next http.Handler) http.Handler {
 		start := time.Now()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		next.ServeHTTP(ww, r)
-		route := "spa"
+		route := "unmatched"
 		if rc := chi.RouteContext(r.Context()); rc != nil && rc.RoutePattern() != "" {
 			route = rc.RoutePattern()
 		}
