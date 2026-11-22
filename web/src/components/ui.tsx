@@ -1,7 +1,15 @@
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { clsx } from 'clsx'
-import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react'
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react'
 import { useTranslation } from 'react-i18next'
+import { ApiError } from '../api/client'
 import lockupDark from '../assets/nithro-lockup-dark.svg'
 import lockupLight from '../assets/nithro-lockup-light.svg'
 
@@ -109,5 +117,84 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
         </Button>
       )}
     </Card>
+  )
+}
+
+// ---- form controls ------------------------------------------------------------
+
+const control =
+  'w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm text-fg placeholder:text-muted focus:border-brand focus:outline-none disabled:opacity-60'
+
+export function Field({ label, help, htmlFor, children }: { label: string; help?: string; htmlFor?: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-1.5">
+      <label htmlFor={htmlFor} className="text-sm font-medium">
+        {label}
+      </label>
+      {children}
+      {help && <p className="text-xs text-muted">{help}</p>}
+    </div>
+  )
+}
+
+export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={clsx(control, props.className)} />
+}
+
+export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={clsx(control, props.className)} />
+}
+
+export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea rows={4} {...props} className={clsx(control, 'font-mono', props.className)} />
+}
+
+/** A labelled switch row used in settings forms. */
+export function SwitchRow({
+  label,
+  help,
+  checked,
+  onCheckedChange,
+}: {
+  label: string
+  help?: string
+  checked: boolean
+  onCheckedChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-start justify-between gap-6">
+      <div>
+        <p className="text-sm font-medium">{label}</p>
+        {help && <p className="mt-1 text-xs text-muted">{help}</p>}
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} label={label} />
+    </div>
+  )
+}
+
+const badgeTones = {
+  neutral: 'bg-surface-2 text-muted',
+  brand: 'bg-brand/15 text-brand',
+  success: 'bg-success/15 text-success',
+  warning: 'bg-warning/15 text-warning',
+  danger: 'bg-danger/15 text-danger',
+}
+
+export function Badge({ tone = 'neutral', children }: { tone?: keyof typeof badgeTones; children: ReactNode }) {
+  return <span className={clsx('inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold', badgeTones[tone])}>{children}</span>
+}
+
+/** Inline error for a failed request; shows the API's message when it has one. */
+export function RequestError({ error }: { error: unknown }) {
+  const { t } = useTranslation()
+  if (!error) return null
+  let message = t('app.genericError')
+  if (error instanceof ApiError) {
+    message = error.code === 'bot_unavailable' ? t('errors.botUnavailable') : error.message || message
+  }
+  return (
+    <p role="alert" className="text-sm text-danger">
+      {message}
+    </p>
   )
 }

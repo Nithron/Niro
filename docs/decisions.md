@@ -17,6 +17,8 @@
 | 12 | 2026-11-22 | **Languages:** English first; every user-facing string goes through message catalogs so other languages can be added later (plan §5a) | Decided |
 | 13 | 2026-11-22 | **Dev app:** "Nithro Dev" with the amber `<N>` DEV icon, plus a private test server | Done |
 | 14 | 2026-11-22 | **Domain:** `nithro.nithron.com` rejected as repetitive; options in [domains](research/2026-11-domains.md) | Open, needed by M5 |
+| 15 | 2026-11-22 | **M0 accepted** (demo passed; logout fix merged in #2). M1 started | Done |
+| 16 | 2026-11-22 | **Final milestone added: UI and brand polish** after all other milestones (dashboard UX, Discord message styling, logo/banner refresh) | Decided |
 
 ## Notes on these decisions
 

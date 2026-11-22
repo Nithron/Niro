@@ -30,6 +30,27 @@ type Module struct {
 	DefaultEnabled bool
 	// AlwaysOn modules cannot be disabled (e.g. core commands).
 	AlwaysOn bool
+	// Settings validates the module's per-guild settings; nil if the module
+	// has none yet.
+	Settings SettingsSpec
+}
+
+// SettingsSpec validates a module's settings document. Normalize receives
+// the stored or submitted JSON (nil for "nothing stored yet") and returns the
+// complete, validated document with defaults filled in.
+type SettingsSpec interface {
+	Normalize(raw []byte) ([]byte, error)
+}
+
+// WithSettings attaches a settings spec to a module in a module list.
+func WithSettings(mods []Module, id ModuleID, spec SettingsSpec) []Module {
+	out := slices.Clone(mods)
+	for i := range out {
+		if out[i].ID == id {
+			out[i].Settings = spec
+		}
+	}
+	return out
 }
 
 // DefaultModules is the v0.1 module set. Feature code for each module lands in

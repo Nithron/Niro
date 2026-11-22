@@ -131,7 +131,7 @@ func (s *Store) ListModuleStates(ctx context.Context, guildID snowflake.ID) ([]c
 	}
 	out := make([]core.StoredModuleState, len(rows))
 	for i, r := range rows {
-		out[i] = core.StoredModuleState{Module: core.ModuleID(r.Module), Enabled: r.Enabled, Version: r.Version, UpdatedAt: r.UpdatedAt}
+		out[i] = core.StoredModuleState{Module: core.ModuleID(r.Module), Enabled: r.Enabled, Config: r.Config, Version: r.Version, UpdatedAt: r.UpdatedAt}
 	}
 	return out, nil
 }
@@ -172,7 +172,46 @@ func (s *Store) SetModuleEnabled(ctx context.Context, guildID snowflake.ID, modu
 		}); err != nil {
 			return err
 		}
-		result = core.StoredModuleState{Module: core.ModuleID(row.Module), Enabled: row.Enabled, Version: row.Version, UpdatedAt: row.UpdatedAt}
+		result = core.StoredModuleState{Module: core.ModuleID(row.Module), Enabled: row.Enabled, Config: row.Config, Version: row.Version, UpdatedAt: row.UpdatedAt}
+		return nil
+	})
+	return result, err
+}
+
+// SetModuleSettings saves a module's settings and writes the audit entry
+// (old and new settings) in one transaction.
+func (s *Store) SetModuleSettings(ctx context.Context, guildID snowflake.ID, module core.ModuleID, config []byte, defaultEnabled bool, actorID *snowflake.ID, source core.ChangeSource) (core.StoredModuleState, error) {
+	var result core.StoredModuleState
+	err := pgx.BeginFunc(ctx, s.pool, func(tx pgx.Tx) error {
+		q := s.q.WithTx(tx)
+		var previous json.RawMessage
+		prev, err := q.GetModuleConfigForUpdate(ctx, dbq.GetModuleConfigForUpdateParams{GuildID: int64(guildID), Module: string(module)})
+		switch {
+		case err == nil:
+			previous = prev
+		case !errors.Is(err, pgx.ErrNoRows):
+			return err
+		}
+		actor := pgtype.Int8{}
+		if actorID != nil {
+			actor = pgtype.Int8{Int64: int64(*actorID), Valid: true}
+		}
+		row, err := q.UpsertModuleConfig(ctx, dbq.UpsertModuleConfigParams{
+			GuildID: int64(guildID), Module: string(module), Enabled: defaultEnabled, Config: config, UpdatedBy: actor,
+		})
+		if err != nil {
+			return mapFKViolation(err)
+		}
+		change, err := json.Marshal(map[string]any{"settings": map[string]any{"from": previous, "to": json.RawMessage(config)}})
+		if err != nil {
+			return err
+		}
+		if err := q.InsertConfigAudit(ctx, dbq.InsertConfigAuditParams{
+			GuildID: int64(guildID), Module: string(module), ActorID: actor, Source: string(source), Change: change,
+		}); err != nil {
+			return err
+		}
+		result = core.StoredModuleState{Module: core.ModuleID(row.Module), Enabled: row.Enabled, Config: row.Config, Version: row.Version, UpdatedAt: row.UpdatedAt}
 		return nil
 	})
 	return result, err

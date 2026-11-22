@@ -100,6 +100,214 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/meta:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getGuildMeta
+      summary: Channels and roles (for pickers)
+      description: Fetched live from Discord through the bot; cached for 30 seconds.
+      responses:
+        "200":
+          description: Channels and roles
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuildMeta" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/settings/moderation:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getModerationSettings
+      summary: Moderation settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ModerationSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateModerationSettings
+      summary: Save moderation settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ModerationSettings" }
+      responses:
+        "200":
+          description: The saved settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ModerationSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/cases:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listCases
+      summary: Moderation cases, newest first
+      parameters:
+        - { name: user, in: query, required: false, schema: { $ref: "#/components/schemas/Snowflake" } }
+        - { name: moderator, in: query, required: false, schema: { $ref: "#/components/schemas/Snowflake" } }
+        - { name: action, in: query, required: false, schema: { $ref: "#/components/schemas/CaseAction" } }
+        - name: before
+          in: query
+          required: false
+          description: Only cases numbered below this (pagination cursor)
+          schema: { type: integer, minimum: 1 }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: A page of cases
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CaseList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/cases/{caseNumber}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - { name: caseNumber, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      operationId: getCase
+      summary: One case
+      responses:
+        "200":
+          description: The case
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    patch:
+      operationId: updateCase
+      summary: Change a case's reason
+      description: Also updates the case's message in the moderation log.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CaseUpdate" }
+      responses:
+        "200":
+          description: The updated case
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+    delete:
+      operationId: deleteCase
+      summary: Delete a case from the history
+      description: Soft delete; kept for the audit trail and marked in the moderation log.
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/automod/rules:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listAutoModRules
+      summary: The server's AutoMod rules (Discord's native AutoMod)
+      responses:
+        "200":
+          description: Rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AutoModRule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+    post:
+      operationId: createAutoModRule
+      summary: Create a rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutoModRule" }
+      responses:
+        "201":
+          description: The created rule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutoModRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/automod/rules/{ruleId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - { name: ruleId, in: path, required: true, schema: { $ref: "#/components/schemas/Snowflake" } }
+    put:
+      operationId: updateAutoModRule
+      summary: Replace a rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AutoModRule" }
+      responses:
+        "200":
+          description: The updated rule
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AutoModRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+    delete:
+      operationId: deleteAutoModRule
+      summary: Delete a rule
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /automod/presets:
+    get:
+      operationId: listAutoModPresets
+      summary: Ready-made AutoMod rules
+      responses:
+        "200":
+          description: Presets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AutoModPreset" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /invite:
     get:
       operationId: getInvite
@@ -150,6 +358,11 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    BotError:
+      description: The bot could not complete the request (offline, or Discord refused it)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     BotNotInGuild:
       description: Nithro is not in this server yet
       content:
@@ -167,7 +380,7 @@ components:
         code:
           type: string
           description: Stable machine-readable code
-          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, internal]
+          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, bot_unavailable, discord_error, internal]
         message: { type: string }
     User:
       type: object
@@ -201,6 +414,108 @@ components:
       additionalProperties: false
       properties:
         enabled: { type: boolean }
+    GuildMeta:
+      type: object
+      required: [channels, roles]
+      properties:
+        channels:
+          type: array
+          items:
+            type: object
+            required: [id, name, type, position]
+            properties:
+              id: { $ref: "#/components/schemas/Snowflake" }
+              name: { type: string }
+              type: { type: string, enum: [text, announcement, voice, forum, category, other] }
+              parentId: { $ref: "#/components/schemas/Snowflake" }
+              position: { type: integer }
+        roles:
+          type: array
+          items:
+            type: object
+            required: [id, name, color, position, managed]
+            properties:
+              id: { $ref: "#/components/schemas/Snowflake" }
+              name: { type: string }
+              color: { type: integer }
+              position: { type: integer }
+              managed: { type: boolean, description: Bot or integration role (can't be assigned) }
+    ModerationSettings:
+      type: object
+      required: [logChannelId, dmUsers, requireReason]
+      additionalProperties: false
+      properties:
+        logChannelId:
+          type: string
+          pattern: "^[0-9]{1,20}$"
+          description: Channel for case logs; "0" disables the log
+        dmUsers: { type: boolean, description: DM users about warnings, timeouts, kicks and bans }
+        requireReason: { type: boolean }
+    CaseAction:
+      type: string
+      enum: [warn, timeout, untimeout, kick, ban, unban, note, purge]
+    Case:
+      type: object
+      required: [number, action, targetName, moderatorId, moderatorName, reason, source, dmSent, createdAt, updatedAt]
+      properties:
+        number: { type: integer }
+        action: { $ref: "#/components/schemas/CaseAction" }
+        targetId: { $ref: "#/components/schemas/Snowflake" }
+        targetName: { type: string }
+        moderatorId: { $ref: "#/components/schemas/Snowflake" }
+        moderatorName: { type: string }
+        reason: { type: string }
+        durationSeconds: { type: integer }
+        expiresAt: { type: string, format: date-time }
+        source: { type: string, enum: [manual, automod, guardian, dashboard, system] }
+        dmSent: { type: boolean }
+        channelId: { $ref: "#/components/schemas/Snowflake" }
+        deletedMessages: { type: integer, description: "Purges: messages deleted; bans: seconds of history deleted" }
+        temporary: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CaseList:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Case" }
+        total: { type: integer, description: Matching cases in total }
+        nextBefore: { type: integer, description: Cursor for the next page, absent on the last page }
+    CaseUpdate:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { type: string, maxLength: 512 }
+    AutoModRule:
+      type: object
+      required: [name, enabled, trigger, blockMessage]
+      properties:
+        id: { $ref: "#/components/schemas/Snowflake" }
+        name: { type: string, maxLength: 100 }
+        enabled: { type: boolean }
+        trigger: { type: string, enum: [keyword, spam, keyword_preset, mention_spam] }
+        keywords: { type: array, items: { type: string } }
+        regexPatterns: { type: array, items: { type: string } }
+        allowList: { type: array, items: { type: string } }
+        presets: { type: array, items: { type: string, enum: [profanity, sexual_content, slurs] } }
+        mentionLimit: { type: integer }
+        mentionRaidProtection: { type: boolean }
+        blockMessage: { type: boolean }
+        customMessage: { type: string, maxLength: 150 }
+        alertChannelId: { $ref: "#/components/schemas/Snowflake" }
+        timeoutSeconds: { type: integer }
+        exemptRoleIds: { type: array, items: { $ref: "#/components/schemas/Snowflake" } }
+        exemptChannelIds: { type: array, items: { $ref: "#/components/schemas/Snowflake" } }
+        createdByBot: { type: boolean, readOnly: true }
+    AutoModPreset:
+      type: object
+      required: [id, rule]
+      properties:
+        id: { type: string }
+        rule: { $ref: "#/components/schemas/AutoModRule" }
     Invite:
       type: object
       required: [url]

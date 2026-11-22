@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, Outlet } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type ModuleState } from '../api/client'
@@ -7,10 +7,17 @@ import { Card, ErrorState, GuildIcon, Spinner, Switch } from '../components/ui'
 import i18n from '../i18n'
 import { InviteButton } from './Servers'
 
-export function GuildPage({ guildId }: { guildId: string }) {
+const tabs = [
+  { to: '/guilds/$guildId', key: 'tabs.modules', exact: true },
+  { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', exact: false },
+  { to: '/guilds/$guildId/cases', key: 'tabs.cases', exact: false },
+  { to: '/guilds/$guildId/automod', key: 'tabs.automod', exact: false },
+] as const
+
+/** Server header, tabs, and the active tab (or an invite if Nithro isn't there). */
+export function GuildLayout({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
   const guild = useGuild(guildId)
-  const modules = useModules(guildId, guild.data?.botPresent === true)
 
   return (
     <section>
@@ -44,25 +51,50 @@ export function GuildPage({ guildId }: { guildId: string }) {
               </div>
             </Card>
           ) : (
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold">{t('guild.modulesTitle')}</h2>
-              <p className="mt-1 text-muted">{t('guild.modulesSubtitle')}</p>
-              <div className="mt-4">
-                {modules.isPending && <Spinner />}
-                {modules.isError && <ErrorState onRetry={() => void modules.refetch()} />}
-                {modules.data && (
-                  <ul className="grid gap-3">
-                    {modules.data.map((m) => (
-                      <ModuleRow key={m.id} guildId={guildId} module={m} />
-                    ))}
-                  </ul>
-                )}
+            <>
+              <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-border" aria-label={guild.data.name}>
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.to}
+                    to={tab.to}
+                    params={{ guildId }}
+                    activeOptions={{ exact: tab.exact }}
+                    className="-mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-brand data-[status=active]:text-fg"
+                  >
+                    {t(tab.key)}
+                  </Link>
+                ))}
+              </nav>
+              <div className="mt-6">
+                <Outlet />
               </div>
-            </div>
+            </>
           )}
         </>
       )}
     </section>
+  )
+}
+
+export function ModulesPage({ guildId }: { guildId: string }) {
+  const { t } = useTranslation()
+  const modules = useModules(guildId, true)
+  return (
+    <div>
+      <h2 className="text-lg font-semibold">{t('guild.modulesTitle')}</h2>
+      <p className="mt-1 text-muted">{t('guild.modulesSubtitle')}</p>
+      <div className="mt-4">
+        {modules.isPending && <Spinner />}
+        {modules.isError && <ErrorState onRetry={() => void modules.refetch()} />}
+        {modules.data && (
+          <ul className="grid gap-3">
+            {modules.data.map((m) => (
+              <ModuleRow key={m.id} guildId={guildId} module={m} />
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
   )
 }
 

@@ -39,15 +39,205 @@
     "forbidden": "You can't manage this server."
   },
   "modules": {
-    "core": { "name": "Core", "description": "Basic commands like /ping, /about and /modules." },
-    "moderation": { "name": "Moderation", "description": "Warnings, timeouts, kicks and bans with a numbered case history, plus Discord AutoMod management." },
-    "guardian": { "name": "Guardian", "description": "Stops hacked accounts, scam links and raids, and audits dangerous permissions." },
-    "logging": { "name": "Logging", "description": "Logs message edits and deletions, member changes and server changes to the channels you choose." },
-    "roles": { "name": "Role panels", "description": "Buttons and menus that let members pick their own roles." },
-    "welcome": { "name": "Welcome", "description": "Greets new members and says goodbye, with optional automatic roles." },
-    "tickets": { "name": "Tickets", "description": "Private support tickets with staff roles and transcripts." }
+    "core": {
+      "name": "Core",
+      "description": "Basic commands like /ping, /about and /modules."
+    },
+    "moderation": {
+      "name": "Moderation",
+      "description": "Warnings, timeouts, kicks and bans with a numbered case history, plus Discord AutoMod management."
+    },
+    "guardian": {
+      "name": "Guardian",
+      "description": "Stops hacked accounts, scam links and raids, and audits dangerous permissions."
+    },
+    "logging": {
+      "name": "Logging",
+      "description": "Logs message edits and deletions, member changes and server changes to the channels you choose."
+    },
+    "roles": {
+      "name": "Role panels",
+      "description": "Buttons and menus that let members pick their own roles."
+    },
+    "welcome": {
+      "name": "Welcome",
+      "description": "Greets new members and says goodbye, with optional automatic roles."
+    },
+    "tickets": {
+      "name": "Tickets",
+      "description": "Private support tickets with staff roles and transcripts."
+    }
   },
   "status": {
     "comingSoon": "Settings arrive in a later milestone"
+  },
+  "tabs": {
+    "modules": "Modules",
+    "moderation": "Moderation",
+    "cases": "Cases",
+    "automod": "AutoMod"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "none": "None",
+    "loadMore": "Load more",
+    "clear": "Clear",
+    "back": "Back"
+  },
+  "modSettings": {
+    "title": "Moderation settings",
+    "subtitle": "How moderation commands behave in this server.",
+    "logChannel": "Moderation log channel",
+    "logChannelHelp": "Every case is posted here. Nithro needs permission to send messages in it.",
+    "noLog": "No log channel",
+    "dmUsers": "Notify users by DM",
+    "dmUsersHelp": "Send members a private message when they are warned, timed out, kicked or banned. Moderators can skip it per action with the silent option.",
+    "requireReason": "Require a reason",
+    "requireReasonHelp": "Moderators must give a reason for every action.",
+    "moduleOff": "The Moderation module is turned off. Settings are kept, but commands won't run until you turn it on in Modules."
+  },
+  "cases": {
+    "title": "Cases",
+    "subtitle": "Every moderation action, newest first.",
+    "filterAction": "Action",
+    "allActions": "All actions",
+    "filterUser": "User ID",
+    "filterUserPlaceholder": "Paste a user ID",
+    "empty": "No cases yet.",
+    "emptyFiltered": "No cases match these filters.",
+    "total_one": "{{count}} case",
+    "total_other": "{{count}} cases",
+    "col": {
+      "number": "#",
+      "action": "Action",
+      "user": "User",
+      "moderator": "Moderator",
+      "reason": "Reason",
+      "date": "Date"
+    },
+    "noReason": "No reason given",
+    "detail": "Case #{{number}}",
+    "user": "User",
+    "moderator": "Moderator",
+    "reason": "Reason",
+    "duration": "Duration",
+    "expires": "Ends",
+    "created": "Created",
+    "source": "Source",
+    "dm": "DM",
+    "dmSent": "Notified by DM",
+    "dmNotSent": "Not notified",
+    "channel": "Channel",
+    "deleted": "Messages deleted",
+    "temporary": "Temporary",
+    "editReason": "Edit reason",
+    "deleteCase": "Delete case",
+    "deleteConfirm": "Delete case #{{number}} from the history? It is kept in the audit trail and marked as deleted in the log channel.",
+    "deletedDone": "Case deleted.",
+    "notFound": "This case doesn't exist (or was deleted).",
+    "actions": {
+      "warn": "Warning",
+      "timeout": "Timeout",
+      "untimeout": "Timeout removed",
+      "kick": "Kick",
+      "ban": "Ban",
+      "unban": "Unban",
+      "note": "Note",
+      "purge": "Purge"
+    },
+    "sources": {
+      "manual": "Command",
+      "automod": "AutoMod",
+      "guardian": "Guardian",
+      "dashboard": "Dashboard",
+      "system": "Automatic"
+    }
+  },
+  "automod": {
+    "title": "AutoMod",
+    "subtitle": "Discord's built-in AutoMod, managed from here. Rules run on Discord's side, instantly, even if Nithro is offline.",
+    "presetsTitle": "Quick add",
+    "presetsSubtitle": "Ready-made rules you can add with one click and adjust later.",
+    "presets": {
+      "invite_links": {
+        "name": "Block invite links",
+        "description": "Stops links to other Discord servers."
+      },
+      "scam_phrases": {
+        "name": "Common scam phrases",
+        "description": "Blocks \"free Nitro\", fake giveaways and similar bait."
+      },
+      "mention_spam": {
+        "name": "Mention spam",
+        "description": "Blocks messages with 6+ mentions and times out the sender for 10 minutes."
+      },
+      "spam": {
+        "name": "Suspected spam",
+        "description": "Discord's own spam detection."
+      },
+      "word_lists": {
+        "name": "Slurs and explicit content",
+        "description": "Discord's maintained word lists."
+      }
+    },
+    "add": "Add",
+    "added": "Added",
+    "rulesTitle": "Rules",
+    "empty": "No AutoMod rules yet.",
+    "newRule": "New rule",
+    "editRule": "Edit rule",
+    "enabled": "Enabled",
+    "createdByNithro": "Created by Nithro",
+    "deleteConfirm": "Delete the rule \"{{name}}\"?",
+    "triggers": {
+      "keyword": "Keywords",
+      "spam": "Suspected spam",
+      "keyword_preset": "Word lists",
+      "mention_spam": "Mention spam"
+    },
+    "wordLists": {
+      "profanity": "Profanity",
+      "sexual_content": "Sexual content",
+      "slurs": "Slurs"
+    },
+    "form": {
+      "name": "Name",
+      "trigger": "Trigger",
+      "keywords": "Keywords",
+      "keywordsHelp": "One per line. Use * as a wildcard, e.g. *scam* or free nitro*.",
+      "regex": "Patterns (regex)",
+      "regexHelp": "Optional. One per line, up to 10.",
+      "allowList": "Allowed words",
+      "allowListHelp": "One per line. Messages with these are never blocked.",
+      "wordLists": "Word lists",
+      "mentionLimit": "Maximum mentions per message",
+      "raidProtection": "Detect mention raids",
+      "actions": "When triggered",
+      "blockMessage": "Block the message",
+      "customMessage": "Message shown to the member (optional)",
+      "alertChannel": "Send an alert to",
+      "noAlert": "Don't send alerts",
+      "timeout": "Time out the member",
+      "noTimeout": "Don't time out",
+      "exemptRoles": "Exempt roles",
+      "exemptChannels": "Exempt channels",
+      "exemptHelp": "Members with these roles or messages in these channels are ignored."
+    },
+    "timeouts": {
+      "60": "1 minute",
+      "300": "5 minutes",
+      "600": "10 minutes",
+      "3600": "1 hour",
+      "86400": "1 day",
+      "604800": "1 week"
+    }
+  },
+  "errors": {
+    "botUnavailable": "The bot isn't responding right now. Make sure it's online and try again."
   }
 }

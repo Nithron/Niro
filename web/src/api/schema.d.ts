@@ -103,6 +103,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/meta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Channels and roles (for pickers)
+         * @description Fetched live from Discord through the bot; cached for 30 seconds.
+         */
+        get: operations["getGuildMeta"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/settings/moderation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Moderation settings */
+        get: operations["getModerationSettings"];
+        /** Save moderation settings */
+        put: operations["updateModerationSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Moderation cases, newest first */
+        get: operations["listCases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/cases/{caseNumber}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                caseNumber: number;
+            };
+            cookie?: never;
+        };
+        /** One case */
+        get: operations["getCase"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a case from the history
+         * @description Soft delete; kept for the audit trail and marked in the moderation log.
+         */
+        delete: operations["deleteCase"];
+        options?: never;
+        head?: never;
+        /**
+         * Change a case's reason
+         * @description Also updates the case's message in the moderation log.
+         */
+        patch: operations["updateCase"];
+        trace?: never;
+    };
+    "/guilds/{guildId}/automod/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** The server's AutoMod rules (Discord's native AutoMod) */
+        get: operations["listAutoModRules"];
+        put?: never;
+        /** Create a rule */
+        post: operations["createAutoModRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/automod/rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                ruleId: components["schemas"]["Snowflake"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a rule */
+        put: operations["updateAutoModRule"];
+        post?: never;
+        /** Delete a rule */
+        delete: operations["deleteAutoModRule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automod/presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ready-made AutoMod rules */
+        get: operations["listAutoModPresets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/invite": {
         parameters: {
             query?: never;
@@ -131,7 +278,7 @@ export interface components {
              * @description Stable machine-readable code
              * @enum {string}
              */
-            code: "bad_request" | "unauthorized" | "forbidden" | "not_found" | "bot_not_in_guild" | "module_always_on" | "internal";
+            code: "bad_request" | "unauthorized" | "forbidden" | "not_found" | "bot_not_in_guild" | "module_always_on" | "bot_unavailable" | "discord_error" | "internal";
             message: string;
         };
         User: {
@@ -169,6 +316,90 @@ export interface components {
         ModuleUpdate: {
             enabled: boolean;
         };
+        GuildMeta: {
+            channels: {
+                id: components["schemas"]["Snowflake"];
+                name: string;
+                /** @enum {string} */
+                type: "text" | "announcement" | "voice" | "forum" | "category" | "other";
+                parentId?: components["schemas"]["Snowflake"];
+                position: number;
+            }[];
+            roles: {
+                id: components["schemas"]["Snowflake"];
+                name: string;
+                color: number;
+                position: number;
+                /** @description Bot or integration role (can't be assigned) */
+                managed: boolean;
+            }[];
+        };
+        ModerationSettings: {
+            /** @description Channel for case logs; "0" disables the log */
+            logChannelId: string;
+            /** @description DM users about warnings */
+            dmUsers: boolean;
+            requireReason: boolean;
+        };
+        /** @enum {string} */
+        CaseAction: "warn" | "timeout" | "untimeout" | "kick" | "ban" | "unban" | "note" | "purge";
+        Case: {
+            number: number;
+            action: components["schemas"]["CaseAction"];
+            targetId?: components["schemas"]["Snowflake"];
+            targetName: string;
+            moderatorId: components["schemas"]["Snowflake"];
+            moderatorName: string;
+            reason: string;
+            durationSeconds?: number;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** @enum {string} */
+            source: "manual" | "automod" | "guardian" | "dashboard" | "system";
+            dmSent: boolean;
+            channelId?: components["schemas"]["Snowflake"];
+            /** @description Purges: messages deleted; bans: seconds of history deleted */
+            deletedMessages?: number;
+            temporary?: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CaseList: {
+            items: components["schemas"]["Case"][];
+            /** @description Matching cases in total */
+            total: number;
+            /** @description Cursor for the next page */
+            nextBefore?: number;
+        };
+        CaseUpdate: {
+            reason: string;
+        };
+        AutoModRule: {
+            id?: components["schemas"]["Snowflake"];
+            name: string;
+            enabled: boolean;
+            /** @enum {string} */
+            trigger: "keyword" | "spam" | "keyword_preset" | "mention_spam";
+            keywords?: string[];
+            regexPatterns?: string[];
+            allowList?: string[];
+            presets?: ("profanity" | "sexual_content" | "slurs")[];
+            mentionLimit?: number;
+            mentionRaidProtection?: boolean;
+            blockMessage: boolean;
+            customMessage?: string;
+            alertChannelId?: components["schemas"]["Snowflake"];
+            timeoutSeconds?: number;
+            exemptRoleIds?: components["schemas"]["Snowflake"][];
+            exemptChannelIds?: components["schemas"]["Snowflake"][];
+            readonly createdByBot?: boolean;
+        };
+        AutoModPreset: {
+            id: string;
+            rule: components["schemas"]["AutoModRule"];
+        };
         Invite: {
             /** Format: uri */
             url: string;
@@ -204,6 +435,15 @@ export interface components {
         };
         /** @description Unknown resource */
         NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description The bot could not complete the request (offline, or Discord refused it) */
+        BotError: {
             headers: {
                 [name: string]: unknown;
             };
@@ -351,6 +591,342 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getGuildMeta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Channels and roles */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuildMeta"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    getModerationSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModerationSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateModerationSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModerationSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModerationSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listCases: {
+        parameters: {
+            query?: {
+                user?: components["schemas"]["Snowflake"];
+                moderator?: components["schemas"]["Snowflake"];
+                action?: components["schemas"]["CaseAction"];
+                /** @description Only cases numbered below this (pagination cursor) */
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of cases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                caseNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Case"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    deleteCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                caseNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    updateCase: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                caseNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseUpdate"];
+            };
+        };
+        responses: {
+            /** @description The updated case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Case"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    listAutoModRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rules */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModRule"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    createAutoModRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoModRule"];
+            };
+        };
+        responses: {
+            /** @description The created rule */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    updateAutoModRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                ruleId: components["schemas"]["Snowflake"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoModRule"];
+            };
+        };
+        responses: {
+            /** @description The updated rule */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModRule"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    deleteAutoModRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                ruleId: components["schemas"]["Snowflake"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    listAutoModPresets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Presets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoModPreset"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
         };
     };
     getInvite: {

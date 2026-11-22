@@ -12,6 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getModuleConfigForUpdate = `-- name: GetModuleConfigForUpdate :one
+SELECT config FROM guild_configs
+WHERE guild_id = $1 AND module = $2
+FOR UPDATE
+`
+
+type GetModuleConfigForUpdateParams struct {
+	GuildID int64
+	Module  string
+}
+
+func (q *Queries) GetModuleConfigForUpdate(ctx context.Context, arg GetModuleConfigForUpdateParams) ([]byte, error) {
+	row := q.db.QueryRow(ctx, getModuleConfigForUpdate, arg.GuildID, arg.Module)
+	var config []byte
+	err := row.Scan(&config)
+	return config, err
+}
+
 const getModuleEnabledForUpdate = `-- name: GetModuleEnabledForUpdate :one
 SELECT enabled FROM guild_configs
 WHERE guild_id = $1 AND module = $2
@@ -104,7 +122,7 @@ func (q *Queries) ListConfigAudit(ctx context.Context, arg ListConfigAuditParams
 }
 
 const listModuleStates = `-- name: ListModuleStates :many
-SELECT module, enabled, version, updated_at
+SELECT module, enabled, config, version, updated_at
 FROM guild_configs
 WHERE guild_id = $1
 `
@@ -112,6 +130,7 @@ WHERE guild_id = $1
 type ListModuleStatesRow struct {
 	Module    string
 	Enabled   bool
+	Config    []byte
 	Version   int64
 	UpdatedAt time.Time
 }
@@ -128,6 +147,7 @@ func (q *Queries) ListModuleStates(ctx context.Context, guildID int64) ([]ListMo
 		if err := rows.Scan(
 			&i.Module,
 			&i.Enabled,
+			&i.Config,
 			&i.Version,
 			&i.UpdatedAt,
 		); err != nil {
@@ -141,6 +161,54 @@ func (q *Queries) ListModuleStates(ctx context.Context, guildID int64) ([]ListMo
 	return items, nil
 }
 
+const upsertModuleConfig = `-- name: UpsertModuleConfig :one
+INSERT INTO guild_configs (guild_id, module, enabled, config, updated_by, updated_at)
+VALUES ($1, $2, $3, $4, $5, now())
+ON CONFLICT (guild_id, module) DO UPDATE SET
+    config     = EXCLUDED.config,
+    version    = guild_configs.version + 1,
+    updated_by = EXCLUDED.updated_by,
+    updated_at = now()
+RETURNING module, enabled, config, version, updated_at
+`
+
+type UpsertModuleConfigParams struct {
+	GuildID   int64
+	Module    string
+	Enabled   bool
+	Config    []byte
+	UpdatedBy pgtype.Int8
+}
+
+type UpsertModuleConfigRow struct {
+	Module    string
+	Enabled   bool
+	Config    []byte
+	Version   int64
+	UpdatedAt time.Time
+}
+
+// Saves module settings. A module that had no row yet keeps its default
+// enabled state (passed in as $3).
+func (q *Queries) UpsertModuleConfig(ctx context.Context, arg UpsertModuleConfigParams) (UpsertModuleConfigRow, error) {
+	row := q.db.QueryRow(ctx, upsertModuleConfig,
+		arg.GuildID,
+		arg.Module,
+		arg.Enabled,
+		arg.Config,
+		arg.UpdatedBy,
+	)
+	var i UpsertModuleConfigRow
+	err := row.Scan(
+		&i.Module,
+		&i.Enabled,
+		&i.Config,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const upsertModuleEnabled = `-- name: UpsertModuleEnabled :one
 INSERT INTO guild_configs (guild_id, module, enabled, updated_by, updated_at)
 VALUES ($1, $2, $3, $4, now())
@@ -149,7 +217,7 @@ ON CONFLICT (guild_id, module) DO UPDATE SET
     version    = guild_configs.version + 1,
     updated_by = EXCLUDED.updated_by,
     updated_at = now()
-RETURNING module, enabled, version, updated_at
+RETURNING module, enabled, config, version, updated_at
 `
 
 type UpsertModuleEnabledParams struct {
@@ -162,6 +230,7 @@ type UpsertModuleEnabledParams struct {
 type UpsertModuleEnabledRow struct {
 	Module    string
 	Enabled   bool
+	Config    []byte
 	Version   int64
 	UpdatedAt time.Time
 }
@@ -177,6 +246,7 @@ func (q *Queries) UpsertModuleEnabled(ctx context.Context, arg UpsertModuleEnabl
 	err := row.Scan(
 		&i.Module,
 		&i.Enabled,
+		&i.Config,
 		&i.Version,
 		&i.UpdatedAt,
 	)

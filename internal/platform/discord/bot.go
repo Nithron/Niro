@@ -23,6 +23,7 @@ import (
 
 	"github.com/nithron/nithro/internal/core"
 	"github.com/nithron/nithro/internal/i18n"
+	"github.com/nithron/nithro/internal/modules/moderation"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -39,6 +40,7 @@ type Deps struct {
 	Log     *slog.Logger
 	Config  *core.ConfigService
 	Guilds  core.GuildDirectory
+	Cases   moderation.CaseStore
 	Catalog *i18n.Catalog
 	Metrics prometheus.Registerer
 }
@@ -50,6 +52,8 @@ type Bot struct {
 	client  *bot.Client
 	emojis  *Emojis
 	metrics *metrics
+	mod     *moderation.Service
+	pending pendingBans
 }
 
 // New builds the client. Nothing connects until Run.
@@ -65,6 +69,7 @@ func New(deps Deps) (*Bot, error) {
 	router.SlashCommand("/ping", b.handlePing)
 	router.SlashCommand("/about", b.handleAbout)
 	router.SlashCommand("/modules", b.handleModules)
+	b.registerModeration(router)
 	router.Error(b.handleError)
 	router.NotFound(func(e *handler.InteractionEvent) error {
 		b.log.Warn("unhandled interaction", "type", e.Type())
@@ -77,7 +82,7 @@ func New(deps Deps) (*Bot, error) {
 			sharding.WithAutoScaling(true), // reshard automatically when Discord asks
 			sharding.WithGatewayConfigOpts(gateway.WithIntents(Intents)),
 		),
-		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels)),
+		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers)),
 		bot.WithEventListeners(router, &events.ListenerAdapter{
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild) },
 			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
@@ -88,7 +93,41 @@ func New(deps Deps) (*Bot, error) {
 		return nil, fmt.Errorf("building discord client: %w", err)
 	}
 	b.emojis = NewEmojis(b.client.Rest, b.client.ApplicationID, b.log)
+	b.mod = moderation.NewService(deps.Cases, modPlatform{client: b.client},
+		modNotifier{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		func(ctx context.Context, guildID snowflake.ID) (moderation.Settings, error) {
+			return moderation.LoadSettings(ctx, deps.Config, guildID)
+		}, b.log.With("module", "moderation"))
 	return b, nil
+}
+
+// Moderation exposes the moderation service (used by the RPC handlers).
+func (b *Bot) Moderation() *moderation.Service { return b.mod }
+
+func (b *Bot) presenter() presenter { return presenter{cat: b.deps.Catalog, emojis: b.emojis} }
+
+// guildLocale is the language for public messages in a guild (logs, DMs).
+func (b *Bot) guildLocale(guildID snowflake.ID) string {
+	if g, ok := b.client.Caches.Guild(guildID); ok && g.PreferredLocale != "" {
+		return g.PreferredLocale
+	}
+	return "en"
+}
+
+// runScheduler lifts temporary bans once the bot knows its own identity.
+func (b *Bot) runScheduler(ctx context.Context) {
+	for {
+		if self, ok := b.client.Caches.SelfUser(); ok {
+			actor := moderation.Actor{Rank: core.Rank{ID: self.ID}, Name: self.Username}
+			b.mod.RunScheduler(ctx, actor, 30*time.Second)
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Second):
+		}
+	}
 }
 
 // Run syncs commands and emojis, connects all shards, and blocks until ctx is done.
@@ -105,6 +144,7 @@ func (b *Bot) Run(ctx context.Context) error {
 		return fmt.Errorf("connecting to the gateway: %w", err)
 	}
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
+	go b.runScheduler(ctx)
 
 	<-ctx.Done()
 	closeCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

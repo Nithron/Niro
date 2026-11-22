@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -49,6 +50,24 @@ func (f *fakeStore) SetModuleEnabled(_ context.Context, g snowflake.ID, m Module
 	}
 	r := f.rows[g][m]
 	r.Module, r.Enabled, r.Version, r.UpdatedAt = m, enabled, r.Version+1, time.Unix(100, 0)
+	f.rows[g][m] = r
+	return r, nil
+}
+
+func (f *fakeStore) SetModuleSettings(_ context.Context, g snowflake.ID, m ModuleID, cfg []byte, def bool, _ *snowflake.ID, _ ChangeSource) (StoredModuleState, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if !f.known[g] {
+		return StoredModuleState{}, ErrUnknownGuild
+	}
+	if f.rows[g] == nil {
+		f.rows[g] = map[ModuleID]StoredModuleState{}
+	}
+	r, ok := f.rows[g][m]
+	if !ok {
+		r.Enabled = def
+	}
+	r.Module, r.Config, r.Version = m, cfg, r.Version+1
 	f.rows[g][m] = r
 	return r, nil
 }
@@ -199,5 +218,57 @@ func TestRunInvalidationDropsCachedGuild(t *testing.T) {
 
 	if on, _ := s.IsEnabled(ctx, guild, ModuleWelcome); !on {
 		t.Fatal("cache not invalidated by bus message")
+	}
+}
+
+// limitSpec accepts {"limit": n} with 1 <= n <= 10, default 3.
+type limitSpec struct{}
+
+func (limitSpec) Normalize(raw []byte) ([]byte, error) {
+	v := struct {
+		Limit int `json:"limit"`
+	}{Limit: 3}
+	if raw != nil {
+		if err := json.Unmarshal(raw, &v); err != nil {
+			return nil, err
+		}
+	}
+	if v.Limit < 1 || v.Limit > 10 {
+		return nil, errors.New("limit out of range")
+	}
+	return json.Marshal(v)
+}
+
+func TestSettings(t *testing.T) {
+	reg, _ := NewRegistry(WithSettings(DefaultModules(), ModuleModeration, limitSpec{})...)
+	store := newFakeStore(guild)
+	s, _ := NewConfigService(reg, store, newFakeBus(), slog.New(slog.NewTextHandler(io.Discard, nil)))
+	ctx := context.Background()
+
+	got, err := s.Settings(ctx, guild, ModuleModeration)
+	if err != nil || string(got) != `{"limit":3}` {
+		t.Fatalf("defaults = %s, %v", got, err)
+	}
+	if _, err := s.SetSettings(ctx, guild, ModuleModeration, []byte(`{"limit":99}`), nil, SourceDashboard); !errors.Is(err, ErrInvalidSettings) {
+		t.Fatalf("invalid settings accepted: %v", err)
+	}
+	if _, err := s.SetSettings(ctx, guild, ModuleModeration, []byte(`{"limit":7}`), nil, SourceDashboard); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := s.Settings(ctx, guild, ModuleModeration); string(got) != `{"limit":7}` {
+		t.Fatalf("after save = %s", got)
+	}
+	if on, _ := s.IsEnabled(ctx, guild, ModuleModeration); !on {
+		t.Fatal("saving settings must keep the module's default enabled state")
+	}
+	if _, err := s.Settings(ctx, guild, ModuleLogging); !errors.Is(err, ErrNoSettings) {
+		t.Fatalf("module without spec: %v", err)
+	}
+
+	// Stored settings that no longer validate fall back to defaults.
+	store.rows[guild][ModuleModeration] = StoredModuleState{Module: ModuleModeration, Enabled: true, Config: []byte(`{"limit":0}`), Version: 9}
+	s.Invalidate(guild)
+	if got, _ := s.Settings(ctx, guild, ModuleModeration); string(got) != `{"limit":3}` {
+		t.Fatalf("invalid stored settings = %s, want defaults", got)
 	}
 }
