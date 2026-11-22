@@ -10,6 +10,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ChannelLockdown struct {
+	GuildID      int64
+	ChannelID    int64
+	HadOverwrite bool
+	AllowBits    int64
+	DenyBits     int64
+	LockedBy     pgtype.Int8
+	CreatedAt    time.Time
+}
+
 type ConfigAudit struct {
 	ID        int64
 	GuildID   int64
@@ -18,6 +28,52 @@ type ConfigAudit struct {
 	Source    string
 	Change    []byte
 	CreatedAt time.Time
+}
+
+type GuardianEvent struct {
+	ID             int64
+	GuildID        int64
+	UserID         pgtype.Int8
+	UserName       string
+	Kind           string
+	Signals        []byte
+	Score          int32
+	Response       string
+	Evidence       []byte
+	CaseNumber     pgtype.Int4
+	Status         string
+	ResolvedBy     pgtype.Int8
+	ResolvedByName string
+	ResolvedAt     pgtype.Timestamptz
+	AlertChannelID pgtype.Int8
+	AlertMessageID pgtype.Int8
+	CreatedAt      time.Time
+}
+
+type GuardianQuarantine struct {
+	GuildID      int64
+	UserID       int64
+	EventID      pgtype.Int8
+	Mode         string
+	SavedRoleIds []int64
+	RoleID       pgtype.Int8
+	Until        pgtype.Timestamptz
+	CreatedAt    time.Time
+}
+
+type GuardianRaid struct {
+	ID          int64
+	GuildID     int64
+	EventID     pgtype.Int8
+	StartedAt   time.Time
+	EndsAt      time.Time
+	EndedAt     pgtype.Timestamptz
+	EndedBy     pgtype.Int8
+	Manual      bool
+	StartedBy   pgtype.Int8
+	StartedName string
+	Joins       int32
+	State       []byte
 }
 
 type Guild struct {
@@ -66,6 +122,18 @@ type ModCase struct {
 	UpdatedAt       time.Time
 	DeletedAt       pgtype.Timestamptz
 	DeletedBy       pgtype.Int8
+}
+
+type ScamDomain struct {
+	Domain  string
+	Source  string
+	AddedAt time.Time
+}
+
+type ScamFeed struct {
+	Source    string
+	Domains   int32
+	UpdatedAt time.Time
 }
 
 type ScheduledAction struct {

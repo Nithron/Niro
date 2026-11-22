@@ -84,8 +84,8 @@ func TestMaskedMismatch(t *testing.T) {
 	}{
 		{"[discord.com/nitro](https://evil.ru/x)", true},
 		{"[https://steamcommunity.com/gift](https://steamcommunity.ru/gift)", true},
-		{"[click here](https://evil.ru)", false},           // no domain shown
-		{"[docs](https://example.com/docs)", false},        // no domain shown
+		{"[click here](https://evil.ru)", false},            // no domain shown
+		{"[docs](https://example.com/docs)", false},         // no domain shown
 		{"[example.com](https://www.example.com/a)", false}, // same site
 		{"[v1.2 notes](https://example.com)", false},        // not a real domain
 	}

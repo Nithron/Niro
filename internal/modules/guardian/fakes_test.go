@@ -208,7 +208,9 @@ func (s *fakeStore) SaveLockdowns(_ context.Context, st []LockState) error {
 	s.locks = append(s.locks, st...)
 	return nil
 }
-func (s *fakeStore) Lockdowns(context.Context, snowflake.ID) ([]LockState, error) { return s.locks, nil }
+func (s *fakeStore) Lockdowns(context.Context, snowflake.ID) ([]LockState, error) {
+	return s.locks, nil
+}
 func (s *fakeStore) DeleteLockdowns(context.Context, snowflake.ID, []snowflake.ID) error {
 	s.locks = nil
 	return nil
