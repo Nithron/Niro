@@ -1,0 +1,38 @@
+# English is Nithro's source language. Every key used in code must exist here
+# (enforced by internal/i18n tests). To add a language, copy this file to
+# <lang>.toml (e.g. nl.toml) and translate the values; keep the keys.
+
+"module.core.name" = "Core"
+"module.core.description" = "Basic commands like /ping, /about and /modules. Always on."
+"module.moderation.name" = "Moderation"
+"module.moderation.description" = "Warnings, timeouts, kicks and bans with a numbered case history, plus Discord AutoMod management."
+"module.guardian.name" = "Guardian"
+"module.guardian.description" = "Stops hacked accounts, scam links and raids, and audits dangerous permissions."
+"module.logging.name" = "Logging"
+"module.logging.description" = "Logs message edits and deletions, member changes and server changes to the channels you choose."
+"module.roles.name" = "Role panels"
+"module.roles.description" = "Buttons and menus that let members pick their own roles."
+"module.welcome.name" = "Welcome"
+"module.welcome.description" = "Greets new members and says goodbye, with optional automatic roles."
+"module.tickets.name" = "Tickets"
+"module.tickets.description" = "Private support tickets with staff roles and transcripts."
+
+"cmd.ping.description" = "Check that Nithro is online and how fast it responds"
+"cmd.ping.reply" = "Pong! Gateway latency: **{{.Latency}}**"
+
+"cmd.about.description" = "About Nithro"
+"cmd.about.title" = "Nithro"
+"cmd.about.body" = "The security-first community bot by Nithron.\nVersion `{{.Version}}`"
+"cmd.about.dashboard" = "Open dashboard"
+"cmd.about.website" = "nithron.com"
+
+"cmd.modules.description" = "Show which Nithro modules are enabled in this server"
+"cmd.modules.title" = "Modules in {{.Server}}"
+"cmd.modules.enabled" = "Enabled"
+"cmd.modules.disabled" = "Disabled"
+"cmd.modules.always_on" = "Always on"
+"cmd.modules.manage" = "Manage in dashboard"
+"cmd.modules.footer" = "Changes made in the dashboard apply immediately."
+
+"error.generic" = "Something went wrong on our side. It has been logged; please try again."
+"error.guild_only" = "This command only works inside a server."

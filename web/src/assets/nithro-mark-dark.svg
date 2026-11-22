@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="216" viewBox="56 148 400 216">
+  <title>Nithro mark (for dark backgrounds)</title>
+  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient></defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="44">
+    <path d="M144 180 L88 256 L144 332" stroke="url(#g)"/>
+    <path d="M368 180 L424 256 L368 332" stroke="url(#g)"/>
+    <path d="M214 336 V176 L298 336 V176" stroke="#E6EDF7"/>
+  </g>
+</svg>

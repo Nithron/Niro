@@ -1,0 +1,32 @@
+# Local development dependencies. Ports are bound to localhost only.
+#   make dev-deps    start
+#   make dev-down    stop (data is kept in named volumes)
+name: nithro-dev
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: nithro
+      POSTGRES_USER: nithro
+      POSTGRES_PASSWORD: nithro
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [postgres:/var/lib/postgresql]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nithro -d nithro"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:8-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  postgres:
