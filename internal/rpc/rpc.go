@@ -21,9 +21,9 @@ import (
 )
 
 const (
-	streamKey   = "nithro:rpc"
+	streamKey   = "niro:rpc"
 	group       = "bots"
-	replyPrefix = "nithro:rpc:reply:"
+	replyPrefix = "niro:rpc:reply:"
 	maxInFlight = 16
 )
 

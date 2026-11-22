@@ -11,9 +11,9 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	tcvalkey "github.com/testcontainers/testcontainers-go/modules/valkey"
 
-	"github.com/nithron/nithro/internal/cache"
-	"github.com/nithron/nithro/internal/rpc"
-	"github.com/nithron/nithro/internal/testutil"
+	"github.com/nithron/niro/internal/cache"
+	"github.com/nithron/niro/internal/rpc"
+	"github.com/nithron/niro/internal/testutil"
 )
 
 func valkeyClient(t *testing.T) *cache.Client {

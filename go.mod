@@ -1,4 +1,4 @@
-module github.com/nithron/nithro
+module github.com/nithron/niro
 
 go 1.27
 

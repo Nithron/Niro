@@ -26,7 +26,7 @@ func TestRunRejectsMissingConfig(t *testing.T) {
 	if code != 2 {
 		t.Fatalf("code = %d, want 2", code)
 	}
-	for _, want := range []string{"NITHRO_DISCORD_TOKEN", "NITHRO_DISCORD_CLIENT_ID", "dev-setup.md"} {
+	for _, want := range []string{"NIRO_DISCORD_TOKEN", "NIRO_DISCORD_CLIENT_ID", "dev-setup.md"} {
 		if !strings.Contains(errOut.String(), want) {
 			t.Errorf("error output missing %q:\n%s", want, errOut.String())
 		}

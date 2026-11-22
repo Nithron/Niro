@@ -318,7 +318,7 @@ type GuildMetaChannelsType string
 
 // GuildSummary defines model for GuildSummary.
 type GuildSummary struct {
-	// BotPresent Nithro is in this server
+	// BotPresent Niro is in this server
 	BotPresent bool    `json:"botPresent"`
 	IconUrl    *string `json:"iconUrl,omitempty"`
 
@@ -482,7 +482,7 @@ type ServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
-	// GetInvite Link to add Nithro to a server
+	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(w http.ResponseWriter, r *http.Request, params GetInviteParams)
 	// GetMe The logged-in user
@@ -589,7 +589,7 @@ func (_ Unimplemented) UpdateModerationSettings(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetInvite Link to add Nithro to a server
+// GetInvite Link to add Niro to a server
 // (GET /invite)
 func (_ Unimplemented) GetInvite(w http.ResponseWriter, r *http.Request, params GetInviteParams) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -2666,7 +2666,7 @@ type StrictServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(ctx context.Context, request UpdateModerationSettingsRequestObject) (UpdateModerationSettingsResponseObject, error)
-	// GetInvite Link to add Nithro to a server
+	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
 	// GetMe The logged-in user

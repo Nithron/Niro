@@ -1,4 +1,4 @@
-// Package i18n holds Nithro's message catalogs. Every user-facing string the
+// Package i18n holds Niro's message catalogs. Every user-facing string the
 // bot sends goes through a Key; English is the source language and other
 // languages are added by dropping a locales/<lang>.toml file next to en.toml.
 package i18n

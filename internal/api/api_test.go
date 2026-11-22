@@ -17,8 +17,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // ---- fakes ----------------------------------------------------------------

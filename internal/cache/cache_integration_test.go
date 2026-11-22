@@ -8,9 +8,9 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	tcvalkey "github.com/testcontainers/testcontainers-go/modules/valkey"
 
-	"github.com/nithron/nithro/internal/cache"
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/testutil"
+	"github.com/nithron/niro/internal/cache"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/testutil"
 )
 
 func newClient(t *testing.T) *cache.Client {

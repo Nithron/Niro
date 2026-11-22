@@ -14,8 +14,8 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/i18n"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 func testBot(t *testing.T) *Bot {
@@ -111,7 +111,7 @@ func TestWithLinksUsesButtonsOnlyForPublicHTTPS(t *testing.T) {
 		t.Fatalf("text=%d buttons=%d, want 1 and 1", text, buttons)
 	}
 	for raw, want := range map[string]bool{
-		"https://app.nithro.gg/x": true, "http://example.com": false, "https://localhost": false,
+		"https://app.niro.gg/x": true, "http://example.com": false, "https://localhost": false,
 		"https://127.0.0.1:8080": false, "::bad": false,
 	} {
 		if got := publicHTTPS(raw); got != want {

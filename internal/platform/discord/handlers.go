@@ -10,7 +10,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/handler"
 
-	"github.com/nithron/nithro/internal/i18n"
+	"github.com/nithron/niro/internal/i18n"
 )
 
 // Brand colours (assets/brand/palette.json).
@@ -43,7 +43,7 @@ func (b *Bot) handlePing(_ discord.SlashCommandInteractionData, e *handler.Comma
 
 func (b *Bot) handleAbout(_ discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
 	loc := e.Locale()
-	title := strings.TrimSpace(b.emojis.Get(EmojiNithro) + " " + b.t(loc, i18n.CmdAboutTitle, nil))
+	title := strings.TrimSpace(b.emojis.Get(EmojiNiro) + " " + b.t(loc, i18n.CmdAboutTitle, nil))
 	body := b.t(loc, i18n.CmdAboutBody, map[string]any{"Version": b.deps.Version})
 
 	container := discord.NewContainer(

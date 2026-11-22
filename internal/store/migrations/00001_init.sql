@@ -1,6 +1,6 @@
 -- +goose Up
 
--- Servers Nithro has been added to. Snowflake IDs fit in a signed bigint.
+-- Servers Niro has been added to. Snowflake IDs fit in a signed bigint.
 -- left_at is set when the bot is removed; data is purged after the
 -- retention grace period (M5), not immediately.
 CREATE TABLE guilds (

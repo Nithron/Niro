@@ -1,8 +1,8 @@
 # Development setup
 
-## 1. Configure the "Nithro Dev" application
+## 1. Configure the "Niro Dev" application
 
-In the [Discord Developer Portal](https://discord.com/developers/applications), open **Nithro Dev**:
+In the [Discord Developer Portal](https://discord.com/developers/applications), open **Niro Dev**:
 
 | Page | Setting |
 |---|---|
@@ -21,10 +21,10 @@ Copy `.env.example` to `.env` in the repo root and fill in the four Discord valu
 **Never paste the token or client secret into chat, issues or commits.** If one leaks, reset it in the portal.
 
 ```
-NITHRO_DISCORD_TOKEN=          # Bot → Reset Token
-NITHRO_DISCORD_CLIENT_ID=      # General Information → Application ID
-NITHRO_DISCORD_CLIENT_SECRET=  # OAuth2 → Client Secret
-NITHRO_DEV_GUILD_ID=           # test server ID (commands register there instantly)
+NIRO_DISCORD_TOKEN=          # Bot → Reset Token
+NIRO_DISCORD_CLIENT_ID=      # General Information → Application ID
+NIRO_DISCORD_CLIENT_SECRET=  # OAuth2 → Client Secret
+NIRO_DEV_GUILD_ID=           # test server ID (commands register there instantly)
 ```
 
 ## 3. Run it
@@ -36,7 +36,7 @@ make dev-deps     # start Postgres + Valkey in Docker
 make run          # build the dashboard, migrate, start bot + API on http://localhost:8080
 ```
 
-For dashboard work with hot reload, set `NITHRO_DASHBOARD_URL=http://localhost:5173` in `.env`, then run `make run-api` and `make web-dev` (Vite on http://localhost:5173, which proxies API calls to :8080).
+For dashboard work with hot reload, set `NIRO_DASHBOARD_URL=http://localhost:5173` in `.env`, then run `make run-api` and `make web-dev` (Vite on http://localhost:5173, which proxies API calls to :8080).
 
 Other useful targets: `make test` (Go tests, including Postgres/Valkey integration tests via Docker), `make lint`, `make generate` (after editing SQL queries or `api/openapi.yaml`), `make docker`, `make help`.
 

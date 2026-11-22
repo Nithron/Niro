@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">
-  <title>Nithro README banner</title>
+  <title>Niro README banner</title>
   <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient><radialGradient id="glow" cx="330" cy="160" r="520" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4CB8FF" stop-opacity="0.22"/><stop offset="0.55" stop-color="#3DDBA6" stop-opacity="0.06"/><stop offset="1" stop-color="#0B0E13" stop-opacity="0"/></radialGradient></defs>
   <rect width="1280" height="320" rx="24" fill="#0B0E13"/>
   <rect width="1280" height="320" rx="24" fill="url(#glow)"/>
@@ -7,13 +7,11 @@
     <path d="M144 180 L88 256 L144 332" stroke="url(#g)"/>
     <path d="M368 180 L424 256 L368 332" stroke="url(#g)"/>
     <path d="M214 336 V176 L298 336 V176" stroke="#E6EDF7"/>
-  </g></svg><svg x="460" y="8" width="840" height="200" viewBox="0 0 840 200"><g fill="none" stroke="#E6EDF7" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+  </g></svg><svg x="460" y="8" width="512" height="200" viewBox="0 0 512 200"><g fill="none" stroke="#E6EDF7" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
     <path d="M20 160 V40 L100 160 V40"/>
     <path d="M172 160 V40"/>
-    <path d="M244 40 H344 M294 40 V160"/>
-    <path d="M416 40 V160 M496 40 V160 M416 100 H496"/>
-    <path d="M568 160 V40 H608 A30 30 0 0 1 608 100 H568 M606 100 L653 160"/>
-    <rect x="725" y="40" width="90" height="120" rx="45"/>
+    <path d="M244 160 V40 H284 A30 30 0 0 1 284 100 H244 M282 100 L329 160"/>
+    <rect x="401" y="40" width="90" height="120" rx="45"/>
   </g></svg></g>
   <text x="80" y="262" font-family="Mona Sans, Inter, Adwaita Sans, Segoe UI, sans-serif" font-size="28" fill="#9AA7B8">The security-first community bot · by Nithron</text>
 </svg>

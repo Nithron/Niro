@@ -1,5 +1,5 @@
 // Package observability sets up logging, Prometheus metrics and the ops HTTP
-// server (liveness, readiness, metrics) that every Nithro process exposes.
+// server (liveness, readiness, metrics) that every Niro process exposes.
 package observability
 
 import (

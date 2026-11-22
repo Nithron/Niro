@@ -12,10 +12,10 @@ import (
 
 	"github.com/valkey-io/valkey-go"
 
-	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/niro/internal/core"
 )
 
-const configChannel = "nithro:config"
+const configChannel = "niro:config"
 
 // Client implements core.ChangeBus plus key/value helpers.
 type Client struct {
@@ -65,7 +65,7 @@ func (c *Client) SubscribeConfigChanges(ctx context.Context, fn func(core.Config
 	return c.c.Receive(ctx, c.c.B().Subscribe().Channel(configChannel).Build(), func(msg valkey.PubSubMessage) {
 		var change core.ConfigChange
 		if err := json.Unmarshal([]byte(msg.Message), &change); err != nil {
-			return // ignore malformed messages; they cannot come from Nithro
+			return // ignore malformed messages; they cannot come from Niro
 		}
 		fn(change)
 	})

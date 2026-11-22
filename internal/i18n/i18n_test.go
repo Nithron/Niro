@@ -5,8 +5,8 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/moderation"
 	"golang.org/x/text/language"
 )
 

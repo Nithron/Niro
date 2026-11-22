@@ -18,9 +18,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/nithron/nithro/internal/api/apigen"
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/api/apigen"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // Config is what the API needs from the process configuration.
@@ -66,7 +66,7 @@ func New(d Deps) (http.Handler, error) {
 		cfg: d.Config, log: d.Log.With("component", "api"), oauth: d.OAuth, kv: d.KV,
 		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, cases: d.Cases, rpc: d.RPC, spa: d.Dashboard,
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "nithro_api_requests_total", Help: "API requests by route and status class.",
+			Name: "niro_api_requests_total", Help: "API requests by route and status class.",
 		}, []string{"route", "status"}),
 	}
 	if d.Metrics != nil {

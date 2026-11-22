@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 func TestCaseLifecycle(t *testing.T) {

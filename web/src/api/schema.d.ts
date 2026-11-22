@@ -31,7 +31,7 @@ export interface paths {
         /**
          * Servers the user can manage
          * @description Servers where the user is the owner or has Administrator or Manage
-         *     Server, with whether Nithro is already in them. Cached for 60 seconds.
+         *     Server, with whether Niro is already in them. Cached for 60 seconds.
          */
         get: operations["listGuilds"];
         put?: never;
@@ -257,7 +257,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Link to add Nithro to a server */
+        /** Link to add Niro to a server */
         get: operations["getInvite"];
         put?: never;
         post?: never;
@@ -294,7 +294,7 @@ export interface components {
             name: string;
             /** Format: uri */
             iconUrl?: string;
-            /** @description Nithro is in this server */
+            /** @description Niro is in this server */
             botPresent: boolean;
             /** @description The user owns this server */
             owner: boolean;
@@ -451,7 +451,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Nithro is not in this server yet */
+        /** @description Niro is not in this server yet */
         BotNotInGuild: {
             headers: {
                 [name: string]: unknown;
@@ -500,7 +500,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Manageable servers, Nithro-present first, then by name */
+            /** @description Manageable servers, Niro-present first, then by name */
             200: {
                 headers: {
                     [name: string]: unknown;

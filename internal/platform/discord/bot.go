@@ -1,4 +1,4 @@
-// Package discord is Nithro's Discord adapter, built on disgo. It translates
+// Package discord is Niro's Discord adapter, built on disgo. It translates
 // gateway events and interactions into calls on the platform-agnostic core,
 // and core results into Discord messages (Components V2).
 package discord
@@ -21,9 +21,9 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/i18n"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -45,7 +45,7 @@ type Deps struct {
 	Metrics prometheus.Registerer
 }
 
-// Bot is a running Nithro Discord client.
+// Bot is a running Niro Discord client.
 type Bot struct {
 	deps    Deps
 	log     *slog.Logger

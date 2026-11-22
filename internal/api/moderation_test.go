@@ -10,9 +10,9 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/modules/moderation"
-	dc "github.com/nithron/nithro/internal/platform/discord"
-	"github.com/nithron/nithro/internal/rpc"
+	"github.com/nithron/niro/internal/modules/moderation"
+	dc "github.com/nithron/niro/internal/platform/discord"
+	"github.com/nithron/niro/internal/rpc"
 )
 
 type rpcCall struct {

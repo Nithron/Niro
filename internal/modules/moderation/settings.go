@@ -8,7 +8,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/niro/internal/core"
 )
 
 // Settings are the per-server moderation settings.

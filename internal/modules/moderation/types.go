@@ -1,4 +1,4 @@
-// Package moderation is Nithro's moderation domain: cases, the moderation
+// Package moderation is Niro's moderation domain: cases, the moderation
 // actions (warn, timeout, kick, ban…), message purges, and scheduled actions
 // such as lifting temporary bans. It is platform-agnostic: Discord specifics
 // live behind the Platform and Notifier interfaces.
@@ -12,7 +12,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/niro/internal/core"
 )
 
 // Action is a moderation action recorded as a case.

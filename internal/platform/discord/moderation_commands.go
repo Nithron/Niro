@@ -15,9 +15,9 @@ import (
 	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/i18n"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // ---- command definitions ----------------------------------------------------

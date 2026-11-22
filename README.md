@@ -1,6 +1,6 @@
-![Nithro](assets/brand/png/social/readme-banner.png)
+![Niro](assets/brand/png/social/readme-banner.png)
 
-# Nithro
+# Niro
 
 A security-first Discord bot by [Nithron](https://nithron.com): one bot for moderation, scam and raid
 protection, logging, roles, welcome and tickets, managed from a web dashboard. AI features
@@ -15,9 +15,9 @@ powered by nAI and NithronOS integration will follow.
 
 ## License
 
-Nithro's source code is available under the [Nithron Community License (NCL) v1.0](LICENSE): free for
+Niro's source code is available under the [Nithron Community License (NCL) v1.0](LICENSE): free for
 non-commercial use. Commercial use, hosting for others, or redistributing binaries needs a commercial
-license; see [COMMERCIAL.md](COMMERCIAL.md). “Nithro” and its logos are trademarks of Nithron; see
+license; see [COMMERCIAL.md](COMMERCIAL.md). “Niro” and its logos are trademarks of Nithron; see
 [TRADEMARK_POLICY.md](TRADEMARK_POLICY.md).
 
-Nithro is not affiliated with or endorsed by Discord Inc.
+Niro is not affiliated with or endorsed by Discord Inc.

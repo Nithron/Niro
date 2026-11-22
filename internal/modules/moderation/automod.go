@@ -12,7 +12,7 @@ import (
 )
 
 // AutoModRule is a simplified, validated view of a native AutoMod rule (the
-// platform enforces it; Nithro only manages it). JSON field names are the
+// platform enforces it; Niro only manages it). JSON field names are the
 // dashboard API's.
 type AutoModRule struct {
 	ID      snowflake.ID `json:"id,omitempty"`
@@ -35,7 +35,7 @@ type AutoModRule struct {
 	ExemptRoleIDs    []snowflake.ID `json:"exemptRoleIds"`
 	ExemptChannelIDs []snowflake.ID `json:"exemptChannelIds"`
 
-	// CreatedByBot is true for rules Nithro created (read-only).
+	// CreatedByBot is true for rules Niro created (read-only).
 	CreatedByBot bool `json:"createdByBot"`
 }
 
@@ -192,17 +192,17 @@ type AutoModPreset struct {
 	Rule AutoModRule `json:"rule"`
 }
 
-// AutoModPresets returns Nithro's rule templates. Names are English; the
+// AutoModPresets returns Niro's rule templates. Names are English; the
 // dashboard shows translated titles by preset ID.
 func AutoModPresets() []AutoModPreset {
 	return []AutoModPreset{
 		{ID: "invite_links", Rule: AutoModRule{
-			Name: "Nithro · Block invite links", Enabled: true, Trigger: TriggerKeyword,
+			Name: "Niro · Block invite links", Enabled: true, Trigger: TriggerKeyword,
 			RegexPatterns: []string{`(?i)(discord\.(gg|io|me|li)|discord(app)?\.com/invite)/[a-z0-9-]+`},
 			BlockMessage:  true, CustomMessage: "Invite links aren't allowed here.",
 		}},
 		{ID: "scam_phrases", Rule: AutoModRule{
-			Name: "Nithro · Common scam phrases", Enabled: true, Trigger: TriggerKeyword,
+			Name: "Niro · Common scam phrases", Enabled: true, Trigger: TriggerKeyword,
 			Keywords: []string{
 				"free nitro", "nitro giveaway", "steam gift", "free discord nitro", "claim your nitro",
 				"airdrop claim", "*giving away $*", "@everyone free*", "crypto giveaway", "check my bio*",
@@ -210,14 +210,14 @@ func AutoModPresets() []AutoModPreset {
 			BlockMessage: true, CustomMessage: "This message looks like a known scam and was blocked.",
 		}},
 		{ID: "mention_spam", Rule: AutoModRule{
-			Name: "Nithro · Mention spam", Enabled: true, Trigger: TriggerMentionSpam,
+			Name: "Niro · Mention spam", Enabled: true, Trigger: TriggerMentionSpam,
 			MentionLimit: 6, MentionRaidProtection: true, BlockMessage: true, TimeoutSeconds: 600,
 		}},
 		{ID: "spam", Rule: AutoModRule{
-			Name: "Nithro · Suspected spam", Enabled: true, Trigger: TriggerSpam, BlockMessage: true,
+			Name: "Niro · Suspected spam", Enabled: true, Trigger: TriggerSpam, BlockMessage: true,
 		}},
 		{ID: "word_lists", Rule: AutoModRule{
-			Name: "Nithro · Slurs and explicit content", Enabled: true, Trigger: TriggerKeywordPreset,
+			Name: "Niro · Slurs and explicit content", Enabled: true, Trigger: TriggerKeywordPreset,
 			Presets: []string{"slurs", "sexual_content"}, BlockMessage: true,
 		}},
 	}

@@ -96,7 +96,7 @@ describe('dashboard', () => {
     expect(await screen.findByText('Beta')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Manage' })).toHaveAttribute('href', '/guilds/100')
     await waitFor(() =>
-      expect(screen.getByRole('link', { name: 'Add Nithro' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'Add Niro' })).toHaveAttribute(
         'href',
         'https://discord.com/oauth2/authorize?client_id=1',
       ),
@@ -129,10 +129,10 @@ describe('dashboard', () => {
     await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'false'))
   })
 
-  it('offers an invite when Nithro is not in the server', async () => {
+  it('offers an invite when Niro is not in the server', async () => {
     routes['GET /api/v1/guilds/200'] = () => json(guilds[1])
     renderAt('/guilds/200')
-    expect(await screen.findByText("Nithro isn't in this server yet")).toBeInTheDocument()
+    expect(await screen.findByText("Niro isn't in this server yet")).toBeInTheDocument()
     expect(calls.some((c) => c.path === '/api/v1/guilds/200/modules')).toBe(false)
   })
 })
@@ -213,7 +213,7 @@ describe('moderation pages', () => {
   })
 
   it('adds an AutoMod preset and toggles rules', async () => {
-    const preset = { id: 'invite_links', rule: { name: 'Nithro · Block invite links', enabled: true, trigger: 'keyword', blockMessage: true, regexPatterns: ['x'] } }
+    const preset = { id: 'invite_links', rule: { name: 'Niro · Block invite links', enabled: true, trigger: 'keyword', blockMessage: true, regexPatterns: ['x'] } }
     let rules: Record<string, unknown>[] = [{ id: '1', name: 'Existing', enabled: true, trigger: 'spam', blockMessage: true }]
     routes['GET /api/v1/automod/presets'] = () => json([preset])
     routes['GET /api/v1/guilds/100/automod/rules'] = () => json(rules)

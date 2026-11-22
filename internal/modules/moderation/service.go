@@ -11,7 +11,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/niro/internal/core"
 )
 
 // SettingsLoader returns a server's moderation settings.
