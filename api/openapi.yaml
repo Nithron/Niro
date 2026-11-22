@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: Nithro API
+  version: 0.1.0
+  description: |
+    API behind the Nithro dashboard. Authentication is a session cookie set by
+    the Discord OAuth2 login flow (`/auth/login` → `/auth/callback`), which is
+    not part of this spec. State-changing requests must come from the
+    dashboard's origin (checked via the `Origin` header).
+
+    Discord IDs (snowflakes) are strings, because they exceed JavaScript's
+    safe integer range.
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+paths:
+  /me:
+    get:
+      operationId: getMe
+      summary: The logged-in user
+      responses:
+        "200":
+          description: The current user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /guilds:
+    get:
+      operationId: listGuilds
+      summary: Servers the user can manage
+      description: |
+        Servers where the user is the owner or has Administrator or Manage
+        Server, with whether Nithro is already in them. Cached for 60 seconds.
+      responses:
+        "200":
+          description: Manageable servers, Nithro-present first, then by name
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/GuildSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /guilds/{guildId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getGuild
+      summary: One server the user can manage
+      responses:
+        "200":
+          description: The server
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuildSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /guilds/{guildId}/modules:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listGuildModules
+      summary: Module states for a server
+      responses:
+        "200":
+          description: Every module with its effective state
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ModuleState" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/modules/{moduleId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - name: moduleId
+        in: path
+        required: true
+        schema: { type: string, pattern: "^[a-z][a-z0-9_]{0,31}$" }
+    put:
+      operationId: updateGuildModule
+      summary: Enable or disable a module
+      description: Applies immediately; the change is audited and broadcast to the bot.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ModuleUpdate" }
+      responses:
+        "200":
+          description: The new state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ModuleState" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /invite:
+    get:
+      operationId: getInvite
+      summary: Link to add Nithro to a server
+      security: []
+      parameters:
+        - name: guildId
+          in: query
+          required: false
+          description: Preselect this server in Discord's install screen
+          schema: { $ref: "#/components/schemas/Snowflake" }
+      responses:
+        "200":
+          description: The install URL
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Invite" }
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: nithro_session
+  parameters:
+    GuildId:
+      name: guildId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Snowflake" }
+  responses:
+    BadRequest:
+      description: The request is invalid
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Not logged in, or the session expired
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: The user cannot manage this server
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Unknown resource
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    BotNotInGuild:
+      description: Nithro is not in this server yet
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Snowflake:
+      type: string
+      pattern: "^[0-9]{1,20}$"
+      example: "1234567890123456789"
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Stable machine-readable code
+          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, internal]
+        message: { type: string }
+    User:
+      type: object
+      required: [id, username, avatarUrl]
+      properties:
+        id: { $ref: "#/components/schemas/Snowflake" }
+        username: { type: string }
+        globalName: { type: string, description: Display name, if set }
+        avatarUrl: { type: string, format: uri }
+    GuildSummary:
+      type: object
+      required: [id, name, botPresent, owner]
+      properties:
+        id: { $ref: "#/components/schemas/Snowflake" }
+        name: { type: string }
+        iconUrl: { type: string, format: uri }
+        botPresent: { type: boolean, description: Nithro is in this server }
+        owner: { type: boolean, description: The user owns this server }
+    ModuleState:
+      type: object
+      required: [id, enabled, alwaysOn, version]
+      properties:
+        id: { type: string, example: logging }
+        enabled: { type: boolean }
+        alwaysOn: { type: boolean, description: Cannot be disabled }
+        version: { type: integer, format: int64, description: 0 if the module was never changed }
+        updatedAt: { type: string, format: date-time }
+    ModuleUpdate:
+      type: object
+      required: [enabled]
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean }
+    Invite:
+      type: object
+      required: [url]
+      properties:
+        url: { type: string, format: uri }

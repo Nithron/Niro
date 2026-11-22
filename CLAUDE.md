@@ -1,6 +1,6 @@
 # Nithro
 
-Security-first Discord bot by Nithron. Current phase: planning. Decisions: docs/decisions.md.
+Security-first Discord bot by Nithron. Current phase: building v0.1 (see docs/plan.md §7). Decisions: docs/decisions.md.
 
 - The plan (docs/plan.md) is approved. Build milestone by milestone; demo each milestone and wait for PM approval before starting the next.
 - Stack: Go bot (disgo) + Go API; dashboard is a Vite + React + TypeScript SPA

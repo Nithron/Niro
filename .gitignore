@@ -11,7 +11,6 @@ Thumbs.db
 
 # Node
 node_modules/
-dist/
 build/
 .next/
 .turbo/
@@ -23,3 +22,10 @@ coverage/
 
 # graphify (local knowledge graph, rebuilt by git hooks)
 graphify-out/
+
+# Go / build output
+bin/
+
+# Dashboard build output (embedded into the binary; only the placeholder is tracked)
+web/dist/*
+!web/dist/.gitkeep
