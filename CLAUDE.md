@@ -2,7 +2,7 @@
 
 Security-first Discord bot by Nithron. Current phase: planning. Decisions: docs/decisions.md.
 
-- Do not write implementation code until the PM has approved the plan.
+- The plan (docs/plan.md) is approved. Build milestone by milestone; demo each milestone and wait for PM approval before starting the next.
 - Stack: Go bot (disgo) + Go API; dashboard is a Vite + React + TypeScript SPA
   embedded in the Go API binary (see docs/decisions.md).
 - Commits: author every commit as the repo owner (the configured git user) and add no

@@ -1,6 +1,6 @@
 # Nithro: Build Plan
 
-*Draft v1, 2026-11-22, for PM approval. No implementation code is written until this is approved.*
+*v1, **approved by the PM on 2026-11-22**. Changes after approval are recorded in [decisions](decisions.md).*
 *Inputs: [decisions](decisions.md), [discovery research](research/2026-11-discovery.md), [Go library check](research/2026-11-go-library-check.md).*
 
 ## 0. Summary
@@ -98,6 +98,18 @@ assets/brand/            logo and brand assets
 - Ticket transcripts: 90 days, configurable.
 - Cases: kept while the bot is in the server.
 - When the bot is removed, all of that server's data is deleted after a 30-day grace period.
+
+## 5a. Languages (i18n)
+
+v0.1 ships in **English only**, but it's built so another language can be added by adding translation files, with no code changes.
+
+- **Bot:** every user-facing string is a message key in per-language catalogs (go-i18n, embedded in the binary); no hard-coded text in handlers.
+  - **Ephemeral replies** use the invoking user's Discord locale.
+  - **Public messages and logs** use the server's language: a dashboard setting that defaults to the server's Discord locale.
+- **Slash commands:** names and descriptions use Discord's built-in `name_localizations` / `description_localizations` from the same catalogs.
+- **Dashboard:** i18next + react-i18next with JSON namespaces; dates and numbers formatted through `Intl`.
+- **CI** fails if a key is used but missing from the English catalog, and reports untranslated keys for other languages.
+- **User content** (custom welcome texts, reasons) is stored as written and never translated automatically.
 
 ## 6. Discord application setup
 
@@ -218,10 +230,7 @@ Sizes are relative (S/M/L), not calendar promises.
 | Hosting cost and outages | Reliability | Start with a single node plus backups; metrics and alerts from M0; clustering only when needed |
 | GDPR (message logs, transcripts) | Legal exposure | Minimal retention, opt-outs, deletion on leave, privacy policy before launch |
 
-## 11. Decisions needed before M0 starts
+## 11. Decisions before M0: resolved
 
-1. **Approve this plan** (scope, order, milestone gates).
-2. **Create the Nithro Dev application and a test server** (I'll give the exact steps).
-3. **Retention defaults** in §5: OK as proposed?
-4. **Launch language:** English only for v0.1, built so other languages can be added later?
-5. **Hosting provider and domain** for the hosted bot and dashboard (e.g. a VPS or your own hardware; `nithro.nithron.com`?). This is only needed by M5; local development uses localhost.
+1. Plan approved. 2. Nithro Dev application and test server created (configuration in [dev-setup](dev-setup.md)). 3. Retention defaults approved. 4. English first, built for more languages (§5a).
+5. **Still open, needed by M5:** hosting provider and domain. See [domain options](research/2026-11-domains.md).

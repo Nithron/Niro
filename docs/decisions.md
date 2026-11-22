@@ -13,6 +13,10 @@
 | 8 | 2026-11-22 | **License text is shared:** `LICENSE` is byte-identical across NithronOS, NithronAI and Nithro (Nithro added to nOS/nAI in NithronOS#2, NithronAI#1) | Decided |
 | 9 | 2026-11-22 | **Commits** are authored as the repo owner, with no AI attribution trailers (earlier history rewritten to match) | Decided |
 | 10 | 2026-11-22 | **Repo goes public at the first code release.** The plan proposes `v0.1.0-alpha.1` at the end of M3 | Decided; timing in [plan](plan.md) |
+| 11 | 2026-11-22 | **Build plan approved**, including milestone gates and the retention defaults in §5 | Decided |
+| 12 | 2026-11-22 | **Languages:** English first; every user-facing string goes through message catalogs so other languages can be added later (plan §5a) | Decided |
+| 13 | 2026-11-22 | **Dev app:** "Nithro Dev" with the amber `<N>` DEV icon, plus a private test server | Done |
+| 14 | 2026-11-22 | **Domain:** `nithro.nithron.com` rejected as repetitive; options in [domains](research/2026-11-domains.md) | Open, needed by M5 |
 
 ## Notes on these decisions
 

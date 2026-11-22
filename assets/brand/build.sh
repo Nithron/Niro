@@ -21,6 +21,11 @@ for f in "$S"/status/*.svg; do
   svg -w 128 -h 128 "$f" -o "$O/discord/emojis/$(basename "${f%.svg}").png"
 done
 
+# Discord: Nithro Dev application (amber "DEV" variant, never used in production)
+svg -w 1024 -h 1024 "$S/nithro-dev-icon.svg" -o "$O/discord/dev-app-icon-1024.png"
+svg -w 1360 -h 480 "$S/nithro-dev-discord-banner.svg" -o "$O/discord/dev-profile-banner-1360x480.png"
+svg -w 32 -h 32 "$S/nithro-dev-icon-small.svg" -o "$O/web/dev-icon-32.png"
+
 # Web / dashboard
 cp "$S/nithro-icon.svg" "$O/web/favicon.svg"
 # 16-48px use a variant with a larger mark and thicker strokes so it stays crisp
