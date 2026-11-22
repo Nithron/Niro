@@ -9,6 +9,7 @@ powered by nAI and NithronOS integration will follow.
 > **Status:** planning. No code yet.
 > - [Discovery research](docs/research/2026-11-discovery.md)
 > - [Go library check](docs/research/2026-11-go-library-check.md)
+> - [Build plan (for approval)](docs/plan.md)
 > - [Decisions log](docs/decisions.md)
 > - [Brand assets](assets/brand/README.md)
 
