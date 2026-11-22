@@ -15,6 +15,72 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Defines values for AuditFindingCode.
+const (
+	BotAdmin          AuditFindingCode = "bot_admin"
+	BotDangerous      AuditFindingCode = "bot_dangerous"
+	EveryoneDangerous AuditFindingCode = "everyone_dangerous"
+	NoModeratorMfa    AuditFindingCode = "no_moderator_mfa"
+	RoleAdmin         AuditFindingCode = "role_admin"
+	RoleDangerous     AuditFindingCode = "role_dangerous"
+	SelfAdmin         AuditFindingCode = "self_admin"
+	VerificationLow   AuditFindingCode = "verification_low"
+	VerificationNone  AuditFindingCode = "verification_none"
+	Webhooks          AuditFindingCode = "webhooks"
+)
+
+// Valid indicates whether the value is a known member of the AuditFindingCode enum.
+func (e AuditFindingCode) Valid() bool {
+	switch e {
+	case BotAdmin:
+		return true
+	case BotDangerous:
+		return true
+	case EveryoneDangerous:
+		return true
+	case NoModeratorMfa:
+		return true
+	case RoleAdmin:
+		return true
+	case RoleDangerous:
+		return true
+	case SelfAdmin:
+		return true
+	case VerificationLow:
+		return true
+	case VerificationNone:
+		return true
+	case Webhooks:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AuditFindingSeverity.
+const (
+	AuditFindingSeverityCritical AuditFindingSeverity = "critical"
+	AuditFindingSeverityHigh     AuditFindingSeverity = "high"
+	AuditFindingSeverityInfo     AuditFindingSeverity = "info"
+	AuditFindingSeverityMedium   AuditFindingSeverity = "medium"
+)
+
+// Valid indicates whether the value is a known member of the AuditFindingSeverity enum.
+func (e AuditFindingSeverity) Valid() bool {
+	switch e {
+	case AuditFindingSeverityCritical:
+		return true
+	case AuditFindingSeverityHigh:
+		return true
+	case AuditFindingSeverityInfo:
+		return true
+	case AuditFindingSeverityMedium:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AutoModRulePresets.
 const (
 	Profanity     AutoModRulePresets = "profanity"
@@ -62,25 +128,25 @@ func (e AutoModRuleTrigger) Valid() bool {
 
 // Defines values for CaseSource.
 const (
-	Automod   CaseSource = "automod"
-	Dashboard CaseSource = "dashboard"
-	Guardian  CaseSource = "guardian"
-	Manual    CaseSource = "manual"
-	System    CaseSource = "system"
+	CaseSourceAutomod   CaseSource = "automod"
+	CaseSourceDashboard CaseSource = "dashboard"
+	CaseSourceGuardian  CaseSource = "guardian"
+	CaseSourceManual    CaseSource = "manual"
+	CaseSourceSystem    CaseSource = "system"
 )
 
 // Valid indicates whether the value is a known member of the CaseSource enum.
 func (e CaseSource) Valid() bool {
 	switch e {
-	case Automod:
+	case CaseSourceAutomod:
 		return true
-	case Dashboard:
+	case CaseSourceDashboard:
 		return true
-	case Guardian:
+	case CaseSourceGuardian:
 		return true
-	case Manual:
+	case CaseSourceManual:
 		return true
-	case System:
+	case CaseSourceSystem:
 		return true
 	default:
 		return false
@@ -89,34 +155,40 @@ func (e CaseSource) Valid() bool {
 
 // Defines values for CaseAction.
 const (
-	Ban       CaseAction = "ban"
-	Kick      CaseAction = "kick"
-	Note      CaseAction = "note"
-	Purge     CaseAction = "purge"
-	Timeout   CaseAction = "timeout"
-	Unban     CaseAction = "unban"
-	Untimeout CaseAction = "untimeout"
-	Warn      CaseAction = "warn"
+	CaseActionBan          CaseAction = "ban"
+	CaseActionKick         CaseAction = "kick"
+	CaseActionNote         CaseAction = "note"
+	CaseActionPurge        CaseAction = "purge"
+	CaseActionQuarantine   CaseAction = "quarantine"
+	CaseActionTimeout      CaseAction = "timeout"
+	CaseActionUnban        CaseAction = "unban"
+	CaseActionUnquarantine CaseAction = "unquarantine"
+	CaseActionUntimeout    CaseAction = "untimeout"
+	CaseActionWarn         CaseAction = "warn"
 )
 
 // Valid indicates whether the value is a known member of the CaseAction enum.
 func (e CaseAction) Valid() bool {
 	switch e {
-	case Ban:
+	case CaseActionBan:
 		return true
-	case Kick:
+	case CaseActionKick:
 		return true
-	case Note:
+	case CaseActionNote:
 		return true
-	case Purge:
+	case CaseActionPurge:
 		return true
-	case Timeout:
+	case CaseActionQuarantine:
 		return true
-	case Unban:
+	case CaseActionTimeout:
 		return true
-	case Untimeout:
+	case CaseActionUnban:
 		return true
-	case Warn:
+	case CaseActionUnquarantine:
+		return true
+	case CaseActionUntimeout:
+		return true
+	case CaseActionWarn:
 		return true
 	default:
 		return false
@@ -162,6 +234,210 @@ func (e ErrorCode) Valid() bool {
 	}
 }
 
+// Defines values for GuardianEventKind.
+const (
+	AccountAge  GuardianEventKind = "account_age"
+	Compromised GuardianEventKind = "compromised"
+	Raid        GuardianEventKind = "raid"
+	Scam        GuardianEventKind = "scam"
+)
+
+// Valid indicates whether the value is a known member of the GuardianEventKind enum.
+func (e GuardianEventKind) Valid() bool {
+	switch e {
+	case AccountAge:
+		return true
+	case Compromised:
+		return true
+	case Raid:
+		return true
+	case Scam:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianEventResponse.
+const (
+	GuardianEventResponseAlert      GuardianEventResponse = "alert"
+	GuardianEventResponseDelete     GuardianEventResponse = "delete"
+	GuardianEventResponseKick       GuardianEventResponse = "kick"
+	GuardianEventResponseQuarantine GuardianEventResponse = "quarantine"
+	GuardianEventResponseRaidMode   GuardianEventResponse = "raid_mode"
+)
+
+// Valid indicates whether the value is a known member of the GuardianEventResponse enum.
+func (e GuardianEventResponse) Valid() bool {
+	switch e {
+	case GuardianEventResponseAlert:
+		return true
+	case GuardianEventResponseDelete:
+		return true
+	case GuardianEventResponseKick:
+		return true
+	case GuardianEventResponseQuarantine:
+		return true
+	case GuardianEventResponseRaidMode:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianResolveAction.
+const (
+	GuardianResolveActionBan     GuardianResolveAction = "ban"
+	GuardianResolveActionKeep    GuardianResolveAction = "keep"
+	GuardianResolveActionRestore GuardianResolveAction = "restore"
+)
+
+// Valid indicates whether the value is a known member of the GuardianResolveAction enum.
+func (e GuardianResolveAction) Valid() bool {
+	switch e {
+	case GuardianResolveActionBan:
+		return true
+	case GuardianResolveActionKeep:
+		return true
+	case GuardianResolveActionRestore:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianSettingsAccountAgeAction.
+const (
+	GuardianSettingsAccountAgeActionAlert      GuardianSettingsAccountAgeAction = "alert"
+	GuardianSettingsAccountAgeActionKick       GuardianSettingsAccountAgeAction = "kick"
+	GuardianSettingsAccountAgeActionQuarantine GuardianSettingsAccountAgeAction = "quarantine"
+)
+
+// Valid indicates whether the value is a known member of the GuardianSettingsAccountAgeAction enum.
+func (e GuardianSettingsAccountAgeAction) Valid() bool {
+	switch e {
+	case GuardianSettingsAccountAgeActionAlert:
+		return true
+	case GuardianSettingsAccountAgeActionKick:
+		return true
+	case GuardianSettingsAccountAgeActionQuarantine:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianSettingsMode.
+const (
+	Enforce GuardianSettingsMode = "enforce"
+	Monitor GuardianSettingsMode = "monitor"
+)
+
+// Valid indicates whether the value is a known member of the GuardianSettingsMode enum.
+func (e GuardianSettingsMode) Valid() bool {
+	switch e {
+	case Enforce:
+		return true
+	case Monitor:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianSettingsQuarantineMode.
+const (
+	GuardianSettingsQuarantineModeRole    GuardianSettingsQuarantineMode = "role"
+	GuardianSettingsQuarantineModeTimeout GuardianSettingsQuarantineMode = "timeout"
+)
+
+// Valid indicates whether the value is a known member of the GuardianSettingsQuarantineMode enum.
+func (e GuardianSettingsQuarantineMode) Valid() bool {
+	switch e {
+	case GuardianSettingsQuarantineModeRole:
+		return true
+	case GuardianSettingsQuarantineModeTimeout:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianSignalKind.
+const (
+	GuardianSignalKindBlockedDomain   GuardianSignalKind = "blocked_domain"
+	GuardianSignalKindBurst           GuardianSignalKind = "burst"
+	GuardianSignalKindDeniedDomain    GuardianSignalKind = "denied_domain"
+	GuardianSignalKindJoinFlood       GuardianSignalKind = "join_flood"
+	GuardianSignalKindLookalikeDomain GuardianSignalKind = "lookalike_domain"
+	GuardianSignalKindManual          GuardianSignalKind = "manual"
+	GuardianSignalKindMaskedLink      GuardianSignalKind = "masked_link"
+	GuardianSignalKindNewAccount      GuardianSignalKind = "new_account"
+	GuardianSignalKindQuietAccount    GuardianSignalKind = "quiet_account"
+	GuardianSignalKindScamTemplate    GuardianSignalKind = "scam_template"
+)
+
+// Valid indicates whether the value is a known member of the GuardianSignalKind enum.
+func (e GuardianSignalKind) Valid() bool {
+	switch e {
+	case GuardianSignalKindBlockedDomain:
+		return true
+	case GuardianSignalKindBurst:
+		return true
+	case GuardianSignalKindDeniedDomain:
+		return true
+	case GuardianSignalKindJoinFlood:
+		return true
+	case GuardianSignalKindLookalikeDomain:
+		return true
+	case GuardianSignalKindManual:
+		return true
+	case GuardianSignalKindMaskedLink:
+		return true
+	case GuardianSignalKindNewAccount:
+		return true
+	case GuardianSignalKindQuietAccount:
+		return true
+	case GuardianSignalKindScamTemplate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GuardianStatus.
+const (
+	GuardianStatusActive   GuardianStatus = "active"
+	GuardianStatusBanned   GuardianStatus = "banned"
+	GuardianStatusEnded    GuardianStatus = "ended"
+	GuardianStatusInfo     GuardianStatus = "info"
+	GuardianStatusKept     GuardianStatus = "kept"
+	GuardianStatusOpen     GuardianStatus = "open"
+	GuardianStatusRestored GuardianStatus = "restored"
+)
+
+// Valid indicates whether the value is a known member of the GuardianStatus enum.
+func (e GuardianStatus) Valid() bool {
+	switch e {
+	case GuardianStatusActive:
+		return true
+	case GuardianStatusBanned:
+		return true
+	case GuardianStatusEnded:
+		return true
+	case GuardianStatusInfo:
+		return true
+	case GuardianStatusKept:
+		return true
+	case GuardianStatusOpen:
+		return true
+	case GuardianStatusRestored:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GuildMetaChannelsType.
 const (
 	Announcement GuildMetaChannelsType = "announcement"
@@ -190,6 +466,35 @@ func (e GuildMetaChannelsType) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// AuditFinding defines model for AuditFinding.
+type AuditFinding struct {
+	ChannelIds *[]Snowflake     `json:"channelIds,omitempty"`
+	Code       AuditFindingCode `json:"code"`
+
+	// Count Members with the role (-1 if unknown) or number of webhooks
+	Count       *int                 `json:"count,omitempty"`
+	Permissions *[]string            `json:"permissions,omitempty"`
+	Severity    AuditFindingSeverity `json:"severity"`
+	Subject     *string              `json:"subject,omitempty"`
+
+	// SubjectId Example: 1234567890123456789
+	SubjectId *Snowflake `json:"subjectId,omitempty"`
+}
+
+// AuditFindingCode defines model for AuditFinding.Code.
+type AuditFindingCode string
+
+// AuditFindingSeverity defines model for AuditFinding.Severity.
+type AuditFindingSeverity string
+
+// AuditResult defines model for AuditResult.
+type AuditResult struct {
+	Findings []AuditFinding `json:"findings"`
+
+	// WebhooksChecked False when Niro lacks Manage Webhooks
+	WebhooksChecked bool `json:"webhooksChecked"`
 }
 
 // AutoModPreset defines model for AutoModPreset.
@@ -288,6 +593,120 @@ type Error struct {
 // ErrorCode Stable machine-readable code
 type ErrorCode string
 
+// GuardianEvent defines model for GuardianEvent.
+type GuardianEvent struct {
+	AccountAge      *string           `json:"accountAge,omitempty"`
+	CaseNumber      *int              `json:"caseNumber,omitempty"`
+	ChannelIds      []Snowflake       `json:"channelIds"`
+	CreatedAt       time.Time         `json:"createdAt"`
+	DeletedMessages int               `json:"deletedMessages"`
+	Domains         []string          `json:"domains"`
+	Id              int64             `json:"id"`
+	Joins           *int              `json:"joins,omitempty"`
+	Kind            GuardianEventKind `json:"kind"`
+
+	// Monitor Monitor mode; no action was taken
+	Monitor        bool                  `json:"monitor"`
+	Problems       []string              `json:"problems"`
+	ResolvedAt     *time.Time            `json:"resolvedAt,omitempty"`
+	ResolvedByName *string               `json:"resolvedByName,omitempty"`
+	Response       GuardianEventResponse `json:"response"`
+	Score          int                   `json:"score"`
+	Signals        []GuardianSignal      `json:"signals"`
+	Status         GuardianStatus        `json:"status"`
+
+	// UserId Example: 1234567890123456789
+	UserId   *Snowflake `json:"userId,omitempty"`
+	UserName *string    `json:"userName,omitempty"`
+}
+
+// GuardianEventKind defines model for GuardianEvent.Kind.
+type GuardianEventKind string
+
+// GuardianEventResponse defines model for GuardianEvent.Response.
+type GuardianEventResponse string
+
+// GuardianEventList defines model for GuardianEventList.
+type GuardianEventList struct {
+	Items []GuardianEvent `json:"items"`
+
+	// NextBefore Cursor for the next page
+	NextBefore *int64 `json:"nextBefore,omitempty"`
+}
+
+// GuardianResolve defines model for GuardianResolve.
+type GuardianResolve struct {
+	Action GuardianResolveAction `json:"action"`
+}
+
+// GuardianResolveAction defines model for GuardianResolve.Action.
+type GuardianResolveAction string
+
+// GuardianSettings defines model for GuardianSettings.
+type GuardianSettings struct {
+	AccountAgeAction GuardianSettingsAccountAgeAction `json:"accountAgeAction"`
+
+	// AlertChannelId "0" uses the moderation log channel
+	AlertChannelId     string   `json:"alertChannelId"`
+	AllowDomains       []string `json:"allowDomains"`
+	BurstChannels      int      `json:"burstChannels"`
+	BurstEnabled       bool     `json:"burstEnabled"`
+	BurstWindowSeconds int      `json:"burstWindowSeconds"`
+	DenyDomains        []string `json:"denyDomains"`
+
+	// DmUser Send quarantined members recovery steps
+	DmUser        bool        `json:"dmUser"`
+	ExemptRoleIds []Snowflake `json:"exemptRoleIds"`
+
+	// MinAccountAgeHours 0 turns the account-age gate off
+	MinAccountAgeHours int `json:"minAccountAgeHours"`
+
+	// Mode monitor only alerts, never acts
+	Mode            GuardianSettingsMode           `json:"mode"`
+	QuarantineHours int                            `json:"quarantineHours"`
+	QuarantineMode  GuardianSettingsQuarantineMode `json:"quarantineMode"`
+
+	// QuarantineRoleId "0" when not using role mode
+	QuarantineRoleId string `json:"quarantineRoleId"`
+
+	// QuietDays 0 turns the quiet-account signal off
+	QuietDays                int  `json:"quietDays"`
+	RaidDurationMinutes      int  `json:"raidDurationMinutes"`
+	RaidEnabled              bool `json:"raidEnabled"`
+	RaidJoins                int  `json:"raidJoins"`
+	RaidPauseInvites         bool `json:"raidPauseInvites"`
+	RaidRaiseVerification    bool `json:"raidRaiseVerification"`
+	RaidSlowmodeSeconds      int  `json:"raidSlowmodeSeconds"`
+	RaidWindowSeconds        int  `json:"raidWindowSeconds"`
+	ScamLinksEnabled         bool `json:"scamLinksEnabled"`
+	VerifyMinAccountAgeHours int  `json:"verifyMinAccountAgeHours"`
+
+	// VerifyRoleId "0" when the verification gate is not set up
+	VerifyRoleId string `json:"verifyRoleId"`
+}
+
+// GuardianSettingsAccountAgeAction defines model for GuardianSettings.AccountAgeAction.
+type GuardianSettingsAccountAgeAction string
+
+// GuardianSettingsMode monitor only alerts, never acts
+type GuardianSettingsMode string
+
+// GuardianSettingsQuarantineMode defines model for GuardianSettings.QuarantineMode.
+type GuardianSettingsQuarantineMode string
+
+// GuardianSignal defines model for GuardianSignal.
+type GuardianSignal struct {
+	Detail *string            `json:"detail,omitempty"`
+	Kind   GuardianSignalKind `json:"kind"`
+	Weight int                `json:"weight"`
+}
+
+// GuardianSignalKind defines model for GuardianSignal.Kind.
+type GuardianSignalKind string
+
+// GuardianStatus defines model for GuardianStatus.
+type GuardianStatus string
+
 // GuildMeta defines model for GuildMeta.
 type GuildMeta struct {
 	Channels []struct {
@@ -364,6 +783,16 @@ type ModuleUpdate struct {
 	Enabled bool `json:"enabled"`
 }
 
+// RaidStatus defines model for RaidStatus.
+type RaidStatus struct {
+	Active    bool       `json:"active"`
+	EndsAt    *time.Time `json:"endsAt,omitempty"`
+	Joins     *int       `json:"joins,omitempty"`
+	Manual    *bool      `json:"manual,omitempty"`
+	Problems  []string   `json:"problems"`
+	StartedAt *time.Time `json:"startedAt,omitempty"`
+}
+
 // Snowflake Example: 1234567890123456789
 type Snowflake = string
 
@@ -411,6 +840,16 @@ type ListCasesParams struct {
 	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListGuardianEventsParams defines parameters for ListGuardianEvents.
+type ListGuardianEventsParams struct {
+	Status *GuardianStatus `form:"status,omitempty" json:"status,omitempty"`
+	User   *Snowflake      `form:"user,omitempty" json:"user,omitempty"`
+
+	// Before Only events with a lower ID (pagination cursor)
+	Before *int64 `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *int   `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // GetInviteParams defines parameters for GetInvite.
 type GetInviteParams struct {
 	// GuildId Preselect this server in Discord's install screen
@@ -426,8 +865,14 @@ type UpdateAutoModRuleJSONRequestBody = AutoModRule
 // UpdateCaseJSONRequestBody defines body for UpdateCase for application/json ContentType.
 type UpdateCaseJSONRequestBody = CaseUpdate
 
+// ResolveGuardianEventJSONRequestBody defines body for ResolveGuardianEvent for application/json ContentType.
+type ResolveGuardianEventJSONRequestBody = GuardianResolve
+
 // UpdateGuildModuleJSONRequestBody defines body for UpdateGuildModule for application/json ContentType.
 type UpdateGuildModuleJSONRequestBody = ModuleUpdate
+
+// UpdateGuardianSettingsJSONRequestBody defines body for UpdateGuardianSettings for application/json ContentType.
+type UpdateGuardianSettingsJSONRequestBody = GuardianSettings
 
 // UpdateModerationSettingsJSONRequestBody defines body for UpdateModerationSettings for application/json ContentType.
 type UpdateModerationSettingsJSONRequestBody = ModerationSettings
@@ -467,6 +912,27 @@ type ServerInterface interface {
 	// UpdateCase Change a case's reason
 	// (PATCH /guilds/{guildId}/cases/{caseNumber})
 	UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int)
+	// GetPermissionAudit Audit the server for dangerous permissions and settings
+	// (GET /guilds/{guildId}/guardian/audit)
+	GetPermissionAudit(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// ListGuardianEvents Guardian detections, newest first
+	// (GET /guilds/{guildId}/guardian/events)
+	ListGuardianEvents(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListGuardianEventsParams)
+	// GetGuardianEvent One Guardian event
+	// (GET /guilds/{guildId}/guardian/events/{eventId})
+	GetGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64)
+	// ResolveGuardianEvent Restore, ban or keep a quarantined member
+	// (POST /guilds/{guildId}/guardian/events/{eventId}/resolve)
+	ResolveGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64)
+	// EndRaidMode Turn raid mode off and undo its changes
+	// (DELETE /guilds/{guildId}/guardian/raid)
+	EndRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// GetRaidStatus Whether raid mode is on
+	// (GET /guilds/{guildId}/guardian/raid)
+	GetRaidStatus(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// StartRaidMode Turn raid mode on now
+	// (POST /guilds/{guildId}/guardian/raid)
+	StartRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetGuildMeta Channels and roles (for pickers)
 	// (GET /guilds/{guildId}/meta)
 	GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId)
@@ -476,6 +942,12 @@ type ServerInterface interface {
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string)
+	// GetGuardianSettings Guardian settings
+	// (GET /guilds/{guildId}/settings/guardian)
+	GetGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// UpdateGuardianSettings Save Guardian settings
+	// (PUT /guilds/{guildId}/settings/guardian)
+	UpdateGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetModerationSettings Moderation settings
 	// (GET /guilds/{guildId}/settings/moderation)
 	GetModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
@@ -559,6 +1031,48 @@ func (_ Unimplemented) UpdateCase(w http.ResponseWriter, r *http.Request, guildI
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetPermissionAudit Audit the server for dangerous permissions and settings
+// (GET /guilds/{guildId}/guardian/audit)
+func (_ Unimplemented) GetPermissionAudit(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListGuardianEvents Guardian detections, newest first
+// (GET /guilds/{guildId}/guardian/events)
+func (_ Unimplemented) ListGuardianEvents(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListGuardianEventsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGuardianEvent One Guardian event
+// (GET /guilds/{guildId}/guardian/events/{eventId})
+func (_ Unimplemented) GetGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ResolveGuardianEvent Restore, ban or keep a quarantined member
+// (POST /guilds/{guildId}/guardian/events/{eventId}/resolve)
+func (_ Unimplemented) ResolveGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// EndRaidMode Turn raid mode off and undo its changes
+// (DELETE /guilds/{guildId}/guardian/raid)
+func (_ Unimplemented) EndRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetRaidStatus Whether raid mode is on
+// (GET /guilds/{guildId}/guardian/raid)
+func (_ Unimplemented) GetRaidStatus(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// StartRaidMode Turn raid mode on now
+// (POST /guilds/{guildId}/guardian/raid)
+func (_ Unimplemented) StartRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetGuildMeta Channels and roles (for pickers)
 // (GET /guilds/{guildId}/meta)
 func (_ Unimplemented) GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId) {
@@ -574,6 +1088,18 @@ func (_ Unimplemented) ListGuildModules(w http.ResponseWriter, r *http.Request, 
 // UpdateGuildModule Enable or disable a module
 // (PUT /guilds/{guildId}/modules/{moduleId})
 func (_ Unimplemented) UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetGuardianSettings Guardian settings
+// (GET /guilds/{guildId}/settings/guardian)
+func (_ Unimplemented) GetGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateGuardianSettings Save Guardian settings
+// (PUT /guilds/{guildId}/settings/guardian)
+func (_ Unimplemented) UpdateGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -985,6 +1511,261 @@ func (siw *ServerInterfaceWrapper) UpdateCase(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// GetPermissionAudit operation middleware
+func (siw *ServerInterfaceWrapper) GetPermissionAudit(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPermissionAudit(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListGuardianEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListGuardianEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListGuardianEventsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "user" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "user", r.URL.Query(), &params.User, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "integer", Format: "int64"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGuardianEvents(w, r, guildId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGuardianEvent operation middleware
+func (siw *ServerInterfaceWrapper) GetGuardianEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "eventId" -------------
+	var eventId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "eventId", chi.URLParam(r, "eventId"), &eventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "eventId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGuardianEvent(w, r, guildId, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResolveGuardianEvent operation middleware
+func (siw *ServerInterfaceWrapper) ResolveGuardianEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "eventId" -------------
+	var eventId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "eventId", chi.URLParam(r, "eventId"), &eventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "eventId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResolveGuardianEvent(w, r, guildId, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EndRaidMode operation middleware
+func (siw *ServerInterfaceWrapper) EndRaidMode(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EndRaidMode(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRaidStatus operation middleware
+func (siw *ServerInterfaceWrapper) GetRaidStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRaidStatus(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartRaidMode operation middleware
+func (siw *ServerInterfaceWrapper) StartRaidMode(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartRaidMode(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetGuildMeta operation middleware
 func (siw *ServerInterfaceWrapper) GetGuildMeta(w http.ResponseWriter, r *http.Request) {
 
@@ -1063,6 +1844,58 @@ func (siw *ServerInterfaceWrapper) UpdateGuildModule(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateGuildModule(w, r, guildId, moduleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetGuardianSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetGuardianSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGuardianSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateGuardianSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateGuardianSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateGuardianSettings(w, r, guildId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1332,6 +2165,33 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/guilds/{guildId}/automod/rules/{ruleId}", wrapper.UpdateAutoModRule)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/settings/guardian", wrapper.GetGuardianSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/settings/guardian", wrapper.UpdateGuardianSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events", wrapper.ListGuardianEvents)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events/{eventId}", wrapper.GetGuardianEvent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/guilds/{guildId}/guardian/events/{eventId}/resolve", wrapper.ResolveGuardianEvent)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/guardian/raid", wrapper.EndRaidMode)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/raid", wrapper.GetRaidStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/guilds/{guildId}/guardian/raid", wrapper.StartRaidMode)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/audit", wrapper.GetPermissionAudit)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/automod/presets", wrapper.ListAutoModPresets)
@@ -2180,6 +3040,584 @@ func (response UpdateCase502JSONResponse) VisitUpdateCaseResponse(w http.Respons
 	return err
 }
 
+type GetPermissionAuditRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetPermissionAuditResponseObject interface {
+	VisitGetPermissionAuditResponse(w http.ResponseWriter) error
+}
+
+type GetPermissionAudit200JSONResponse AuditResult
+
+func (response GetPermissionAudit200JSONResponse) VisitGetPermissionAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPermissionAudit401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetPermissionAudit401JSONResponse) VisitGetPermissionAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPermissionAudit403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetPermissionAudit403JSONResponse) VisitGetPermissionAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPermissionAudit409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetPermissionAudit409JSONResponse) VisitGetPermissionAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPermissionAudit502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response GetPermissionAudit502JSONResponse) VisitGetPermissionAuditResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGuardianEventsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Params  ListGuardianEventsParams
+}
+
+type ListGuardianEventsResponseObject interface {
+	VisitListGuardianEventsResponse(w http.ResponseWriter) error
+}
+
+type ListGuardianEvents200JSONResponse GuardianEventList
+
+func (response ListGuardianEvents200JSONResponse) VisitListGuardianEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGuardianEvents401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListGuardianEvents401JSONResponse) VisitListGuardianEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGuardianEvents403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListGuardianEvents403JSONResponse) VisitListGuardianEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGuardianEvents409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListGuardianEvents409JSONResponse) VisitListGuardianEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianEventRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	EventId int64   `json:"eventId"`
+}
+
+type GetGuardianEventResponseObject interface {
+	VisitGetGuardianEventResponse(w http.ResponseWriter) error
+}
+
+type GetGuardianEvent200JSONResponse GuardianEvent
+
+func (response GetGuardianEvent200JSONResponse) VisitGetGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianEvent401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetGuardianEvent401JSONResponse) VisitGetGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianEvent403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetGuardianEvent403JSONResponse) VisitGetGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianEvent404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetGuardianEvent404JSONResponse) VisitGetGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianEvent409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetGuardianEvent409JSONResponse) VisitGetGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEventRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	EventId int64   `json:"eventId"`
+	Body    *ResolveGuardianEventJSONRequestBody
+}
+
+type ResolveGuardianEventResponseObject interface {
+	VisitResolveGuardianEventResponse(w http.ResponseWriter) error
+}
+
+type ResolveGuardianEvent200JSONResponse GuardianEvent
+
+func (response ResolveGuardianEvent200JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response ResolveGuardianEvent400JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ResolveGuardianEvent401JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ResolveGuardianEvent403JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response ResolveGuardianEvent404JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ResolveGuardianEvent409JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveGuardianEvent502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response ResolveGuardianEvent502JSONResponse) VisitResolveGuardianEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidModeRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type EndRaidModeResponseObject interface {
+	VisitEndRaidModeResponse(w http.ResponseWriter) error
+}
+
+type EndRaidMode200JSONResponse RaidStatus
+
+func (response EndRaidMode200JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidMode400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response EndRaidMode400JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidMode401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response EndRaidMode401JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidMode403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response EndRaidMode403JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidMode409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response EndRaidMode409JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EndRaidMode502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response EndRaidMode502JSONResponse) VisitEndRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRaidStatusRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetRaidStatusResponseObject interface {
+	VisitGetRaidStatusResponse(w http.ResponseWriter) error
+}
+
+type GetRaidStatus200JSONResponse RaidStatus
+
+func (response GetRaidStatus200JSONResponse) VisitGetRaidStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRaidStatus401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetRaidStatus401JSONResponse) VisitGetRaidStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRaidStatus403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetRaidStatus403JSONResponse) VisitGetRaidStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRaidStatus409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetRaidStatus409JSONResponse) VisitGetRaidStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidModeRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type StartRaidModeResponseObject interface {
+	VisitStartRaidModeResponse(w http.ResponseWriter) error
+}
+
+type StartRaidMode200JSONResponse RaidStatus
+
+func (response StartRaidMode200JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidMode400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response StartRaidMode400JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidMode401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response StartRaidMode401JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidMode403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response StartRaidMode403JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidMode409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response StartRaidMode409JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartRaidMode502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response StartRaidMode502JSONResponse) VisitStartRaidModeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetGuildMetaRequestObject struct {
 	GuildId GuildId `json:"guildId"`
 }
@@ -2405,6 +3843,149 @@ func (response UpdateGuildModule404JSONResponse) VisitUpdateGuildModuleResponse(
 type UpdateGuildModule409JSONResponse struct{ BotNotInGuildJSONResponse }
 
 func (response UpdateGuildModule409JSONResponse) VisitUpdateGuildModuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetGuardianSettingsResponseObject interface {
+	VisitGetGuardianSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetGuardianSettings200JSONResponse GuardianSettings
+
+func (response GetGuardianSettings200JSONResponse) VisitGetGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetGuardianSettings401JSONResponse) VisitGetGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetGuardianSettings403JSONResponse) VisitGetGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetGuardianSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetGuardianSettings409JSONResponse) VisitGetGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGuardianSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *UpdateGuardianSettingsJSONRequestBody
+}
+
+type UpdateGuardianSettingsResponseObject interface {
+	VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateGuardianSettings200JSONResponse GuardianSettings
+
+func (response UpdateGuardianSettings200JSONResponse) VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGuardianSettings400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateGuardianSettings400JSONResponse) VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGuardianSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateGuardianSettings401JSONResponse) VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGuardianSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateGuardianSettings403JSONResponse) VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateGuardianSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateGuardianSettings409JSONResponse) VisitUpdateGuardianSettingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
@@ -2651,6 +4232,27 @@ type StrictServerInterface interface {
 	// UpdateCase Change a case's reason
 	// (PATCH /guilds/{guildId}/cases/{caseNumber})
 	UpdateCase(ctx context.Context, request UpdateCaseRequestObject) (UpdateCaseResponseObject, error)
+	// GetPermissionAudit Audit the server for dangerous permissions and settings
+	// (GET /guilds/{guildId}/guardian/audit)
+	GetPermissionAudit(ctx context.Context, request GetPermissionAuditRequestObject) (GetPermissionAuditResponseObject, error)
+	// ListGuardianEvents Guardian detections, newest first
+	// (GET /guilds/{guildId}/guardian/events)
+	ListGuardianEvents(ctx context.Context, request ListGuardianEventsRequestObject) (ListGuardianEventsResponseObject, error)
+	// GetGuardianEvent One Guardian event
+	// (GET /guilds/{guildId}/guardian/events/{eventId})
+	GetGuardianEvent(ctx context.Context, request GetGuardianEventRequestObject) (GetGuardianEventResponseObject, error)
+	// ResolveGuardianEvent Restore, ban or keep a quarantined member
+	// (POST /guilds/{guildId}/guardian/events/{eventId}/resolve)
+	ResolveGuardianEvent(ctx context.Context, request ResolveGuardianEventRequestObject) (ResolveGuardianEventResponseObject, error)
+	// EndRaidMode Turn raid mode off and undo its changes
+	// (DELETE /guilds/{guildId}/guardian/raid)
+	EndRaidMode(ctx context.Context, request EndRaidModeRequestObject) (EndRaidModeResponseObject, error)
+	// GetRaidStatus Whether raid mode is on
+	// (GET /guilds/{guildId}/guardian/raid)
+	GetRaidStatus(ctx context.Context, request GetRaidStatusRequestObject) (GetRaidStatusResponseObject, error)
+	// StartRaidMode Turn raid mode on now
+	// (POST /guilds/{guildId}/guardian/raid)
+	StartRaidMode(ctx context.Context, request StartRaidModeRequestObject) (StartRaidModeResponseObject, error)
 	// GetGuildMeta Channels and roles (for pickers)
 	// (GET /guilds/{guildId}/meta)
 	GetGuildMeta(ctx context.Context, request GetGuildMetaRequestObject) (GetGuildMetaResponseObject, error)
@@ -2660,6 +4262,12 @@ type StrictServerInterface interface {
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(ctx context.Context, request UpdateGuildModuleRequestObject) (UpdateGuildModuleResponseObject, error)
+	// GetGuardianSettings Guardian settings
+	// (GET /guilds/{guildId}/settings/guardian)
+	GetGuardianSettings(ctx context.Context, request GetGuardianSettingsRequestObject) (GetGuardianSettingsResponseObject, error)
+	// UpdateGuardianSettings Save Guardian settings
+	// (PUT /guilds/{guildId}/settings/guardian)
+	UpdateGuardianSettings(ctx context.Context, request UpdateGuardianSettingsRequestObject) (UpdateGuardianSettingsResponseObject, error)
 	// GetModerationSettings Moderation settings
 	// (GET /guilds/{guildId}/settings/moderation)
 	GetModerationSettings(ctx context.Context, request GetModerationSettingsRequestObject) (GetModerationSettingsResponseObject, error)
@@ -3025,6 +4633,198 @@ func (sh *strictHandler) UpdateCase(w http.ResponseWriter, r *http.Request, guil
 	}
 }
 
+// GetPermissionAudit operation middleware
+func (sh *strictHandler) GetPermissionAudit(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetPermissionAuditRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetPermissionAudit(ctx, request.(GetPermissionAuditRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPermissionAudit")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPermissionAuditResponseObject); ok {
+		if err := validResponse.VisitGetPermissionAuditResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListGuardianEvents operation middleware
+func (sh *strictHandler) ListGuardianEvents(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListGuardianEventsParams) {
+	var request ListGuardianEventsRequestObject
+
+	request.GuildId = guildId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListGuardianEvents(ctx, request.(ListGuardianEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGuardianEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGuardianEventsResponseObject); ok {
+		if err := validResponse.VisitListGuardianEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGuardianEvent operation middleware
+func (sh *strictHandler) GetGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64) {
+	var request GetGuardianEventRequestObject
+
+	request.GuildId = guildId
+	request.EventId = eventId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetGuardianEvent(ctx, request.(GetGuardianEventRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGuardianEvent")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGuardianEventResponseObject); ok {
+		if err := validResponse.VisitGetGuardianEventResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResolveGuardianEvent operation middleware
+func (sh *strictHandler) ResolveGuardianEvent(w http.ResponseWriter, r *http.Request, guildId GuildId, eventId int64) {
+	var request ResolveGuardianEventRequestObject
+
+	request.GuildId = guildId
+	request.EventId = eventId
+
+	var body ResolveGuardianEventJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ResolveGuardianEvent(ctx, request.(ResolveGuardianEventRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResolveGuardianEvent")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResolveGuardianEventResponseObject); ok {
+		if err := validResponse.VisitResolveGuardianEventResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EndRaidMode operation middleware
+func (sh *strictHandler) EndRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request EndRaidModeRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.EndRaidMode(ctx, request.(EndRaidModeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EndRaidMode")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EndRaidModeResponseObject); ok {
+		if err := validResponse.VisitEndRaidModeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRaidStatus operation middleware
+func (sh *strictHandler) GetRaidStatus(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetRaidStatusRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetRaidStatus(ctx, request.(GetRaidStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRaidStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRaidStatusResponseObject); ok {
+		if err := validResponse.VisitGetRaidStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartRaidMode operation middleware
+func (sh *strictHandler) StartRaidMode(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request StartRaidModeRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.StartRaidMode(ctx, request.(StartRaidModeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartRaidMode")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartRaidModeResponseObject); ok {
+		if err := validResponse.VisitStartRaidModeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetGuildMeta operation middleware
 func (sh *strictHandler) GetGuildMeta(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	var request GetGuildMetaRequestObject
@@ -3104,6 +4904,65 @@ func (sh *strictHandler) UpdateGuildModule(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateGuildModuleResponseObject); ok {
 		if err := validResponse.VisitUpdateGuildModuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetGuardianSettings operation middleware
+func (sh *strictHandler) GetGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetGuardianSettingsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetGuardianSettings(ctx, request.(GetGuardianSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGuardianSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetGuardianSettingsResponseObject); ok {
+		if err := validResponse.VisitGetGuardianSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateGuardianSettings operation middleware
+func (sh *strictHandler) UpdateGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request UpdateGuardianSettingsRequestObject
+
+	request.GuildId = guildId
+
+	var body UpdateGuardianSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateGuardianSettings(ctx, request.(UpdateGuardianSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateGuardianSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateGuardianSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateGuardianSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -82,6 +82,7 @@ func (b *Bot) RegisterRPC(srv *rpc.Server) {
 	srv.Handle(RPCAutoModCreate, b.rpcAutoModCreate)
 	srv.Handle(RPCAutoModUpdate, b.rpcAutoModUpdate)
 	srv.Handle(RPCAutoModDelete, b.rpcAutoModDelete)
+	b.registerGuardianRPC(srv)
 }
 
 func caseRPCError(err error) error {

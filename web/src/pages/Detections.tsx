@@ -1,0 +1,213 @@
+import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
+import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
+import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner } from '../components/ui'
+
+const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+const relFmt = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
+
+function relative(iso: string) {
+  const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60_000)
+  return Math.abs(minutes) < 60 ? relFmt.format(minutes, 'minute') : relFmt.format(Math.round(minutes / 60), 'hour')
+}
+
+const statusTone: Record<GuardianStatus, 'neutral' | 'brand' | 'success' | 'warning' | 'danger'> = {
+  open: 'danger',
+  kept: 'warning',
+  restored: 'success',
+  banned: 'danger',
+  info: 'neutral',
+  active: 'danger',
+  ended: 'success',
+}
+
+function RaidCard({ guildId }: { guildId: string }) {
+  const { t } = useTranslation()
+  const raid = useRaidStatus(guildId)
+  const setRaid = useSetRaidMode(guildId)
+  if (raid.isPending) return null
+  if (raid.isError) return <RequestError error={raid.error} />
+  const on = raid.data.active
+  return (
+    <Card className={on ? 'border-danger/50 bg-danger/5' : undefined}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="font-semibold">{on ? t('detections.raidOn') : t('detections.raidOff')}</p>
+          <p className="mt-1 text-sm text-muted">
+            {on && raid.data.endsAt ? t('detections.raidOnBody', { ends: relative(raid.data.endsAt) }) : t('detections.raidOffBody')}
+          </p>
+          {raid.data.problems.map((p) => (
+            <p key={p} className="mt-1 text-sm text-warning">
+              {t(`detections.problemText.${p}` as never, { defaultValue: p })}
+            </p>
+          ))}
+        </div>
+        <Button
+          variant={on ? 'primary' : 'secondary'}
+          disabled={setRaid.isPending}
+          onClick={() => {
+            if (on || window.confirm(t('detections.startRaidConfirm'))) setRaid.mutate(!on)
+          }}
+        >
+          {on ? t('detections.endRaid') : t('detections.startRaid')}
+        </Button>
+      </div>
+      <RequestError error={setRaid.error} />
+    </Card>
+  )
+}
+
+function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
+  const { t } = useTranslation()
+  const resolve = useResolveEvent(guildId)
+  const reviewable = ev.status === 'open' || ev.status === 'kept'
+  const user = ev.userName ? `${ev.userName} (${ev.userId})` : ev.userId
+
+  function act(action: GuardianResolve) {
+    if (action === 'ban' && !window.confirm(t('detections.banConfirm', { user: ev.userName || ev.userId }))) return
+    resolve.mutate({ eventId: ev.id, action })
+  }
+
+  const rows: [string, React.ReactNode][] = []
+  if (ev.userId) rows.push([t('detections.member'), user])
+  if (ev.signals.length)
+    rows.push([
+      t('detections.why'),
+      <ul key="why" className="grid gap-0.5">
+        {ev.signals.map((s, i) => (
+          <li key={i}>
+            {t(`detections.signals.${s.kind}`)}
+            {s.detail && s.kind !== 'manual' && <code className="ml-1 text-xs text-muted">{s.detail}</code>}
+          </li>
+        ))}
+      </ul>,
+    ])
+  if (ev.domains.length) rows.push([t('detections.domains'), <code key="d">{ev.domains.join(', ')}</code>])
+  if (ev.channelIds.length && ev.kind !== 'raid') rows.push([t('detections.channels'), ev.channelIds.length])
+  if (ev.deletedMessages) rows.push([t('detections.deleted'), ev.deletedMessages])
+  if (ev.joins) rows.push([t('detections.joins'), ev.joins])
+  if (ev.accountAge) rows.push([t('detections.accountAge'), ev.accountAge])
+  if (!ev.monitor)
+    rows.push([
+      t('detections.action'),
+      <span key="a">
+        {t(`detections.responses.${ev.response}`)}
+        {ev.caseNumber && (
+          <>
+            {' · '}
+            <Link
+              to="/guilds/$guildId/cases/$number"
+              params={{ guildId, number: String(ev.caseNumber) }}
+              className="text-brand hover:underline"
+            >
+              {t('detections.case', { number: ev.caseNumber })}
+            </Link>
+          </>
+        )}
+      </span>,
+    ])
+
+  return (
+    <li>
+      <Card>
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="font-semibold">{t(`detections.titles.${ev.kind}`)}</h3>
+          <Badge tone={statusTone[ev.status]}>{t(`detections.statuses.${ev.status}`)}</Badge>
+          <span className="text-xs text-muted">
+            #{ev.id} · {dateFmt.format(new Date(ev.createdAt))}
+            {ev.resolvedByName && ` · ${t('detections.resolvedBy', { name: ev.resolvedByName })}`}
+          </span>
+        </div>
+        <dl className="mt-3 grid grid-cols-[max-content_1fr] gap-x-6 gap-y-1.5 text-sm">
+          {rows.map(([k, v]) => (
+            <div key={k} className="contents">
+              <dt className="text-muted">{k}</dt>
+              <dd>{v}</dd>
+            </div>
+          ))}
+        </dl>
+        {ev.monitor && <p className="mt-3 text-sm text-muted">{t('detections.monitor')}</p>}
+        {ev.problems.length > 0 && (
+          <div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+            <p className="font-medium">{t('detections.problems')}</p>
+            <ul className="mt-1 list-disc pl-5">
+              {ev.problems.map((p) => (
+                <li key={p}>{t(`detections.problemText.${p}` as never, { defaultValue: p })}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {reviewable && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={() => act('restore')} disabled={resolve.isPending}>
+              {t('detections.restore')}
+            </Button>
+            <Button variant="secondary" className="text-danger" onClick={() => act('ban')} disabled={resolve.isPending}>
+              {t('detections.ban')}
+            </Button>
+            {ev.status === 'open' && (
+              <Button variant="ghost" onClick={() => act('keep')} disabled={resolve.isPending}>
+                {t('detections.keep')}
+              </Button>
+            )}
+          </div>
+        )}
+        <div className="mt-2">
+          <RequestError error={resolve.error} />
+        </div>
+      </Card>
+    </li>
+  )
+}
+
+export function DetectionsPage({ guildId }: { guildId: string }) {
+  const { t } = useTranslation()
+  const [status, setStatus] = useState<'' | GuardianStatus>('')
+  const events = useGuardianEvents(guildId, status || undefined)
+  const items = events.data?.pages.flatMap((p) => p.items) ?? []
+
+  return (
+    <div className="max-w-3xl">
+      <h2 className="text-lg font-semibold">{t('detections.title')}</h2>
+      <p className="mt-1 text-muted">{t('detections.subtitle')}</p>
+
+      <div className="mt-4">
+        <RaidCard guildId={guildId} />
+      </div>
+
+      <div className="mt-6 w-56">
+        <Field label={t('detections.filter')} htmlFor="det-status">
+          <Select id="det-status" value={status} onChange={(e) => setStatus(e.target.value as '' | GuardianStatus)}>
+            <option value="">{t('detections.filters.all')}</option>
+            <option value="open">{t('detections.filters.open')}</option>
+            <option value="kept">{t('detections.filters.kept')}</option>
+          </Select>
+        </Field>
+      </div>
+
+      <div className="mt-4">
+        {events.isPending && <Spinner />}
+        {events.isError && <ErrorState onRetry={() => void events.refetch()} />}
+        {events.data && items.length === 0 && (
+          <Card>
+            <p className="text-muted">{status ? t('detections.emptyFiltered') : t('detections.empty')}</p>
+          </Card>
+        )}
+        {items.length > 0 && (
+          <ul className="grid gap-3">
+            {items.map((ev) => (
+              <EventCard key={ev.id} guildId={guildId} ev={ev} />
+            ))}
+          </ul>
+        )}
+        {events.hasNextPage && (
+          <Button variant="secondary" className="mt-4" onClick={() => void events.fetchNextPage()} disabled={events.isFetchingNextPage}>
+            {t('common.loadMore')}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,13 @@
+{
+  "description": "With a 24h minimum account age and the kick action, a brand-new account is kicked and an old one passes.",
+  "settings": {"min_account_age_hours": 24, "account_age_action": "kick"},
+  "members": {"fresh": {"joins": true, "account_days": 0}, "old": {"joins": true, "account_days": 30}},
+  "steps": [
+    {"join": {"user": "fresh"}},
+    {"join": {"user": "old"}}
+  ],
+  "expect": {
+    "kicked": ["fresh"],
+    "events": [{"kind": "account_age", "response": "kick", "status": "info", "user": "fresh"}]
+  }
+}

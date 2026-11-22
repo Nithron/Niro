@@ -233,6 +233,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/settings/guardian": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Guardian settings */
+        get: operations["getGuardianSettings"];
+        /** Save Guardian settings */
+        put: operations["updateGuardianSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/guardian/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Guardian detections, newest first */
+        get: operations["listGuardianEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/guardian/events/{eventId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                eventId: number;
+            };
+            cookie?: never;
+        };
+        /** One Guardian event */
+        get: operations["getGuardianEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/guardian/events/{eventId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                eventId: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore, ban or keep a quarantined member
+         * @description The same as the buttons on the Discord alert; the alert is updated too.
+         */
+        post: operations["resolveGuardianEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/guardian/raid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Whether raid mode is on */
+        get: operations["getRaidStatus"];
+        put?: never;
+        /** Turn raid mode on now */
+        post: operations["startRaidMode"];
+        /** Turn raid mode off and undo its changes */
+        delete: operations["endRaidMode"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/guardian/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Audit the server for dangerous permissions and settings
+         * @description Read-only. Runs on the bot, which reads roles, integrations and webhooks.
+         */
+        get: operations["getPermissionAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/automod/presets": {
         parameters: {
             query?: never;
@@ -342,7 +467,7 @@ export interface components {
             requireReason: boolean;
         };
         /** @enum {string} */
-        CaseAction: "warn" | "timeout" | "untimeout" | "kick" | "ban" | "unban" | "note" | "purge";
+        CaseAction: "warn" | "timeout" | "untimeout" | "kick" | "ban" | "unban" | "note" | "purge" | "quarantine" | "unquarantine";
         Case: {
             number: number;
             action: components["schemas"]["CaseAction"];
@@ -399,6 +524,119 @@ export interface components {
         AutoModPreset: {
             id: string;
             rule: components["schemas"]["AutoModRule"];
+        };
+        GuardianSettings: {
+            /**
+             * @description monitor only alerts, never acts
+             * @enum {string}
+             */
+            mode: "enforce" | "monitor";
+            /** @description "0" uses the moderation log channel */
+            alertChannelId: string;
+            exemptRoleIds: components["schemas"]["Snowflake"][];
+            burstEnabled: boolean;
+            burstChannels: number;
+            burstWindowSeconds: number;
+            /** @description 0 turns the quiet-account signal off */
+            quietDays: number;
+            scamLinksEnabled: boolean;
+            allowDomains: string[];
+            denyDomains: string[];
+            /** @enum {string} */
+            quarantineMode: "timeout" | "role";
+            /** @description "0" when not using role mode */
+            quarantineRoleId: string;
+            quarantineHours: number;
+            /** @description Send quarantined members recovery steps */
+            dmUser: boolean;
+            raidEnabled: boolean;
+            raidJoins: number;
+            raidWindowSeconds: number;
+            raidDurationMinutes: number;
+            raidPauseInvites: boolean;
+            raidRaiseVerification: boolean;
+            raidSlowmodeSeconds: number;
+            /** @description 0 turns the account-age gate off */
+            minAccountAgeHours: number;
+            /** @enum {string} */
+            accountAgeAction: "alert" | "kick" | "quarantine";
+            /** @description "0" when the verification gate is not set up */
+            verifyRoleId: string;
+            verifyMinAccountAgeHours: number;
+        };
+        /** @enum {string} */
+        GuardianStatus: "open" | "kept" | "restored" | "banned" | "info" | "active" | "ended";
+        GuardianSignal: {
+            /** @enum {string} */
+            kind: "burst" | "blocked_domain" | "denied_domain" | "lookalike_domain" | "masked_link" | "scam_template" | "quiet_account" | "new_account" | "join_flood" | "manual";
+            detail?: string;
+            weight: number;
+        };
+        GuardianEvent: {
+            /** Format: int64 */
+            id: number;
+            userId?: components["schemas"]["Snowflake"];
+            userName?: string;
+            /** @enum {string} */
+            kind: "compromised" | "scam" | "raid" | "account_age";
+            signals: components["schemas"]["GuardianSignal"][];
+            score: number;
+            /** @enum {string} */
+            response: "alert" | "delete" | "quarantine" | "kick" | "raid_mode";
+            status: components["schemas"]["GuardianStatus"];
+            caseNumber?: number;
+            channelIds: components["schemas"]["Snowflake"][];
+            deletedMessages: number;
+            domains: string[];
+            joins?: number;
+            accountAge?: string;
+            problems: string[];
+            /** @description Monitor mode; no action was taken */
+            monitor: boolean;
+            resolvedByName?: string;
+            /** Format: date-time */
+            resolvedAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        GuardianEventList: {
+            items: components["schemas"]["GuardianEvent"][];
+            /**
+             * Format: int64
+             * @description Cursor for the next page
+             */
+            nextBefore?: number;
+        };
+        GuardianResolve: {
+            /** @enum {string} */
+            action: "restore" | "ban" | "keep";
+        };
+        RaidStatus: {
+            active: boolean;
+            /** Format: date-time */
+            startedAt?: string;
+            /** Format: date-time */
+            endsAt?: string;
+            manual?: boolean;
+            joins?: number;
+            problems: string[];
+        };
+        AuditFinding: {
+            /** @enum {string} */
+            severity: "critical" | "high" | "medium" | "info";
+            /** @enum {string} */
+            code: "everyone_dangerous" | "role_admin" | "role_dangerous" | "bot_admin" | "bot_dangerous" | "webhooks" | "verification_none" | "verification_low" | "no_moderator_mfa" | "self_admin";
+            subjectId?: components["schemas"]["Snowflake"];
+            subject?: string;
+            permissions?: string[];
+            /** @description Members with the role (-1 if unknown) or number of webhooks */
+            count?: number;
+            channelIds?: components["schemas"]["Snowflake"][];
+        };
+        AuditResult: {
+            findings: components["schemas"]["AuditFinding"][];
+            /** @description False when Niro lacks Manage Webhooks */
+            webhooksChecked: boolean;
         };
         Invite: {
             /** Format: uri */
@@ -904,6 +1142,257 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    getGuardianSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateGuardianSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuardianSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings (domains normalized) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listGuardianEvents: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["GuardianStatus"];
+                user?: components["schemas"]["Snowflake"];
+                /** @description Only events with a lower ID (pagination cursor) */
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianEventList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getGuardianEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                eventId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The event */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianEvent"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    resolveGuardianEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                eventId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuardianResolve"];
+            };
+        };
+        responses: {
+            /** @description The updated event */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianEvent"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    getRaidStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raid mode status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RaidStatus"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    startRaidMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raid mode status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RaidStatus"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    endRaidMode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Raid mode status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RaidStatus"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+            502: components["responses"]["BotError"];
+        };
+    };
+    getPermissionAudit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Findings, most severe first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditResult"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             409: components["responses"]["BotNotInGuild"];
             502: components["responses"]["BotError"];
         };

@@ -18,6 +18,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/moderation"
 )
 
@@ -151,6 +152,7 @@ type harness struct {
 	oauth *fakeOAuth
 	rpc   *fakeRPC
 	cases *fakeCases
+	guard *fakeGuardian
 }
 
 func newHarness(t *testing.T) *harness {
@@ -163,7 +165,9 @@ func newHarness(t *testing.T) *harness {
 		{ID: memberOnlyGuild, Name: "Gamma", Permissions: discord.PermissionSendMessages},
 	}}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	reg, _ := core.NewRegistry(core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})...)
+	mods := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
+	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleGuardian, guardian.SettingsSpec{})...)
+	fguard := &fakeGuardian{}
 	frpc := &fakeRPC{handlers: map[string]func(params any, out any) error{}}
 	fcases := &fakeCases{}
 	cfgs, _ := core.NewConfigService(reg, &fakeConfigStore{rows: map[core.ModuleID]core.StoredModuleState{}}, nopBus{}, log)
@@ -174,13 +178,14 @@ func newHarness(t *testing.T) *harness {
 		Guilds:    fakeDir{active: map[snowflake.ID]bool{managedGuild: true}},
 		Configs:   cfgs,
 		Cases:     fcases,
+		Guardian:  fguard,
 		RPC:       frpc,
 		Dashboard: fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases}
+	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases, guard: fguard}
 }
 
 func (h *harness) do(method, target, body, cookie string, hdr map[string]string) *httptest.ResponseRecorder {

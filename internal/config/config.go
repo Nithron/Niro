@@ -34,6 +34,10 @@ type Config struct {
 	ValkeyPassword string
 
 	Discord Discord
+
+	// ScamFeeds are scam-domain list URLs (NIRO_SCAM_FEEDS, comma-separated).
+	// nil means "use Niro's default list"; empty (NIRO_SCAM_FEEDS=off) means none.
+	ScamFeeds []string
 }
 
 type Discord struct {
@@ -108,6 +112,20 @@ func Load(getenv func(string) string) (Config, error) {
 	}
 	if c.Discord.DevGuildID, err = optionalSnowflake(get("NIRO_DEV_GUILD_ID", "")); err != nil {
 		errs = append(errs, fmt.Errorf("NIRO_DEV_GUILD_ID: %w", err))
+	}
+	switch v := get("NIRO_SCAM_FEEDS", ""); v {
+	case "":
+	case "off", "none":
+		c.ScamFeeds = []string{}
+	default:
+		for _, u := range strings.Split(v, ",") {
+			u = strings.TrimSpace(u)
+			if p, err := url.Parse(u); err != nil || p.Scheme != "https" || p.Host == "" {
+				errs = append(errs, fmt.Errorf("NIRO_SCAM_FEEDS: %q is not an https URL", u))
+				continue
+			}
+			c.ScamFeeds = append(c.ScamFeeds, u)
+		}
 	}
 	return c, errors.Join(errs...)
 }

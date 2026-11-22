@@ -5,7 +5,7 @@ import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
 import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput } from '../components/ui'
 
-export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge']
+export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
 const actionTone: Record<CaseAction, 'neutral' | 'brand' | 'success' | 'warning' | 'danger'> = {
   warn: 'warning',
@@ -16,6 +16,8 @@ const actionTone: Record<CaseAction, 'neutral' | 'brand' | 'success' | 'warning'
   unban: 'success',
   note: 'brand',
   purge: 'neutral',
+  quarantine: 'danger',
+  unquarantine: 'success',
 }
 
 export function ActionBadge({ action }: { action: CaseAction }) {

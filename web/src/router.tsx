@@ -10,8 +10,11 @@ import { ApiError, type CaseAction } from './api/client'
 import { useMe, type CaseFilters } from './api/queries'
 import { Layout } from './components/Layout'
 import { ErrorState, Spinner } from './components/ui'
+import { AuditPage } from './pages/Audit'
 import { AutoModPage } from './pages/AutoMod'
 import { CaseDetailPage, CasesPage, caseActions } from './pages/Cases'
+import { DetectionsPage } from './pages/Detections'
+import { GuardianSettingsPage } from './pages/GuardianSettings'
 import { GuildLayout, ModulesPage } from './pages/Guild'
 import { LoginPage } from './pages/Login'
 import { ModerationSettingsPage } from './pages/ModerationSettings'
@@ -101,9 +104,36 @@ const automodRoute = createRoute({
   },
 })
 
+const guardianRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/guardian',
+  component: function GuardianRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <GuardianSettingsPage guildId={guildId} />
+  },
+})
+
+const detectionsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/guardian/detections',
+  component: function DetectionsRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <DetectionsPage guildId={guildId} />
+  },
+})
+
+const auditRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/guardian/audit',
+  component: function AuditRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <AuditPage guildId={guildId} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute]),
+  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute]),
 ])
 
 export function makeRouter(queryClient: QueryClient, history?: RouterHistory) {

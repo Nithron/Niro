@@ -1,0 +1,27 @@
+{
+  "description": "Blocklisted, server-denied and look-alike links quarantine on the first message; a masked link alone deletes; ordinary links pass.",
+  "blocklist": ["evil.ru"],
+  "settings": {"deny_domains": ["https://grabify.link/x"], "allow_domains": ["partner-dlscord.com"]},
+  "members": {
+    "a": {}, "b": {}, "c": {}, "d": {}, "e": {}, "f": {}
+  },
+  "steps": [
+    {"message": {"user": "a", "channel": 11, "content": "free stuff https://login.evil.ru/nitro"}},
+    {"message": {"user": "b", "channel": 11, "content": "look https://grabify.link/abc"}},
+    {"message": {"user": "c", "channel": 11, "content": "[discord.com/gifts](https://dlscord.gift/abc)"}},
+    {"message": {"user": "d", "channel": 11, "content": "[steamcommunity.com/trade](https://example-trade.com/x)"}},
+    {"message": {"user": "e", "channel": 11, "content": "docs: https://github.com/nithron and [the guide](https://discord.com/developers)"}},
+    {"message": {"user": "f", "channel": 11, "content": "our partner https://partner-dlscord.com"}}
+  ],
+  "expect": {
+    "responses": {"0": "quarantine", "1": "quarantine", "2": "quarantine", "3": "delete"},
+    "deleted_steps": [0, 1, 2, 3],
+    "timed_out": ["a", "b", "c"],
+    "events": [
+      {"kind": "scam", "response": "quarantine", "status": "open", "user": "a"},
+      {"kind": "scam", "response": "quarantine", "status": "open", "user": "b"},
+      {"kind": "scam", "response": "quarantine", "status": "open", "user": "c"},
+      {"kind": "scam", "response": "delete", "status": "info", "user": "d"}
+    ]
+  }
+}

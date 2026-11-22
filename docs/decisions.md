@@ -20,6 +20,9 @@
 | 15 | 2026-11-22 | **M0 accepted** (demo passed; logout fix merged in #2). M1 started | Done |
 | 16 | 2026-11-22 | **Final milestone added: UI and brand polish** after all other milestones (dashboard UX, Discord message styling, logo/banner refresh) | Decided |
 | 17 | 2026-11-22 | **Renamed Nithro → Niro** before M2: the bot will grow beyond security, so the name stays general. Repo `Nithron/Niro`, Go module `github.com/nithron/niro`, binary `niro`, env prefix `NIRO_`. The `<N>` mark is unchanged; the wordmark is redrawn as NIRO | Done |
+| 17b | 2026-11-22 | **M1 accepted** (demo passed; merged in #3, rename in #5). M2 started | Done |
+| 18 | 2026-11-22 | **Scam-domain feed:** default to nikolaischunk/discord-phishing-links (MIT); configurable with `NIRO_SCAM_FEEDS`. FishFish skipped (licence terms not found). Look-alike checks cover new domains. See [feeds](research/2026-11-scam-domain-feeds.md) | Decided |
+| 19 | 2026-11-22 | **Guardian defaults:** enforce mode; quarantine = 7-day timeout; a member is quarantined only on strong signals (score ≥ 3), cross-posted plain text only alerts; raid = 10 joins in 30 s for 30 min. No Manage Webhooks permission (the audit says webhooks weren't checked) | Decided, tune after the demo |
 
 ## Notes on these decisions
 

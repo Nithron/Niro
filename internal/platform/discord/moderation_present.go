@@ -27,9 +27,9 @@ func actionColor(a moderation.Action) int {
 		return colorWarning
 	case moderation.ActionKick:
 		return colorOrange
-	case moderation.ActionBan:
+	case moderation.ActionBan, moderation.ActionQuarantine:
 		return colorDanger
-	case moderation.ActionUntimeout, moderation.ActionUnban:
+	case moderation.ActionUntimeout, moderation.ActionUnban, moderation.ActionUnquarantine:
 		return colorSuccess
 	}
 	return colorBrand
@@ -39,9 +39,9 @@ func actionEmoji(e *Emojis, a moderation.Action) string {
 	switch a {
 	case moderation.ActionWarn, moderation.ActionTimeout:
 		return e.Get(EmojiWarn)
-	case moderation.ActionKick, moderation.ActionBan:
+	case moderation.ActionKick, moderation.ActionBan, moderation.ActionQuarantine:
 		return e.Get(EmojiShield)
-	case moderation.ActionUntimeout, moderation.ActionUnban:
+	case moderation.ActionUntimeout, moderation.ActionUnban, moderation.ActionUnquarantine:
 		return e.Get(EmojiOK)
 	}
 	return e.Get(EmojiInfo)

@@ -1,0 +1,14 @@
+{
+  "description": "In monitor mode Guardian reports but never deletes, times out or starts raid mode.",
+  "blocklist": ["evil.ru"],
+  "settings": {"mode": "monitor"},
+  "members": {"victim": {}},
+  "steps": [
+    {"message": {"user": "victim", "channel": 11, "content": "https://evil.ru/free"}}
+  ],
+  "expect": {
+    "responses": {"0": "quarantine"},
+    "deleted_steps": [],
+    "events": [{"kind": "scam", "response": "quarantine", "status": "info", "user": "victim", "monitor": true}]
+  }
+}

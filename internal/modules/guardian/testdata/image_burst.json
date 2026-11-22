@@ -1,0 +1,15 @@
+{
+  "description": "The 'CS2 skins' pattern: the same image with no text posted in three channels.",
+  "members": {"victim": {"joined_days": 200}},
+  "steps": [
+    {"after_ms": 0,    "message": {"user": "victim", "channel": 11, "content": "", "attachments": ["image.png:48211"]}},
+    {"after_ms": 900,  "message": {"user": "victim", "channel": 12, "content": "", "attachments": ["image.png:48211"]}},
+    {"after_ms": 1800, "message": {"user": "victim", "channel": 13, "content": "", "attachments": ["image.png:48211"]}}
+  ],
+  "expect": {
+    "responses": {"2": "quarantine"},
+    "deleted_steps": [0, 1, 2],
+    "timed_out": ["victim"],
+    "events": [{"kind": "compromised", "response": "quarantine", "status": "open", "user": "victim"}]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "description": "Cross-posting plain text (no link, file or mass ping) is only worth an alert.",
+  "members": {"alice": {}},
+  "steps": [
+    {"after_ms": 0,   "message": {"user": "alice", "channel": 11, "content": "anyone up for a match tonight?"}},
+    {"after_ms": 500, "message": {"user": "alice", "channel": 12, "content": "Anyone up for a match tonight??"}},
+    {"after_ms": 900, "message": {"user": "alice", "channel": 13, "content": "anyone up for a match tonight"}}
+  ],
+  "expect": {
+    "responses": {"2": "alert"},
+    "deleted_steps": [],
+    "events": [{"kind": "compromised", "response": "alert", "status": "info", "user": "alice"}]
+  }
+}

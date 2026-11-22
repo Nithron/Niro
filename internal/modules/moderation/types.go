@@ -27,10 +27,14 @@ const (
 	ActionUnban     Action = "unban"
 	ActionNote      Action = "note"
 	ActionPurge     Action = "purge"
+	// Guardian records these; moderators cannot run them as commands.
+	ActionQuarantine   Action = "quarantine"
+	ActionUnquarantine Action = "unquarantine"
 )
 
 // Actions lists every action (for validation and filters).
-var Actions = []Action{ActionWarn, ActionTimeout, ActionUntimeout, ActionKick, ActionBan, ActionUnban, ActionNote, ActionPurge}
+var Actions = []Action{ActionWarn, ActionTimeout, ActionUntimeout, ActionKick, ActionBan, ActionUnban, ActionNote, ActionPurge,
+	ActionQuarantine, ActionUnquarantine}
 
 func (a Action) Valid() bool {
 	for _, x := range Actions {
