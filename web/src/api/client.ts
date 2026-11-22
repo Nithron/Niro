@@ -42,3 +42,11 @@ export async function logout(): Promise<void> {
     credentials: 'same-origin',
   })
 }
+
+export type GuildMeta = components['schemas']['GuildMeta']
+export type ModerationSettings = components['schemas']['ModerationSettings']
+export type Case = components['schemas']['Case']
+export type CaseAction = components['schemas']['CaseAction']
+export type CaseList = components['schemas']['CaseList']
+export type AutoModRule = components['schemas']['AutoModRule']
+export type AutoModPreset = components['schemas']['AutoModPreset']
