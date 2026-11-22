@@ -78,11 +78,11 @@ type Deps struct {
 
 // Bot is a running Niro Discord client.
 type Bot struct {
-	deps    Deps
-	log     *slog.Logger
-	client  *bot.Client
-	emojis  *Emojis
-	metrics *metrics
+	deps      Deps
+	log       *slog.Logger
+	client    *bot.Client
+	emojis    *Emojis
+	metrics   *metrics
 	mod       *moderation.Service
 	guard     *guardian.Service
 	blocklist *guardian.DomainSet
@@ -118,9 +118,9 @@ func New(deps Deps) (*Bot, error) {
 		),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers)),
 		bot.WithEventListeners(router, &events.ListenerAdapter{
-			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild) },
-			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
-			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
+			OnGuildReady:         func(e *events.GuildReady) { b.recordGuild(e.Guild) },
+			OnGuildJoin:          func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
+			OnGuildLeave:         func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
 			OnGuildMessageCreate: b.onGuildMessage,
 			OnGuildMemberJoin:    b.onMemberJoin,
 		}),

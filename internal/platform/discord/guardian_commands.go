@@ -410,4 +410,3 @@ func (b *Bot) handleVerifyButton(_ discord.ButtonInteractionData, e *handler.Com
 	}
 	return reply(EmojiOK, b.t(l, i18n.GuardianVerifyOK, nil), colorSuccess)
 }
-

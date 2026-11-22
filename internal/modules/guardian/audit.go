@@ -156,10 +156,10 @@ func Audit(in AuditInput) []Finding {
 		out = append(out, Finding{Severity: SeverityInfo, Code: FindWebhooks, Count: len(in.Webhooks), ChannelIDs: chans})
 	}
 
-	switch {
-	case in.VerificationLevel == 0:
+	switch in.VerificationLevel {
+	case 0:
 		out = append(out, Finding{Severity: SeverityMedium, Code: FindVerificationNone})
-	case in.VerificationLevel == 1:
+	case 1:
 		out = append(out, Finding{Severity: SeverityInfo, Code: FindVerificationLow})
 	}
 	if !in.ModeratorMFA {

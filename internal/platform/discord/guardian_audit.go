@@ -66,15 +66,12 @@ func (b *Bot) runAudit(ctx context.Context, guildID snowflake.ID) (AuditResult, 
 	}
 
 	var (
-		wg              sync.WaitGroup
-		counts          map[snowflake.ID]int
-		integrations    []discord.Integration
-		webhooks        []discord.Webhook
-		webhookErr      error
-		integrationsErr error
+		wg         sync.WaitGroup
+		counts     map[snowflake.ID]int
+		webhooks   []discord.Webhook
+		webhookErr error
 	)
 	wg.Go(func() { counts, _ = b.client.Rest.GetRoleMemberCounts(guildID, rest.WithCtx(ctx)) })
-	wg.Go(func() { integrations, integrationsErr = b.client.Rest.GetIntegrations(guildID, rest.WithCtx(ctx)) })
 	wg.Go(func() { webhooks, webhookErr = b.client.Rest.GetAllWebhooks(guildID, rest.WithCtx(ctx)) })
 	wg.Wait()
 
@@ -93,23 +90,21 @@ func (b *Bot) runAudit(ctx context.Context, guildID snowflake.ID) (AuditResult, 
 	}
 	slices.SortFunc(in.Roles, func(a, b guardian.AuditRole) int { return b.Position - a.Position })
 
-	// Bots: from the server's integrations, with their effective permissions
+	// Bots: every bot gets a managed role tagged with its ID; cached bot
+	// members cover bots without one. Their effective permissions are then
 	// computed by Discord.
 	self, _ := b.client.Caches.SelfUser()
 	botIDs := map[snowflake.ID]string{self.ID: self.Username}
-	if integrationsErr == nil {
-		for _, i := range integrations {
-			if bi, ok := i.(discord.BotIntegration); ok {
-				if id, err := snowflake.Parse(bi.Account.ID); err == nil {
-					botIDs[id] = bi.Account.Name
-				}
+	for r := range b.client.Caches.Roles(guildID) {
+		if r.Tags != nil && r.Tags.BotID != nil {
+			if _, ok := botIDs[*r.Tags.BotID]; !ok {
+				botIDs[*r.Tags.BotID] = r.Name
 			}
 		}
-	} else {
-		for m := range b.client.Caches.Members(guildID) {
-			if m.User.Bot {
-				botIDs[m.User.ID] = m.User.Username
-			}
+	}
+	for m := range b.client.Caches.Members(guildID) {
+		if m.User.Bot {
+			botIDs[m.User.ID] = m.User.Username
 		}
 	}
 	var mu sync.Mutex
