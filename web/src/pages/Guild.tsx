@@ -12,6 +12,9 @@ const tabs = [
   { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', exact: false },
   { to: '/guilds/$guildId/cases', key: 'tabs.cases', exact: false },
   { to: '/guilds/$guildId/automod', key: 'tabs.automod', exact: false },
+  { to: '/guilds/$guildId/guardian', key: 'tabs.guardian', exact: true },
+  { to: '/guilds/$guildId/guardian/detections', key: 'tabs.detections', exact: false },
+  { to: '/guilds/$guildId/guardian/audit', key: 'tabs.audit', exact: false },
 ] as const
 
 /** Server header, tabs, and the active tab (or an invite if Niro isn't there). */

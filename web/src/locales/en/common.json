@@ -75,7 +75,10 @@
     "modules": "Modules",
     "moderation": "Moderation",
     "cases": "Cases",
-    "automod": "AutoMod"
+    "automod": "AutoMod",
+    "guardian": "Guardian",
+    "detections": "Detections",
+    "audit": "Security audit"
   },
   "common": {
     "save": "Save",
@@ -148,7 +151,9 @@
       "ban": "Ban",
       "unban": "Unban",
       "note": "Note",
-      "purge": "Purge"
+      "purge": "Purge",
+      "quarantine": "Quarantine",
+      "unquarantine": "Quarantine lifted"
     },
     "sources": {
       "manual": "Command",
@@ -239,5 +244,191 @@
   },
   "errors": {
     "botUnavailable": "The bot isn't responding right now. Make sure it's online and try again."
+  },
+  "guardianSettings": {
+    "title": "Guardian settings",
+    "subtitle": "Protection against hacked accounts, scam links and raids. Changes apply immediately.",
+    "moduleOff": "The Guardian module is turned off. Settings are kept, but nothing is checked until you turn it on in Modules.",
+    "sections": {
+      "general": "General",
+      "compromised": "Hacked accounts",
+      "scam": "Scam links",
+      "quarantine": "Quarantine",
+      "raid": "Anti-raid",
+      "age": "Account-age gate",
+      "verify": "Verification gate",
+      "exempt": "Trusted roles"
+    },
+    "mode": "Mode",
+    "modeHelp": "Start in monitor mode to see what Guardian would do before it acts.",
+    "modes": {
+      "enforce": "Enforce: delete, quarantine and start raid mode",
+      "monitor": "Monitor: only post alerts"
+    },
+    "alertChannel": "Alert channel",
+    "alertChannelHelp": "Where Guardian posts alerts with Restore / Ban buttons. Use a channel only moderators can see.",
+    "useModLog": "Use the moderation log channel",
+    "burstEnabled": "Detect the same message in many channels",
+    "burstEnabledHelp": "Hacked accounts usually post one scam link everywhere at once.",
+    "burstChannels": "Number of channels",
+    "burstWindow": "Within (seconds)",
+    "quietDays": "Quiet member threshold (days)",
+    "quietDaysHelp": "A member silent this long who suddenly posts a link adds suspicion to other signals. Never enough on its own. 0 turns it off.",
+    "scamEnabled": "Check links and scam wording",
+    "scamEnabledHelp": "Known scam domains, look-alikes of Discord and Steam, links whose text shows a different site, and typical scam messages. Niro never opens the links.",
+    "allowDomains": "Always allow these domains",
+    "denyDomains": "Always block these domains",
+    "domainsHelp": "One domain per line, for example example.com. Subdomains are included.",
+    "quarantineMode": "How to restrict",
+    "quarantineModes": {
+      "timeout": "Time out (works everywhere, up to 28 days)",
+      "role": "Replace their roles with a quarantine role"
+    },
+    "quarantineRole": "Quarantine role",
+    "quarantineRoleHelp": "Set up its channel permissions yourself, for example to only see one help channel. Their old roles are saved and given back on Restore.",
+    "quarantineHours": "Timeout length (hours)",
+    "dmUser": "DM the member recovery steps",
+    "dmUserHelp": "Explains how to secure a hacked account and to contact your moderators.",
+    "raidEnabled": "Detect raids",
+    "raidJoins": "Joins",
+    "raidWindow": "Within (seconds)",
+    "raidDuration": "Raid mode lasts (minutes)",
+    "raidPauseInvites": "Pause invites during raid mode",
+    "raidRaiseVerification": "Raise the verification level to High during raid mode",
+    "raidSlowmode": "Slowmode during raid mode (seconds)",
+    "raidSlowmodeHelp": "0 leaves slowmode alone. Everything raid mode changes is undone when it ends.",
+    "minAge": "Minimum account age (hours)",
+    "minAgeHelp": "Accounts younger than this when they join get the action below. 0 turns the gate off.",
+    "ageAction": "Action",
+    "ageActions": {
+      "alert": "Only alert",
+      "kick": "Kick",
+      "quarantine": "Quarantine"
+    },
+    "verifyRole": "Verified role",
+    "verifyRoleHelp": "Members get this role by pressing the Verify button. Post the button with /guardian verify-panel.",
+    "verifyMinAge": "Minimum account age to verify (hours)",
+    "noRole": "No role",
+    "exemptHelp": "Members with these roles are never checked. Server owners and members who can manage messages are always trusted."
+  },
+  "detections": {
+    "title": "Detections",
+    "subtitle": "What Guardian found and did, newest first. Message text is never stored.",
+    "filter": "Show",
+    "filters": {
+      "all": "Everything",
+      "open": "Waiting for review",
+      "kept": "Kept in quarantine"
+    },
+    "empty": "Nothing detected yet.",
+    "emptyFiltered": "Nothing matches this filter.",
+    "raidOn": "Raid mode is on",
+    "raidOnBody": "New invites are paused and the server is stricter. Ends {{ends}}.",
+    "raidOff": "Raid mode is off",
+    "raidOffBody": "Turn it on by hand if you see a raid Guardian missed.",
+    "startRaid": "Start raid mode",
+    "endRaid": "End raid mode",
+    "startRaidConfirm": "Start raid mode now? Invites are paused and verification is raised until you end it.",
+    "member": "Member",
+    "why": "Why",
+    "channels": "Channels",
+    "deleted": "Messages deleted",
+    "domains": "Domains",
+    "joins": "Joins",
+    "accountAge": "Account age",
+    "action": "Action",
+    "case": "Case #{{number}}",
+    "monitor": "Monitor mode: no action taken.",
+    "problems": "Problems",
+    "restore": "Restore",
+    "ban": "Ban",
+    "keep": "Keep quarantined",
+    "banConfirm": "Ban {{user}}? Their messages from the last day are deleted too.",
+    "resolvedBy": "by {{name}}",
+    "titles": {
+      "compromised": "Possible hacked account",
+      "scam": "Scam message",
+      "raid": "Raid detected",
+      "account_age": "New account"
+    },
+    "signals": {
+      "burst": "Same message in several channels",
+      "blocked_domain": "Known scam domain",
+      "denied_domain": "Domain on your block list",
+      "lookalike_domain": "Look-alike domain",
+      "masked_link": "Link text shows a different site",
+      "scam_template": "Known scam wording",
+      "quiet_account": "Long-silent member posting links",
+      "new_account": "Very new account",
+      "join_flood": "Many joins at once",
+      "manual": "Started by a moderator"
+    },
+    "responses": {
+      "alert": "Alert only",
+      "delete": "Message deleted",
+      "quarantine": "Quarantined",
+      "kick": "Kicked",
+      "raid_mode": "Raid mode"
+    },
+    "statuses": {
+      "open": "Needs review",
+      "kept": "Kept",
+      "restored": "Restored",
+      "banned": "Banned",
+      "info": "Handled",
+      "active": "Active",
+      "ended": "Ended"
+    },
+    "problemText": {
+      "left_server": "The member left before Guardian could act.",
+      "bot_role_too_low": "Niro's role isn't above this member's highest role. Move Niro's role higher.",
+      "target_is_owner": "The server owner cannot be restricted.",
+      "target_is_bot": "This account cannot be restricted.",
+      "restrict_failed": "Restricting the member failed. Check that Niro can time out members and manage roles.",
+      "delete_failed": "Some messages could not be deleted. Check that Niro can manage messages there.",
+      "kick_failed": "Kicking failed. Check that Niro can kick members.",
+      "pause_invites_failed": "Pausing invites failed (needs Manage Server).",
+      "verification_failed": "Raising the verification level failed (needs Manage Server).",
+      "slowmode_failed": "Slowmode could not be set in some channels (needs Manage Channels)."
+    }
+  },
+  "audit": {
+    "title": "Security audit",
+    "subtitle": "Dangerous permissions and settings in this server. Read-only: nothing is changed.",
+    "rerun": "Run again",
+    "clean": "No problems found. Nice.",
+    "webhooksUnchecked": "Webhooks were not checked: Niro needs the Manage Webhooks permission to list them.",
+    "unknownCount": "?",
+    "severity": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "info": "Info"
+    },
+    "findings": {
+      "everyone_dangerous": "@everyone has {{permissions}}: every member can use these.",
+      "role_admin": "Role {{subject}} has Administrator ({{count}} members).",
+      "role_dangerous": "Role {{subject}} has {{permissions}} ({{count}} members).",
+      "bot_admin": "Bot {{subject}} has Administrator. If that bot is compromised, so is your server.",
+      "bot_dangerous": "Bot {{subject}} has {{permissions}}.",
+      "self_admin": "Niro has Administrator. It doesn't need it: remove it and keep the permissions from the invite.",
+      "webhooks": "{{count}} webhooks can post in this server. Anyone with a webhook's URL can post as anyone: delete the ones you don't use.",
+      "verification_none": "The verification level is None: brand-new accounts can post right away.",
+      "verification_low": "The verification level is Low. Medium or higher slows down throwaway accounts.",
+      "no_moderator_mfa": "Moderators don't have to use two-factor authentication (Server Settings → Safety Setup)."
+    },
+    "permissions": {
+      "administrator": "Administrator",
+      "manage_guild": "Manage Server",
+      "manage_roles": "Manage Roles",
+      "manage_channels": "Manage Channels",
+      "manage_webhooks": "Manage Webhooks",
+      "ban_members": "Ban Members",
+      "kick_members": "Kick Members",
+      "moderate_members": "Timeout Members",
+      "manage_messages": "Manage Messages",
+      "mention_everyone": "Mention @everyone",
+      "manage_expressions": "Manage Expressions"
+    }
   }
 }

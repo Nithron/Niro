@@ -5,6 +5,9 @@ import {
   unwrap,
   type AutoModRule,
   type CaseAction,
+  type GuardianResolve,
+  type GuardianSettings,
+  type GuardianStatus,
   type ModerationSettings,
   type ModuleState,
 } from './client'
@@ -214,5 +217,96 @@ export function useDeleteAutoModRule(guildId: string) {
       if (error !== undefined) throw new ApiError(response.status, error.code, error.message)
     },
     onSuccess: () => void qc.invalidateQueries({ queryKey: modKeys.automod(guildId) }),
+  })
+}
+
+// ---- Guardian (M2) ----------------------------------------------------------
+
+export const guardKeys = {
+  settings: (g: string) => ['guilds', g, 'settings', 'guardian'] as const,
+  events: (g: string, status?: GuardianStatus) => ['guilds', g, 'guardian', 'events', status ?? 'all'] as const,
+  allEvents: (g: string) => ['guilds', g, 'guardian', 'events'] as const,
+  raid: (g: string) => ['guilds', g, 'guardian', 'raid'] as const,
+  audit: (g: string) => ['guilds', g, 'guardian', 'audit'] as const,
+}
+
+export function useGuardianSettings(guildId: string) {
+  return useQuery({
+    queryKey: guardKeys.settings(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/settings/guardian', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveGuardianSettings(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: GuardianSettings) =>
+      unwrap(api.PUT('/guilds/{guildId}/settings/guardian', { params: { path: { guildId } }, body })),
+    onSuccess: (saved) => qc.setQueryData(guardKeys.settings(guildId), saved),
+  })
+}
+
+export function useGuardianEvents(guildId: string, status?: GuardianStatus) {
+  return useInfiniteQuery({
+    queryKey: guardKeys.events(guildId, status),
+    queryFn: ({ pageParam }) =>
+      unwrap(
+        api.GET('/guilds/{guildId}/guardian/events', {
+          params: { path: { guildId }, query: { status, before: pageParam, limit: 25 } },
+        }),
+      ),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (last) => last.nextBefore,
+    // New detections arrive while the page is open.
+    refetchInterval: 30_000,
+    retry,
+  })
+}
+
+export function useResolveEvent(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ eventId, action }: { eventId: number; action: GuardianResolve }) =>
+      unwrap(
+        api.POST('/guilds/{guildId}/guardian/events/{eventId}/resolve', {
+          params: { path: { guildId, eventId } },
+          body: { action },
+        }),
+      ),
+    onSettled: () => {
+      void qc.invalidateQueries({ queryKey: guardKeys.allEvents(guildId) })
+      void qc.invalidateQueries({ queryKey: modKeys.allCases(guildId) })
+    },
+  })
+}
+
+export function useRaidStatus(guildId: string) {
+  return useQuery({
+    queryKey: guardKeys.raid(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/guardian/raid', { params: { path: { guildId } } })),
+    refetchInterval: 30_000,
+    retry,
+  })
+}
+
+export function useSetRaidMode(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (on: boolean) =>
+      on
+        ? unwrap(api.POST('/guilds/{guildId}/guardian/raid', { params: { path: { guildId } } }))
+        : unwrap(api.DELETE('/guilds/{guildId}/guardian/raid', { params: { path: { guildId } } })),
+    onSuccess: (status) => qc.setQueryData(guardKeys.raid(guildId), status),
+    onSettled: () => void qc.invalidateQueries({ queryKey: guardKeys.allEvents(guildId) }),
+  })
+}
+
+export function useAudit(guildId: string) {
+  return useQuery({
+    queryKey: guardKeys.audit(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/guardian/audit', { params: { path: { guildId } } })),
+    staleTime: 60_000,
+    retry,
   })
 }

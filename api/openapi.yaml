@@ -295,6 +295,165 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
         "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/settings/guardian:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getGuardianSettings
+      summary: Guardian settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuardianSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateGuardianSettings
+      summary: Save Guardian settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GuardianSettings" }
+      responses:
+        "200":
+          description: The saved settings (domains normalized)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuardianSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/guardian/events:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listGuardianEvents
+      summary: Guardian detections, newest first
+      parameters:
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/GuardianStatus" } }
+        - { name: user, in: query, required: false, schema: { $ref: "#/components/schemas/Snowflake" } }
+        - name: before
+          in: query
+          required: false
+          description: Only events with a lower ID (pagination cursor)
+          schema: { type: integer, format: int64, minimum: 1 }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: A page of events
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuardianEventList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/guardian/events/{eventId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - { name: eventId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    get:
+      operationId: getGuardianEvent
+      summary: One Guardian event
+      responses:
+        "200":
+          description: The event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuardianEvent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/guardian/events/{eventId}/resolve:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - { name: eventId, in: path, required: true, schema: { type: integer, format: int64, minimum: 1 } }
+    post:
+      operationId: resolveGuardianEvent
+      summary: Restore, ban or keep a quarantined member
+      description: The same as the buttons on the Discord alert; the alert is updated too.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GuardianResolve" }
+      responses:
+        "200":
+          description: The updated event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GuardianEvent" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/guardian/raid:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getRaidStatus
+      summary: Whether raid mode is on
+      responses:
+        "200":
+          description: Raid mode status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    post:
+      operationId: startRaidMode
+      summary: Turn raid mode on now
+      responses:
+        "200":
+          description: Raid mode status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidStatus" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+    delete:
+      operationId: endRaidMode
+      summary: Turn raid mode off and undo its changes
+      responses:
+        "200":
+          description: Raid mode status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RaidStatus" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
+  /guilds/{guildId}/guardian/audit:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getPermissionAudit
+      summary: Audit the server for dangerous permissions and settings
+      description: Read-only. Runs on the bot, which reads roles, integrations and webhooks.
+      responses:
+        "200":
+          description: Findings, most severe first
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+        "502": { $ref: "#/components/responses/BotError" }
   /automod/presets:
     get:
       operationId: listAutoModPresets
@@ -453,7 +612,7 @@ components:
         requireReason: { type: boolean }
     CaseAction:
       type: string
-      enum: [warn, timeout, untimeout, kick, ban, unban, note, purge]
+      enum: [warn, timeout, untimeout, kick, ban, unban, note, purge, quarantine, unquarantine]
     Case:
       type: object
       required: [number, action, targetName, moderatorId, moderatorName, reason, source, dmSent, createdAt, updatedAt]
@@ -516,6 +675,115 @@ components:
       properties:
         id: { type: string }
         rule: { $ref: "#/components/schemas/AutoModRule" }
+    GuardianSettings:
+      type: object
+      additionalProperties: false
+      required: [mode, alertChannelId, exemptRoleIds, burstEnabled, burstChannels, burstWindowSeconds, quietDays,
+        scamLinksEnabled, allowDomains, denyDomains, quarantineMode, quarantineRoleId, quarantineHours, dmUser,
+        raidEnabled, raidJoins, raidWindowSeconds, raidDurationMinutes, raidPauseInvites, raidRaiseVerification,
+        raidSlowmodeSeconds, minAccountAgeHours, accountAgeAction, verifyRoleId, verifyMinAccountAgeHours]
+      properties:
+        mode: { type: string, enum: [enforce, monitor], description: "monitor only alerts, never acts" }
+        alertChannelId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" uses the moderation log channel' }
+        exemptRoleIds: { type: array, maxItems: 25, items: { $ref: "#/components/schemas/Snowflake" } }
+        burstEnabled: { type: boolean }
+        burstChannels: { type: integer, minimum: 2, maximum: 10 }
+        burstWindowSeconds: { type: integer, minimum: 10, maximum: 600 }
+        quietDays: { type: integer, minimum: 0, maximum: 365, description: 0 turns the quiet-account signal off }
+        scamLinksEnabled: { type: boolean }
+        allowDomains: { type: array, maxItems: 200, items: { type: string, maxLength: 253 } }
+        denyDomains: { type: array, maxItems: 200, items: { type: string, maxLength: 253 } }
+        quarantineMode: { type: string, enum: [timeout, role] }
+        quarantineRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when not using role mode' }
+        quarantineHours: { type: integer, minimum: 1, maximum: 672 }
+        dmUser: { type: boolean, description: Send quarantined members recovery steps }
+        raidEnabled: { type: boolean }
+        raidJoins: { type: integer, minimum: 3, maximum: 200 }
+        raidWindowSeconds: { type: integer, minimum: 5, maximum: 600 }
+        raidDurationMinutes: { type: integer, minimum: 5, maximum: 1440 }
+        raidPauseInvites: { type: boolean }
+        raidRaiseVerification: { type: boolean }
+        raidSlowmodeSeconds: { type: integer, minimum: 0, maximum: 21600 }
+        minAccountAgeHours: { type: integer, minimum: 0, maximum: 8760, description: 0 turns the account-age gate off }
+        accountAgeAction: { type: string, enum: [alert, kick, quarantine] }
+        verifyRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when the verification gate is not set up' }
+        verifyMinAccountAgeHours: { type: integer, minimum: 0, maximum: 8760 }
+    GuardianStatus:
+      type: string
+      enum: [open, kept, restored, banned, info, active, ended]
+    GuardianSignal:
+      type: object
+      required: [kind, weight]
+      properties:
+        kind: { type: string, enum: [burst, blocked_domain, denied_domain, lookalike_domain, masked_link, scam_template, quiet_account, new_account, join_flood, manual] }
+        detail: { type: string }
+        weight: { type: integer }
+    GuardianEvent:
+      type: object
+      required: [id, kind, signals, score, response, status, channelIds, deletedMessages, domains, problems, monitor, createdAt]
+      properties:
+        id: { type: integer, format: int64 }
+        userId: { $ref: "#/components/schemas/Snowflake" }
+        userName: { type: string }
+        kind: { type: string, enum: [compromised, scam, raid, account_age] }
+        signals: { type: array, items: { $ref: "#/components/schemas/GuardianSignal" } }
+        score: { type: integer }
+        response: { type: string, enum: [alert, delete, quarantine, kick, raid_mode] }
+        status: { $ref: "#/components/schemas/GuardianStatus" }
+        caseNumber: { type: integer }
+        channelIds: { type: array, items: { $ref: "#/components/schemas/Snowflake" } }
+        deletedMessages: { type: integer }
+        domains: { type: array, items: { type: string } }
+        joins: { type: integer }
+        accountAge: { type: string }
+        problems: { type: array, items: { type: string } }
+        monitor: { type: boolean, description: Monitor mode; no action was taken }
+        resolvedByName: { type: string }
+        resolvedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+    GuardianEventList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/GuardianEvent" }
+        nextBefore: { type: integer, format: int64, description: Cursor for the next page, absent on the last page }
+    GuardianResolve:
+      type: object
+      required: [action]
+      additionalProperties: false
+      properties:
+        action: { type: string, enum: [restore, ban, keep] }
+    RaidStatus:
+      type: object
+      required: [active, problems]
+      properties:
+        active: { type: boolean }
+        startedAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        manual: { type: boolean }
+        joins: { type: integer }
+        problems: { type: array, items: { type: string } }
+    AuditFinding:
+      type: object
+      required: [severity, code]
+      properties:
+        severity: { type: string, enum: [critical, high, medium, info] }
+        code: { type: string, enum: [everyone_dangerous, role_admin, role_dangerous, bot_admin, bot_dangerous, webhooks, verification_none, verification_low, no_moderator_mfa, self_admin] }
+        subjectId: { $ref: "#/components/schemas/Snowflake" }
+        subject: { type: string }
+        permissions: { type: array, items: { type: string } }
+        count: { type: integer, description: "Members with the role (-1 if unknown) or number of webhooks" }
+        channelIds: { type: array, items: { $ref: "#/components/schemas/Snowflake" } }
+    AuditResult:
+      type: object
+      required: [findings, webhooksChecked]
+      properties:
+        findings:
+          type: array
+          items: { $ref: "#/components/schemas/AuditFinding" }
+        webhooksChecked: { type: boolean, description: False when Niro lacks Manage Webhooks }
     Invite:
       type: object
       required: [url]

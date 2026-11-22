@@ -243,3 +243,91 @@ describe('moderation pages', () => {
     expect(await screen.findByText(/The bot isn't responding/)).toBeInTheDocument()
   })
 })
+
+describe('guardian pages', () => {
+  const settings = {
+    mode: 'enforce', alertChannelId: '0', exemptRoleIds: [], burstEnabled: true, burstChannels: 3, burstWindowSeconds: 60,
+    quietDays: 30, scamLinksEnabled: true, allowDomains: [], denyDomains: [], quarantineMode: 'timeout', quarantineRoleId: '0',
+    quarantineHours: 168, dmUser: true, raidEnabled: true, raidJoins: 10, raidWindowSeconds: 30, raidDurationMinutes: 30,
+    raidPauseInvites: true, raidRaiseVerification: true, raidSlowmodeSeconds: 0, minAccountAgeHours: 0, accountAgeAction: 'kick',
+    verifyRoleId: '0', verifyMinAccountAgeHours: 0,
+  }
+  const event = (id: number, extra: Record<string, unknown> = {}) => ({
+    id, userId: '42', userName: 'victim', kind: 'compromised', score: 3, response: 'quarantine', status: 'open', caseNumber: 4,
+    signals: [{ kind: 'burst', detail: 'l', weight: 3 }], channelIds: ['11', '12', '13'], deletedMessages: 3,
+    domains: ['evil.ru'], problems: [], monitor: false, createdAt: '2026-11-22T12:00:00Z', ...extra,
+  })
+
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({ channels: [{ id: '500', name: 'alerts', type: 'text', position: 0 }], roles: [{ id: '600', name: 'Quarantined', color: 0, position: 2, managed: false }] })
+  })
+
+  it('saves guardian settings and parses domain lists', async () => {
+    routes['GET /api/v1/guilds/100/settings/guardian'] = () => json(settings)
+    routes['PUT /api/v1/guilds/100/settings/guardian'] = async (req) => json(await req.json())
+    renderAt('/guilds/100/guardian')
+
+    await userEvent.selectOptions(await screen.findByLabelText('Mode'), 'monitor')
+    await userEvent.type(screen.getByLabelText('Always block these domains', { selector: '#g-deny' }), 'grabify.link{enter}bad.example')
+    await userEvent.selectOptions(screen.getByLabelText('How to restrict'), 'role')
+    await userEvent.selectOptions(await screen.findByLabelText('Quarantine role'), '600')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'PUT',
+          body: expect.objectContaining({ mode: 'monitor', denyDomains: ['grabify.link', 'bad.example'], quarantineMode: 'role', quarantineRoleId: '600' }),
+        }),
+      ),
+    )
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+  })
+
+  it('reviews a detection and controls raid mode', async () => {
+    let events = [event(2), event(1, { kind: 'scam', response: 'delete', status: 'info', caseNumber: undefined })]
+    let raid: Record<string, unknown> = { active: false, problems: [] }
+    routes['GET /api/v1/guilds/100/guardian/events'] = () => json({ items: events })
+    routes['POST /api/v1/guilds/100/guardian/events/2/resolve'] = () => {
+      events = [event(2, { status: 'restored', resolvedByName: 'ana' }), events[1]!]
+      return json(events[0])
+    }
+    routes['GET /api/v1/guilds/100/guardian/raid'] = () => json(raid)
+    routes['POST /api/v1/guilds/100/guardian/raid'] = () => {
+      raid = { active: true, problems: [], endsAt: new Date(Date.now() + 30 * 60_000).toISOString() }
+      return json(raid)
+    }
+    vi.stubGlobal('confirm', () => true)
+    renderAt('/guilds/100/guardian/detections')
+
+    expect(await screen.findByText('Possible hacked account')).toBeInTheDocument()
+    expect(screen.getAllByText('Same message in several channels')).toHaveLength(2)
+    expect(screen.getByRole('link', { name: 'Case #4' })).toHaveAttribute('href', '/guilds/100/cases/4')
+    // Only the open quarantine can be reviewed.
+    expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(1)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Restore' }))
+    expect(await screen.findByText('Restored')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Restore' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Start raid mode' }))
+    expect(await screen.findByText('Raid mode is on')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'End raid mode' })).toBeInTheDocument()
+  })
+
+  it('shows the permission audit', async () => {
+    routes['GET /api/v1/guilds/100/guardian/audit'] = () =>
+      json({
+        webhooksChecked: false,
+        findings: [
+          { severity: 'critical', code: 'everyone_dangerous', permissions: ['administrator'] },
+          { severity: 'high', code: 'role_admin', subject: 'Admins', count: -1 },
+        ],
+      })
+    renderAt('/guilds/100/guardian/audit')
+    expect(await screen.findByText('@everyone has Administrator: every member can use these.')).toBeInTheDocument()
+    expect(screen.getByText('Role Admins has Administrator (? members).')).toBeInTheDocument()
+    expect(screen.getByText(/Manage Webhooks permission/)).toBeInTheDocument()
+  })
+})
