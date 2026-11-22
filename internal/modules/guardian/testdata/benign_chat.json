@@ -1,0 +1,22 @@
+{
+  "description": "Normal server life must not trigger anything: many people sharing the same link, a moderator cross-posting an announcement, bots, short repeated greetings.",
+  "members": {
+    "alice": {}, "bob": {}, "carol": {},
+    "mod": {"moderator": true},
+    "bot": {"bot": true}
+  },
+  "steps": [
+    {"after_ms": 0,    "message": {"user": "alice", "channel": 11, "content": "new release is out https://github.com/nithron/niro/releases"}},
+    {"after_ms": 300,  "message": {"user": "bob",   "channel": 12, "content": "new release is out https://github.com/nithron/niro/releases"}},
+    {"after_ms": 600,  "message": {"user": "carol", "channel": 13, "content": "new release is out https://github.com/nithron/niro/releases"}},
+    {"after_ms": 900,  "message": {"user": "mod",   "channel": 11, "content": "Server maintenance tonight, details: https://status.example.org"}},
+    {"after_ms": 1000, "message": {"user": "mod",   "channel": 12, "content": "Server maintenance tonight, details: https://status.example.org"}},
+    {"after_ms": 1100, "message": {"user": "mod",   "channel": 13, "content": "Server maintenance tonight, details: https://status.example.org"}},
+    {"after_ms": 1200, "message": {"user": "bot",   "channel": 11, "content": "free nitro https://dlscord.gift"}},
+    {"after_ms": 1300, "message": {"user": "alice", "channel": 12, "content": "gm"}},
+    {"after_ms": 1400, "message": {"user": "alice", "channel": 13, "content": "gm"}},
+    {"after_ms": 1500, "message": {"user": "alice", "channel": 14, "content": "gm"}},
+    {"after_ms": 1600, "message": {"user": "bob",   "channel": 11, "content": "is nitro worth it? the steam sale is on too"}}
+  ],
+  "expect": {"responses": {}, "deleted_steps": [], "events": []}
+}

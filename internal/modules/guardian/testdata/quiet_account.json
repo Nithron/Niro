@@ -1,0 +1,23 @@
+{
+  "description": "A member silent for two months posting a masked link is quarantined; an active member doing the same only has it deleted. A quiet member posting a normal link is fine.",
+  "watching_days": 90,
+  "members": {
+    "sleeper": {"joined_days": 300, "silent_days": 60},
+    "regular": {"joined_days": 300},
+    "returning": {"joined_days": 300, "silent_days": 45}
+  },
+  "steps": [
+    {"message": {"user": "sleeper",   "channel": 11, "content": "[youtube.com/watch](https://vids-free.example/x)"}},
+    {"message": {"user": "regular",   "channel": 11, "content": "[youtube.com/watch](https://vids-free.example/x)"}},
+    {"message": {"user": "returning", "channel": 11, "content": "I'm back! made this https://github.com/me/project"}}
+  ],
+  "expect": {
+    "responses": {"0": "quarantine", "1": "delete"},
+    "deleted_steps": [0, 1],
+    "timed_out": ["sleeper"],
+    "events": [
+      {"kind": "scam", "response": "quarantine", "status": "open", "user": "sleeper"},
+      {"kind": "scam", "response": "delete", "status": "info", "user": "regular"}
+    ]
+  }
+}

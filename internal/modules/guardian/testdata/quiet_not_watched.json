@@ -1,0 +1,13 @@
+{
+  "description": "Right after Niro joins a server it has no activity history, so the quiet-account signal must stay off.",
+  "watching_days": 3,
+  "members": {"sleeper": {"joined_days": 300, "silent_days": 60}},
+  "steps": [
+    {"message": {"user": "sleeper", "channel": 11, "content": "[youtube.com/watch](https://vids-free.example/x)"}}
+  ],
+  "expect": {
+    "responses": {"0": "delete"},
+    "deleted_steps": [0],
+    "events": [{"kind": "scam", "response": "delete", "status": "info", "user": "sleeper"}]
+  }
+}

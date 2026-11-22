@@ -1,0 +1,18 @@
+{
+  "description": "The same number of joins spread over minutes is normal growth.",
+  "settings": {"raid_joins": 5, "raid_window_seconds": 30},
+  "members": {
+    "r1": {"joins": true, "account_days": 400}, "r2": {"joins": true, "account_days": 400},
+    "r3": {"joins": true, "account_days": 400}, "r4": {"joins": true, "account_days": 400},
+    "r5": {"joins": true, "account_days": 400}, "r6": {"joins": true, "account_days": 400}
+  },
+  "steps": [
+    {"after_ms": 0,      "join": {"user": "r1"}},
+    {"after_ms": 20000,  "join": {"user": "r2"}},
+    {"after_ms": 40000,  "join": {"user": "r3"}},
+    {"after_ms": 60000,  "join": {"user": "r4"}},
+    {"after_ms": 80000,  "join": {"user": "r5"}},
+    {"after_ms": 100000, "join": {"user": "r6"}}
+  ],
+  "expect": {"events": []}
+}

@@ -1,0 +1,16 @@
+{
+  "description": "A hacked account posts the same link in four channels within seconds. The third copy crosses the threshold: every copy is deleted and the member is timed out once.",
+  "members": {"victim": {"account_days": 900, "joined_days": 400, "role_position": 1}},
+  "steps": [
+    {"after_ms": 0,    "message": {"user": "victim", "channel": 11, "content": "omg look at this https://cool-site.example/a1"}},
+    {"after_ms": 400,  "message": {"user": "victim", "channel": 12, "content": "OMG look at this https://cool-site.example/b2"}},
+    {"after_ms": 800,  "message": {"user": "victim", "channel": 13, "content": "omg look at this!! https://cool-site.example/c3"}},
+    {"after_ms": 1200, "message": {"user": "victim", "channel": 14, "content": "omg look at this https://cool-site.example/d4"}}
+  ],
+  "expect": {
+    "responses": {"2": "quarantine", "3": "quarantine"},
+    "deleted_steps": [0, 1, 2, 3],
+    "timed_out": ["victim"],
+    "events": [{"kind": "compromised", "response": "quarantine", "status": "open", "user": "victim"}]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "description": "Scam wording with a link deletes; with a mass ping too it quarantines; wording without a link only alerts.",
+  "members": {"a": {}, "b": {}, "c": {}},
+  "steps": [
+    {"message": {"user": "a", "channel": 11, "content": "Free Nitro for everyone! https://gift-claims.example/x"}},
+    {"message": {"user": "b", "channel": 11, "content": "@everyone free nitro giveaway https://gift-claims.example/y"}},
+    {"message": {"user": "c", "channel": 11, "content": "sorry i accidentally reported your account, message the admin"}}
+  ],
+  "expect": {
+    "responses": {"0": "delete", "1": "quarantine", "2": "alert"},
+    "deleted_steps": [0, 1],
+    "timed_out": ["b"],
+    "events": [
+      {"kind": "scam", "response": "delete", "status": "info", "user": "a"},
+      {"kind": "scam", "response": "quarantine", "status": "open", "user": "b"},
+      {"kind": "scam", "response": "alert", "status": "info", "user": "c"}
+    ]
+  }
+}

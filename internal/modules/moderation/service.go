@@ -210,6 +210,21 @@ func (s *Service) postLog(ctx context.Context, settings Settings, c *Case) bool 
 	return true
 }
 
+// Record stores a case for an action performed elsewhere (Guardian) and
+// posts it to the moderation log.
+func (s *Service) Record(ctx context.Context, nc NewCase) (Case, error) {
+	settings, err := s.settings(ctx, nc.GuildID)
+	if err != nil {
+		return Case{}, fmt.Errorf("loading settings: %w", err)
+	}
+	c, err := s.store.CreateCase(ctx, nc)
+	if err != nil {
+		return Case{}, err
+	}
+	s.postLog(ctx, settings, &c)
+	return c, nil
+}
+
 // UpdateReason changes a case's reason and refreshes its log message.
 func (s *Service) UpdateReason(ctx context.Context, guildID snowflake.ID, number int, reason string) (Case, error) {
 	reason = strings.TrimSpace(reason)
@@ -262,7 +277,7 @@ func (s *Service) ListCases(ctx context.Context, guildID snowflake.ID, f CaseFil
 }
 
 func validate(req Request, settings Settings) error {
-	if !req.Action.Valid() || req.Action == ActionPurge {
+	if !req.Action.Valid() || req.Action == ActionPurge || req.Action == ActionQuarantine || req.Action == ActionUnquarantine {
 		return ErrBadAction
 	}
 	reason := strings.TrimSpace(req.Reason)
