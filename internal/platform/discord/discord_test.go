@@ -2,6 +2,7 @@ package discord
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"log/slog"
 	"strings"
@@ -40,11 +41,12 @@ func TestCommandsRespectDiscordLimits(t *testing.T) {
 		if n := len([]rune(s.Description)); n == 0 || n > 100 {
 			t.Errorf("%s: description length %d, must be 1–100", s.Name, n)
 		}
+		checkOptions(t, s.Name, s.Options)
 		if len(s.Contexts) != 1 || s.Contexts[0] != discord.InteractionContextTypeGuild {
 			t.Errorf("%s: must be guild-only in v0.1", s.Name)
 		}
 	}
-	for _, want := range []string{"ping", "about", "modules"} {
+	for _, want := range []string{"ping", "about", "modules", "warn", "timeout", "untimeout", "kick", "ban", "unban", "purge", "note", "history", "case"} {
 		if !names[want] {
 			t.Errorf("missing /%s", want)
 		}
@@ -162,5 +164,39 @@ func TestEmojiSyncUploadsOnlyMissing(t *testing.T) {
 	}
 	if got := e.Get(EmojiShield); !strings.HasPrefix(got, "<:shield:") {
 		t.Fatalf("Get(shield) = %q", got)
+	}
+}
+
+// checkOptions enforces Discord's option limits (names ≤32 lowercase,
+// descriptions 1–100 chars, choice names ≤100), recursing into subcommands.
+func checkOptions(t *testing.T, cmd string, opts []discord.ApplicationCommandOption) {
+	t.Helper()
+	if len(opts) > 25 {
+		t.Errorf("%s: %d options, max 25", cmd, len(opts))
+	}
+	for _, o := range opts {
+		raw, _ := json.Marshal(o)
+		var v struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+			Choices     []struct {
+				Name string `json:"name"`
+			} `json:"choices"`
+		}
+		_ = json.Unmarshal(raw, &v)
+		if v.Name != strings.ToLower(v.Name) || len(v.Name) > 32 || v.Name == "" {
+			t.Errorf("%s/%s: bad option name", cmd, v.Name)
+		}
+		if n := len([]rune(v.Description)); n == 0 || n > 100 {
+			t.Errorf("%s/%s: description length %d", cmd, v.Name, n)
+		}
+		for _, c := range v.Choices {
+			if len([]rune(c.Name)) > 100 {
+				t.Errorf("%s/%s: choice name too long", cmd, v.Name)
+			}
+		}
+		if sc, ok := o.(discord.ApplicationCommandOptionSubCommand); ok {
+			checkOptions(t, cmd+" "+sc.Name, sc.Options)
+		}
 	}
 }

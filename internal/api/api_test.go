@@ -115,6 +115,18 @@ func (s *fakeConfigStore) SetModuleEnabled(_ context.Context, _ snowflake.ID, m 
 	return r, nil
 }
 
+func (s *fakeConfigStore) SetModuleSettings(_ context.Context, _ snowflake.ID, m core.ModuleID, cfg []byte, def bool, _ *snowflake.ID, _ core.ChangeSource) (core.StoredModuleState, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	r, ok := s.rows[m]
+	if !ok {
+		r.Enabled = def
+	}
+	r.Module, r.Config, r.Version = m, cfg, r.Version+1
+	s.rows[m] = r
+	return r, nil
+}
+
 type nopBus struct{}
 
 func (nopBus) PublishConfigChange(context.Context, core.ConfigChange) error { return nil }

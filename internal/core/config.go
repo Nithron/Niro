@@ -24,6 +24,8 @@ var (
 	ErrUnknownModule   = errors.New("unknown module")
 	ErrModuleAlwaysOn  = errors.New("module cannot be disabled")
 	ErrUnknownGuild    = errors.New("guild not known to Nithro")
+	ErrNoSettings      = errors.New("module has no settings")
+	ErrInvalidSettings = errors.New("invalid settings")
 	errNilDependencies = errors.New("config service: nil dependency")
 )
 
@@ -31,6 +33,7 @@ var (
 type StoredModuleState struct {
 	Module    ModuleID
 	Enabled   bool
+	Config    []byte // module settings JSON; empty if never saved
 	Version   int64
 	UpdatedAt time.Time
 }
@@ -57,6 +60,9 @@ type ConfigChange struct {
 type ConfigStore interface {
 	ListModuleStates(ctx context.Context, guildID snowflake.ID) ([]StoredModuleState, error)
 	SetModuleEnabled(ctx context.Context, guildID snowflake.ID, module ModuleID, enabled bool, actorID *snowflake.ID, source ChangeSource) (StoredModuleState, error)
+	// SetModuleSettings saves settings; a module without a row yet is created
+	// with defaultEnabled. Same audit/transaction rules as SetModuleEnabled.
+	SetModuleSettings(ctx context.Context, guildID snowflake.ID, module ModuleID, config []byte, defaultEnabled bool, actorID *snowflake.ID, source ChangeSource) (StoredModuleState, error)
 }
 
 // ChangeBus fans config changes out to all processes (bot shards, API replicas).
@@ -155,6 +161,58 @@ func (s *ConfigService) SetEnabled(ctx context.Context, guildID snowflake.ID, id
 		s.log.WarnContext(ctx, "publishing config change failed", "guild_id", guildID, "module", id, "err", err)
 	}
 	return ModuleState{Module: m, Enabled: row.Enabled, Version: row.Version, UpdatedAt: row.UpdatedAt}, nil
+}
+
+// Settings returns a module's validated settings for a guild (defaults if
+// never saved).
+func (s *ConfigService) Settings(ctx context.Context, guildID snowflake.ID, id ModuleID) ([]byte, error) {
+	m, ok := s.registry.Get(id)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownModule, id)
+	}
+	if m.Settings == nil {
+		return nil, fmt.Errorf("%w: %q", ErrNoSettings, id)
+	}
+	stored, err := s.load(ctx, guildID)
+	if err != nil {
+		return nil, err
+	}
+	var raw []byte
+	if row, ok := stored[id]; ok && len(row.Config) > 0 && string(row.Config) != "{}" {
+		raw = row.Config
+	}
+	out, err := m.Settings.Normalize(raw)
+	if err != nil {
+		// Stored settings no longer validate (e.g. after a schema change):
+		// fall back to defaults rather than breaking the module.
+		s.log.WarnContext(ctx, "stored settings invalid, using defaults", "guild_id", guildID, "module", id, "err", err)
+		return m.Settings.Normalize(nil)
+	}
+	return out, nil
+}
+
+// SetSettings validates and saves a module's settings, then broadcasts the change.
+func (s *ConfigService) SetSettings(ctx context.Context, guildID snowflake.ID, id ModuleID, raw []byte, actorID *snowflake.ID, source ChangeSource) ([]byte, error) {
+	m, ok := s.registry.Get(id)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownModule, id)
+	}
+	if m.Settings == nil {
+		return nil, fmt.Errorf("%w: %q", ErrNoSettings, id)
+	}
+	normalized, err := m.Settings.Normalize(raw)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidSettings, err)
+	}
+	row, err := s.store.SetModuleSettings(ctx, guildID, id, normalized, m.DefaultEnabled, actorID, source)
+	if err != nil {
+		return nil, err
+	}
+	s.Invalidate(guildID)
+	if err := s.bus.PublishConfigChange(ctx, ConfigChange{GuildID: guildID, Module: id, Version: row.Version}); err != nil {
+		s.log.WarnContext(ctx, "publishing config change failed", "guild_id", guildID, "module", id, "err", err)
+	}
+	return normalized, nil
 }
 
 // Invalidate drops the cached state of one guild.

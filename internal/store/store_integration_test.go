@@ -134,3 +134,5 @@ func TestSetModuleEnabledUnknownGuild(t *testing.T) {
 		t.Fatalf("err = %v, want ErrUnknownGuild", err)
 	}
 }
+
+func snow(n int64) snowflake.ID { return snowflake.ID(n) }

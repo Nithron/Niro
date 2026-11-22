@@ -210,6 +210,7 @@ Sizes are relative (S/M/L), not calendar promises.
 | **v0.4** | Community+ and NithronOS | NithronOS bridge (SMART, pool health, backup and update alerts; nAI search); leveling (text + voice, role rewards); forms and applications; scheduled messages; anti-nuke auto-revert; opt-in shared scam-intelligence network |
 | **v0.5** | Music | Lavalink + disgolink; Components V2 player and queue; SoundCloud, Bandcamp, internet radio, direct files, Jellyfin/Plex (NithronOS). **YouTube excluded by default** because of the ToS and takedown risk |
 | Later | Reach | Fluxer adapter, more languages, public API and webhooks, server analytics |
+| **Final** | UI and brand polish | A dedicated pass after all feature milestones: dashboard design and UX refinement (layout, motion, empty states, accessibility audit, responsive and mobile pass), consistent Discord message styling across all modules, and a refresh of the logo, banners, social images and App Directory assets. Until then, UI work aims for clean and functional rather than final |
 
 ## 9. How we'll work
 

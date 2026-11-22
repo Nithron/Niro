@@ -6,6 +6,7 @@ import (
 	"testing/fstest"
 
 	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/nithro/internal/modules/moderation"
 	"golang.org/x/text/language"
 )
 
@@ -16,6 +17,11 @@ func TestEnglishCatalogIsComplete(t *testing.T) {
 	}
 	if missing := c.Missing(language.English); len(missing) > 0 {
 		t.Fatalf("en.toml is missing keys: %v", missing)
+	}
+	for _, a := range moderation.Actions {
+		if k := ModAction(string(a)); c.T("en", k, nil) == string(k) {
+			t.Errorf("en.toml is missing %s", k)
+		}
 	}
 	for _, m := range core.DefaultModules() {
 		for _, k := range []Key{ModuleName(string(m.ID)), ModuleDescription(string(m.ID))} {

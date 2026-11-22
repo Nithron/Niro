@@ -31,6 +31,11 @@ type Guild struct {
 	UpdatedAt time.Time
 }
 
+type GuildCaseCounter struct {
+	GuildID  int64
+	LastCase int32
+}
+
 type GuildConfig struct {
 	GuildID   int64
 	Module    string
@@ -39,4 +44,39 @@ type GuildConfig struct {
 	Version   int64
 	UpdatedBy pgtype.Int8
 	UpdatedAt time.Time
+}
+
+type ModCase struct {
+	GuildID         int64
+	CaseNumber      int32
+	Action          string
+	TargetID        pgtype.Int8
+	TargetName      string
+	ModeratorID     int64
+	ModeratorName   string
+	Reason          string
+	DurationSeconds pgtype.Int4
+	ExpiresAt       pgtype.Timestamptz
+	Source          string
+	Details         []byte
+	DmSent          bool
+	LogChannelID    pgtype.Int8
+	LogMessageID    pgtype.Int8
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       pgtype.Timestamptz
+	DeletedBy       pgtype.Int8
+}
+
+type ScheduledAction struct {
+	ID         int64
+	GuildID    int64
+	Kind       string
+	TargetID   int64
+	CaseNumber pgtype.Int4
+	RunAt      time.Time
+	Attempts   int32
+	LastError  pgtype.Text
+	DoneAt     pgtype.Timestamptz
+	CreatedAt  time.Time
 }

@@ -30,11 +30,11 @@ func (b *Bot) commands() []discord.ApplicationCommandCreate {
 	modules := slash("modules", i18n.CmdModulesDescription)
 	modules.DefaultMemberPermissions = omit.New(&manageGuild)
 
-	return []discord.ApplicationCommandCreate{
+	return append([]discord.ApplicationCommandCreate{
 		slash("ping", i18n.CmdPingDescription),
 		slash("about", i18n.CmdAboutDescription),
 		modules,
-	}
+	}, b.moderationCommands()...)
 }
 
 // localizations maps a key's translations onto Discord's locale codes,

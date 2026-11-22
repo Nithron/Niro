@@ -31,6 +31,7 @@ import (
 	"github.com/nithron/nithro/internal/config"
 	"github.com/nithron/nithro/internal/core"
 	"github.com/nithron/nithro/internal/i18n"
+	"github.com/nithron/nithro/internal/modules/moderation"
 	"github.com/nithron/nithro/internal/observability"
 	"github.com/nithron/nithro/internal/platform/discord"
 	"github.com/nithron/nithro/internal/store"
@@ -127,7 +128,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	defer kv.Close()
 
 	db := store.New(pool)
-	registry, err := core.NewRegistry(core.DefaultModules()...)
+	registry, err := core.NewRegistry(core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})...)
 	if err != nil {
 		return err
 	}
@@ -161,7 +162,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	if role.Bot {
 		b, err := discord.New(discord.Deps{
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
-			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Catalog: catalog, Metrics: metrics,
+			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
 		})
 		if err != nil {
 			return err
