@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="200" viewBox="0 0 512 200">
+  <title>Niro wordmark (for light backgrounds)</title>
+  <g fill="none" stroke="#121418" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 160 V40 L100 160 V40"/>
+    <path d="M172 160 V40"/>
+    <path d="M244 160 V40 H284 A30 30 0 0 1 284 100 H244 M282 100 L329 160"/>
+    <rect x="401" y="40" width="90" height="120" rx="45"/>
+  </g>
+</svg>

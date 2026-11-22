@@ -10,15 +10,15 @@ import type {
 } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api/client'
-import lockupDark from '../assets/nithro-lockup-dark.svg'
-import lockupLight from '../assets/nithro-lockup-light.svg'
+import lockupDark from '../assets/niro-lockup-dark.svg'
+import lockupLight from '../assets/niro-lockup-light.svg'
 
-/** The Nithro lockup, switching variant with the colour scheme. */
+/** The Niro lockup, switching variant with the colour scheme. */
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={clsx('inline-block', className)}>
-      <img src={lockupDark} alt="Nithro" className="hidden h-full dark:block" />
-      <img src={lockupLight} alt="Nithro" className="h-full dark:hidden" />
+      <img src={lockupDark} alt="Niro" className="hidden h-full dark:block" />
+      <img src={lockupLight} alt="Niro" className="h-full dark:hidden" />
     </span>
   )
 }

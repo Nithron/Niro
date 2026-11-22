@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1360" height="480" viewBox="0 0 1360 480">
-  <title>Nithro Discord profile banner</title>
-  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient>
-    <linearGradient id="band" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E2A3F"/><stop offset="1" stop-color="#0C3A31"/></linearGradient>
+  <title>Niro Dev Discord profile banner</title>
+  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#FFC24B"/><stop offset="1" stop-color="#FF7A45"/></linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2410"/><stop offset="1" stop-color="#3A1A12"/></linearGradient>
   </defs>
   <rect width="1360" height="480" fill="url(#band)"/>
   <g opacity="0.9" transform="translate(760 40) scale(1.0)"><svg x="0" y="0" width="560" height="302" viewBox="56 148 400 216"><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="44">

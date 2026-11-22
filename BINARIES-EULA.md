@@ -1,6 +1,6 @@
-# Nithro Official Build EULA (v1.0)
+# Niro Official Build EULA (v1.0)
 
-This End User License Agreement (“EULA”) governs use of Nithro Official Build Artifacts:
+This End User License Agreement (“EULA”) governs use of Niro Official Build Artifacts:
 container images, packages, update repositories, and signing keys (“Binaries”).
 By installing or using Binaries, you agree to this EULA.
 
@@ -11,13 +11,13 @@ By installing or using Binaries, you agree to this EULA.
 ## Restrictions
 You may NOT:
 - Redistribute, mirror, resell, sublicense, or make Binaries available to third parties.
-- Offer Nithro as a hosted/managed service to others without a Commercial/MSP license.
+- Offer Niro as a hosted/managed service to others without a Commercial/MSP license.
 - Circumvent access controls, modify or re-sign update repositories, or remove license checks.
 - Use Trademarks or brand assets except as allowed by the Trademark Policy.
 
 ## Updates & Telemetry
 - Updates may require an active subscription/license. We may disable update access when subscriptions lapse.
-- Nithro ships with no telemetry. Any telemetry added in future will be **opt-in** and documented.
+- Niro ships with no telemetry. Any telemetry added in future will be **opt-in** and documented.
 
 ## Ownership
 Binaries are licensed, not sold. Nithron retains all rights not expressly granted.

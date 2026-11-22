@@ -1,4 +1,4 @@
-# Nithro: Build Plan
+# Niro: Build Plan
 
 *v1, **approved by the PM on 2026-11-22**. Changes after approval are recorded in [decisions](decisions.md).*
 *Inputs: [decisions](decisions.md), [discovery research](research/2026-11-discovery.md), [Go library check](research/2026-11-go-library-check.md).*
@@ -20,7 +20,7 @@
 
 1. **Secure and private by default.** Request least-privilege permissions (never Administrator). Keep as little data as possible: message text is not stored in Postgres; the edit/delete log cache lives in Valkey with a TTL. Quarantine before banning, and a human confirms irreversible actions.
 2. **Platform-agnostic core.** Domain packages never import disgo. Discord is one adapter, which keeps a Fluxer adapter or a library swap cheap.
-3. **One codebase for hosted and self-hosted.** `nithro all` runs everything in one process for self-hosters. The hosted service runs `nithro bot` and `nithro api` separately so they can scale.
+3. **One codebase for hosted and self-hosted.** `niro all` runs everything in one process for self-hosters. The hosted service runs `niro bot` and `niro api` separately so they can scale.
 4. **Configuration is data.** Every setting is editable in the dashboard and applies live (pub/sub) without a restart. Every change is audited.
 5. **The free core stays free.** Only features that cost us money to run (AI, long retention, higher limits) are premium.
 6. **Tests first for domain logic,** especially the detection heuristics. Integration tests run against real Postgres and Valkey.
@@ -29,10 +29,10 @@
 
 ```mermaid
 flowchart LR
-  D[(Discord\nGateway + REST)] <--> B[nithro bot\ndisgo, sharded]
+  D[(Discord\nGateway + REST)] <--> B[niro bot\ndisgo, sharded]
   B <--> V[(Valkey\nconfig cache · pub/sub · counters\nmessage cache · job streams)]
   B <--> P[(PostgreSQL)]
-  A[nithro api\nREST · OAuth2 · embedded dashboard] <--> P
+  A[niro api\nREST · OAuth2 · embedded dashboard] <--> P
   A <--> V
   U[Dashboard SPA\nin the browser] <--> A
   A -- user OAuth2 --> D
@@ -47,7 +47,7 @@ flowchart LR
 ## 3. Repository layout
 
 ```
-cmd/nithro/              single binary: nithro all | bot | api | migrate | version
+cmd/niro/              single binary: niro all | bot | api | migrate | version
 internal/
   core/                  platform-agnostic types (guild, member, message, action) + module interfaces
   modules/               moderation/ guardian/ logging/ roles/ welcome/ tickets/
@@ -113,7 +113,7 @@ v0.1 ships in **English only**, but it's built so another language can be added 
 
 ## 6. Discord application setup
 
-- **Two applications:** **Nithro** (production, already created) and **Nithro Dev**, plus a private test server. You create Nithro Dev because it's tied to your account; I'll write the step-by-step.
+- **Two applications:** **Niro** (production, already created) and **Niro Dev**, plus a private test server. You create Niro Dev because it's tied to your account; I'll write the step-by-step.
 - **Install context:** server install for v0.1. User install comes with the v0.3 AI features.
 - **Gateway intents:**
   - Guilds, Guild Moderation, Guild Messages, AutoMod Configuration + Execution, Guild Voice States (voice logs).
@@ -137,7 +137,7 @@ Sizes are relative (S/M/L), not calendar promises.
   - Permission and role-hierarchy checks.
   - Upload of the brand status emojis as application emojis.
 - **API + dashboard shell:** Discord OAuth2 login, sessions, server picker (servers where you have *Manage Server*, flagged if the bot is present), invite flow, branded layout, module toggles.
-- **Done when:** Nithro Dev comes online in the test server and answers `/ping` and `/about`. You log in to the dashboard, toggle a module, and the bot reacts within about a second without a restart.
+- **Done when:** Niro Dev comes online in the test server and answers `/ping` and `/about`. You log in to the dashboard, toggle a module, and the bot reacts within about a second without a restart.
 
 ### M1: Moderation core (M)
 - **Commands:** `/warn /timeout /untimeout /kick /ban /unban /purge` (filter by user, bots, links or count), `/case view|reason|delete`, `/history`, `/note`.
@@ -157,7 +157,7 @@ Sizes are relative (S/M/L), not calendar promises.
   - Curated domain blocklist with an updatable feed (licences of public lists to be checked).
   - Look-alike domain checks (punycode and homoglyphs of Discord, Steam, etc.).
   - Masked markdown links.
-  - **Nithro never fetches user links** (privacy and SSRF safety).
+  - **Niro never fetches user links** (privacy and SSRF safety).
 - **Quarantine:**
   - Delete every copy of the message.
   - Time out the user (up to 28 days) or apply a quarantine role, and strip their roles (saved so they can be restored).
@@ -233,5 +233,5 @@ Sizes are relative (S/M/L), not calendar promises.
 
 ## 11. Decisions before M0: resolved
 
-1. Plan approved. 2. Nithro Dev application and test server created (configuration in [dev-setup](dev-setup.md)). 3. Retention defaults approved. 4. English first, built for more languages (§5a).
-5. **Still open, needed by M5:** hosting provider and domain. See [domain options](research/2026-11-domains.md).
+1. Plan approved. 2. Niro Dev application and test server created (configuration in [dev-setup](dev-setup.md)). 3. Retention defaults approved. 4. English first, built for more languages (§5a).
+5. **Still open, needed by M5:** hosting provider. The domain is `niro.nithron.com` (decision 14).

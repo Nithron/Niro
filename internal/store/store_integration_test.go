@@ -11,9 +11,9 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/store"
-	"github.com/nithron/nithro/internal/testutil"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/store"
+	"github.com/nithron/niro/internal/testutil"
 )
 
 func newStore(t *testing.T) *store.Store {
@@ -21,7 +21,7 @@ func newStore(t *testing.T) *store.Store {
 	testutil.RequireDocker(t)
 	ctx := context.Background()
 	ctr, err := postgres.Run(ctx, "postgres:18-alpine",
-		postgres.WithDatabase("nithro"), postgres.WithUsername("nithro"), postgres.WithPassword("nithro"),
+		postgres.WithDatabase("niro"), postgres.WithUsername("niro"), postgres.WithPassword("niro"),
 		postgres.BasicWaitStrategies())
 	testcontainers.CleanupContainer(t, ctr)
 	if err != nil {

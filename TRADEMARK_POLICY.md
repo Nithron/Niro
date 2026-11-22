@@ -1,22 +1,22 @@
-# Nithro Trademark Policy (v1.0)
+# Niro Trademark Policy (v1.0)
 
-This policy governs use of Nithron’s trademarks: “Nithron”, “NithronOS”, “nOS”, “NithronAI”, “nAI”, “Nithro”, the N-mark, related wordmarks, and logos (“Trademarks”).
+This policy governs use of Nithron’s trademarks: “Nithron”, “NithronOS”, “nOS”, “NithronAI”, “nAI”, “Niro”, the N-mark, related wordmarks, and logos (“Trademarks”).
 
 ## Allowed (without asking)
-- Truthful, nominative references: “X is a fork of Nithro” (plain text only).
+- Truthful, nominative references: “X is a fork of Niro” (plain text only).
 - Links to https://nithron.com or the GitHub repo.
 - Screenshots in reviews/tutorials with attribution.
 
 ## Not allowed (without written permission)
 - Using the Trademarks in your project, fork, company, product, domain, social handle, or app name.  
-  *Disallowed examples:* “BetterNithro”, “Nithro Pro”, “nithro-cloud”.
+  *Disallowed examples:* “BetterNiro”, “Niro Pro”, “niro-cloud”.
 - Using logos/brand assets in your UI, splash, about box, or marketing.
 - Suggesting sponsorship, affiliation, or official status.
 - Registering domains that include or are confusingly similar to the Trademarks.
 
 ## Forks & Distributions
 - Remove all Nithron logos and replace names with your own brand.
-- Include: “This project is not affiliated with Nithron. It is an independent fork of Nithro.” in README/about.
+- Include: “This project is not affiliated with Nithron. It is an independent fork of Niro.” in README/about.
 - Keep copyright and license notices intact.
 
 ## Merch, Events, Services

@@ -5,7 +5,7 @@ import (
 	"github.com/disgoorg/omit"
 	"golang.org/x/text/language"
 
-	"github.com/nithron/nithro/internal/i18n"
+	"github.com/nithron/niro/internal/i18n"
 )
 
 // commands returns the slash commands to register. Descriptions come from the

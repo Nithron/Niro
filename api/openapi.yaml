@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: Nithro API
+  title: Niro API
   version: 0.1.0
   description: |
-    API behind the Nithro dashboard. Authentication is a session cookie set by
+    API behind the Niro dashboard. Authentication is a session cookie set by
     the Discord OAuth2 login flow (`/auth/login` → `/auth/callback`), which is
     not part of this spec. State-changing requests must come from the
     dashboard's origin (checked via the `Origin` header).
@@ -32,10 +32,10 @@ paths:
       summary: Servers the user can manage
       description: |
         Servers where the user is the owner or has Administrator or Manage
-        Server, with whether Nithro is already in them. Cached for 60 seconds.
+        Server, with whether Niro is already in them. Cached for 60 seconds.
       responses:
         "200":
-          description: Manageable servers, Nithro-present first, then by name
+          description: Manageable servers, Niro-present first, then by name
           content:
             application/json:
               schema:
@@ -311,7 +311,7 @@ paths:
   /invite:
     get:
       operationId: getInvite
-      summary: Link to add Nithro to a server
+      summary: Link to add Niro to a server
       security: []
       parameters:
         - name: guildId
@@ -330,7 +330,7 @@ components:
     sessionCookie:
       type: apiKey
       in: cookie
-      name: nithro_session
+      name: niro_session
   parameters:
     GuildId:
       name: guildId
@@ -364,7 +364,7 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     BotNotInGuild:
-      description: Nithro is not in this server yet
+      description: Niro is not in this server yet
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -397,7 +397,7 @@ components:
         id: { $ref: "#/components/schemas/Snowflake" }
         name: { type: string }
         iconUrl: { type: string, format: uri }
-        botPresent: { type: boolean, description: Nithro is in this server }
+        botPresent: { type: boolean, description: Niro is in this server }
         owner: { type: boolean, description: The user owns this server }
     ModuleState:
       type: object

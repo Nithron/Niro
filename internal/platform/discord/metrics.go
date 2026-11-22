@@ -17,13 +17,13 @@ type metrics struct {
 func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 	m := &metrics{
 		guilds: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "nithro_bot_guilds", Help: "Guilds in this process's cache.",
+			Name: "niro_bot_guilds", Help: "Guilds in this process's cache.",
 		}),
 		interactions: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "nithro_bot_interactions_total", Help: "Interactions handled, by name and result.",
+			Name: "niro_bot_interactions_total", Help: "Interactions handled, by name and result.",
 		}, []string{"name", "result"}),
 		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name: "nithro_bot_interaction_duration_seconds", Help: "Time to handle an interaction.",
+			Name: "niro_bot_interaction_duration_seconds", Help: "Time to handle an interaction.",
 			Buckets: []float64{.025, .05, .1, .25, .5, 1, 2.5},
 		}, []string{"name"}),
 	}

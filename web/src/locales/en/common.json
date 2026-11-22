@@ -1,16 +1,16 @@
 {
   "app": {
-    "name": "Nithro",
+    "name": "Niro",
     "tagline": "The security-first community bot",
     "loading": "Loading…",
     "retry": "Try again",
     "genericError": "Something went wrong. Please try again."
   },
   "login": {
-    "title": "Welcome to Nithro",
-    "body": "Log in with Discord to manage Nithro in your servers.",
+    "title": "Welcome to Niro",
+    "body": "Log in with Discord to manage Niro in your servers.",
     "button": "Log in with Discord",
-    "privacy": "Nithro only reads your username, avatar and server list. It never sees your password or messages.",
+    "privacy": "Niro only reads your username, avatar and server list. It never sees your password or messages.",
     "failed": "Login didn't work. Please try again.",
     "cancelled": "Login was cancelled."
   },
@@ -22,10 +22,10 @@
     "title": "Your servers",
     "subtitle": "Servers where you're the owner or have Manage Server.",
     "manage": "Manage",
-    "add": "Add Nithro",
+    "add": "Add Niro",
     "owner": "Owner",
-    "empty": "You don't manage any servers yet. You need Manage Server permission in a server to set up Nithro there.",
-    "addedHint": "Just added Nithro? It can take up to a minute to show up here."
+    "empty": "You don't manage any servers yet. You need Manage Server permission in a server to set up Niro there.",
+    "addedHint": "Just added Niro? It can take up to a minute to show up here."
   },
   "guild": {
     "back": "All servers",
@@ -34,8 +34,8 @@
     "alwaysOn": "Always on",
     "saved": "Saved",
     "saveFailed": "Couldn't save that change. It was undone.",
-    "notInServerTitle": "Nithro isn't in this server yet",
-    "notInServerBody": "Add Nithro to start configuring it.",
+    "notInServerTitle": "Niro isn't in this server yet",
+    "notInServerBody": "Add Niro to start configuring it.",
     "forbidden": "You can't manage this server."
   },
   "modules": {
@@ -93,7 +93,7 @@
     "title": "Moderation settings",
     "subtitle": "How moderation commands behave in this server.",
     "logChannel": "Moderation log channel",
-    "logChannelHelp": "Every case is posted here. Nithro needs permission to send messages in it.",
+    "logChannelHelp": "Every case is posted here. Niro needs permission to send messages in it.",
     "noLog": "No log channel",
     "dmUsers": "Notify users by DM",
     "dmUsersHelp": "Send members a private message when they are warned, timed out, kicked or banned. Moderators can skip it per action with the silent option.",
@@ -160,7 +160,7 @@
   },
   "automod": {
     "title": "AutoMod",
-    "subtitle": "Discord's built-in AutoMod, managed from here. Rules run on Discord's side, instantly, even if Nithro is offline.",
+    "subtitle": "Discord's built-in AutoMod, managed from here. Rules run on Discord's side, instantly, even if Niro is offline.",
     "presetsTitle": "Quick add",
     "presetsSubtitle": "Ready-made rules you can add with one click and adjust later.",
     "presets": {
@@ -192,7 +192,7 @@
     "newRule": "New rule",
     "editRule": "Edit rule",
     "enabled": "Enabled",
-    "createdByNithro": "Created by Nithro",
+    "createdByNiro": "Created by Niro",
     "deleteConfirm": "Delete the rule \"{{name}}\"?",
     "triggers": {
       "keyword": "Keywords",

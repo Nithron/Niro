@@ -1,4 +1,4 @@
-# English is Nithro's source language. Every key used in code must exist here
+# English is Niro's source language. Every key used in code must exist here
 # (enforced by internal/i18n tests). To add a language, copy this file to
 # <lang>.toml (e.g. nl.toml) and translate the values; keep the keys.
 
@@ -17,16 +17,16 @@
 "module.tickets.name" = "Tickets"
 "module.tickets.description" = "Private support tickets with staff roles and transcripts."
 
-"cmd.ping.description" = "Check that Nithro is online and how fast it responds"
+"cmd.ping.description" = "Check that Niro is online and how fast it responds"
 "cmd.ping.reply" = "Pong! Gateway latency: **{{.Latency}}**"
 
-"cmd.about.description" = "About Nithro"
-"cmd.about.title" = "Nithro"
+"cmd.about.description" = "About Niro"
+"cmd.about.title" = "Niro"
 "cmd.about.body" = "The security-first community bot by Nithron.\nVersion `{{.Version}}`"
 "cmd.about.dashboard" = "Open dashboard"
 "cmd.about.website" = "nithron.com"
 
-"cmd.modules.description" = "Show which Nithro modules are enabled in this server"
+"cmd.modules.description" = "Show which Niro modules are enabled in this server"
 "cmd.modules.title" = "Modules in {{.Server}}"
 "cmd.modules.enabled" = "Enabled"
 "cmd.modules.disabled" = "Disabled"

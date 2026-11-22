@@ -10,9 +10,9 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/api/apigen"
-	"github.com/nithron/nithro/internal/core"
-	dc "github.com/nithron/nithro/internal/platform/discord"
+	"github.com/nithron/niro/internal/api/apigen"
+	"github.com/nithron/niro/internal/core"
+	dc "github.com/nithron/niro/internal/platform/discord"
 )
 
 const userGuildsTTL = 60 * time.Second
@@ -86,7 +86,7 @@ func (h handlers) ListGuildModules(ctx context.Context, req apigen.ListGuildModu
 	case errors.Is(err, errForbidden):
 		return apigen.ListGuildModules403JSONResponse{ForbiddenJSONResponse: apigen.ForbiddenJSONResponse(apiErr(apigen.ErrorCodeForbidden, "You can't manage this server."))}, nil
 	case errors.Is(err, errBotNotInGuild):
-		return apigen.ListGuildModules409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Nithro to this server first."))}, nil
+		return apigen.ListGuildModules409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Niro to this server first."))}, nil
 	case err != nil:
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (h handlers) UpdateGuildModule(ctx context.Context, req apigen.UpdateGuildM
 	case errors.Is(err, errForbidden):
 		return apigen.UpdateGuildModule403JSONResponse{ForbiddenJSONResponse: apigen.ForbiddenJSONResponse(apiErr(apigen.ErrorCodeForbidden, "You can't manage this server."))}, nil
 	case errors.Is(err, errBotNotInGuild):
-		return apigen.UpdateGuildModule409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Nithro to this server first."))}, nil
+		return apigen.UpdateGuildModule409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Niro to this server first."))}, nil
 	case err != nil:
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (h handlers) UpdateGuildModule(ctx context.Context, req apigen.UpdateGuildM
 	case errors.Is(err, core.ErrModuleAlwaysOn):
 		return apigen.UpdateGuildModule400JSONResponse{BadRequestJSONResponse: apigen.BadRequestJSONResponse(apiErr(apigen.ErrorCodeModuleAlwaysOn, "This module is always on."))}, nil
 	case errors.Is(err, core.ErrUnknownGuild):
-		return apigen.UpdateGuildModule409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Nithro to this server first."))}, nil
+		return apigen.UpdateGuildModule409JSONResponse{BotNotInGuildJSONResponse: apigen.BotNotInGuildJSONResponse(apiErr(apigen.ErrorCodeBotNotInGuild, "Add Niro to this server first."))}, nil
 	case err != nil:
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (h handlers) GetInvite(_ context.Context, req apigen.GetInviteRequestObject
 // manageableGuilds returns the servers the user may configure, from a
 // 60-second per-user cache to stay well inside Discord's rate limits.
 func (h handlers) manageableGuilds(ctx context.Context, sess *Session) ([]UserGuild, error) {
-	key := "nithro:user-guilds:" + sess.User.ID.String()
+	key := "niro:user-guilds:" + sess.User.ID.String()
 	var all []UserGuild
 	found, err := h.kv.GetJSON(ctx, key, &all)
 	if err != nil {
@@ -170,7 +170,7 @@ func (h handlers) manageableGuilds(ctx context.Context, sess *Session) ([]UserGu
 }
 
 // authorizeGuild checks the user may manage the server and, if requireBot,
-// that Nithro is in it. It returns errForbidden for servers the user cannot
+// that Niro is in it. It returns errForbidden for servers the user cannot
 // manage or is not in, so the API never reveals whether a server exists.
 func (h handlers) authorizeGuild(ctx context.Context, rawID string, requireBot bool) (UserGuild, bool, error) {
 	id, err := snowflake.Parse(rawID)

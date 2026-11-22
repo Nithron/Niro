@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/nithron/nithro/internal/modules/moderation"
-	"github.com/nithron/nithro/internal/store/dbq"
+	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/store/dbq"
 )
 
 var _ moderation.CaseStore = (*Store)(nil)

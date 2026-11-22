@@ -10,11 +10,11 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/api/apigen"
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/modules/moderation"
-	dc "github.com/nithron/nithro/internal/platform/discord"
-	"github.com/nithron/nithro/internal/rpc"
+	"github.com/nithron/niro/internal/api/apigen"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/moderation"
+	dc "github.com/nithron/niro/internal/platform/discord"
+	"github.com/nithron/niro/internal/rpc"
 )
 
 // RPCCaller asks the bot to do things that need the bot token.
@@ -42,7 +42,7 @@ func guildErr(err error) error {
 	case errors.Is(err, errForbidden):
 		return httpErr(http.StatusForbidden, apigen.ErrorCodeForbidden, "You can't manage this server.")
 	case errors.Is(err, errBotNotInGuild):
-		return httpErr(http.StatusConflict, apigen.ErrorCodeBotNotInGuild, "Add Nithro to this server first.")
+		return httpErr(http.StatusConflict, apigen.ErrorCodeBotNotInGuild, "Add Niro to this server first.")
 	}
 	return err
 }
@@ -91,7 +91,7 @@ func convert(dst, src any) error {
 const guildMetaTTL = 30 * time.Second
 
 func (h handlers) guildMeta(ctx context.Context, guildID snowflake.ID) (dc.GuildMeta, error) {
-	key := "nithro:guild-meta:" + guildID.String()
+	key := "niro:guild-meta:" + guildID.String()
 	var meta dc.GuildMeta
 	if found, err := h.kv.GetJSON(ctx, key, &meta); err == nil && found {
 		return meta, nil

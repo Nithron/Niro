@@ -1,4 +1,4 @@
-// Package core holds Nithro's platform-agnostic domain: modules, per-guild
+// Package core holds Niro's platform-agnostic domain: modules, per-guild
 // configuration and the rules that apply regardless of chat platform.
 // It must never import a platform SDK (disgo etc.); adapters translate.
 package core

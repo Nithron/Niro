@@ -31,12 +31,12 @@ func TestLoadDefaults(t *testing.T) {
 
 func TestLoadValues(t *testing.T) {
 	c, err := Load(env(map[string]string{
-		"NITHRO_ENV":                   "production",
-		"NITHRO_LOG_LEVEL":             "debug",
-		"NITHRO_PUBLIC_URL":            "https://app.example.gg/",
-		"NITHRO_DISCORD_CLIENT_ID":     "1234567890123456789",
-		"NITHRO_DISCORD_CLIENT_SECRET": "s",
-		"NITHRO_DISCORD_TOKEN":         "t",
+		"NIRO_ENV":                   "production",
+		"NIRO_LOG_LEVEL":             "debug",
+		"NIRO_PUBLIC_URL":            "https://app.example.gg/",
+		"NIRO_DISCORD_CLIENT_ID":     "1234567890123456789",
+		"NIRO_DISCORD_CLIENT_SECRET": "s",
+		"NIRO_DISCORD_TOKEN":         "t",
 	}))
 	if err != nil {
 		t.Fatal(err)
@@ -54,15 +54,15 @@ func TestLoadValues(t *testing.T) {
 
 func TestLoadRejectsBadValues(t *testing.T) {
 	_, err := Load(env(map[string]string{
-		"NITHRO_ENV":               "staging",
-		"NITHRO_LOG_FORMAT":        "xml",
-		"NITHRO_PUBLIC_URL":        "localhost:8080",
-		"NITHRO_DISCORD_CLIENT_ID": "abc",
+		"NIRO_ENV":               "staging",
+		"NIRO_LOG_FORMAT":        "xml",
+		"NIRO_PUBLIC_URL":        "localhost:8080",
+		"NIRO_DISCORD_CLIENT_ID": "abc",
 	}))
 	if err == nil {
 		t.Fatal("expected errors")
 	}
-	for _, want := range []string{"NITHRO_ENV", "NITHRO_LOG_FORMAT", "NITHRO_PUBLIC_URL", "NITHRO_DISCORD_CLIENT_ID"} {
+	for _, want := range []string{"NIRO_ENV", "NIRO_LOG_FORMAT", "NIRO_PUBLIC_URL", "NIRO_DISCORD_CLIENT_ID"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error does not mention %s: %v", want, err)
 		}
@@ -74,7 +74,7 @@ func TestValidateByRole(t *testing.T) {
 	if err := c.Validate(Role{}); err != nil {
 		t.Fatalf("no role should need nothing: %v", err)
 	}
-	if err := c.Validate(Role{Bot: true}); err == nil || !strings.Contains(err.Error(), "NITHRO_DISCORD_TOKEN") {
+	if err := c.Validate(Role{Bot: true}); err == nil || !strings.Contains(err.Error(), "NIRO_DISCORD_TOKEN") {
 		t.Fatalf("bot without token: %v", err)
 	}
 	err := c.Validate(Role{API: true})
@@ -83,8 +83,8 @@ func TestValidateByRole(t *testing.T) {
 	}
 
 	prod, _ := Load(env(map[string]string{
-		"NITHRO_ENV": "production", "NITHRO_DISCORD_TOKEN": "t", "NITHRO_DEV_GUILD_ID": "1",
-		"NITHRO_DISCORD_CLIENT_ID": "1", "NITHRO_DISCORD_CLIENT_SECRET": "s",
+		"NIRO_ENV": "production", "NIRO_DISCORD_TOKEN": "t", "NIRO_DEV_GUILD_ID": "1",
+		"NIRO_DISCORD_CLIENT_ID": "1", "NIRO_DISCORD_CLIENT_SECRET": "s",
 	}))
 	err = prod.Validate(Role{Bot: true, API: true})
 	if err == nil || !strings.Contains(err.Error(), "https") || !strings.Contains(err.Error(), "DEV_GUILD_ID") {

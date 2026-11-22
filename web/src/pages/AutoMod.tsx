@@ -110,7 +110,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                     <p className="truncate font-semibold">{r.name}</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                       <Badge tone="brand">{t(`automod.triggers.${r.trigger}`)}</Badge>
-                      {r.createdByBot && <Badge>{t('automod.createdByNithro')}</Badge>}
+                      {r.createdByBot && <Badge>{t('automod.createdByNiro')}</Badge>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

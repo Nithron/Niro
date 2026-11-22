@@ -1,4 +1,4 @@
-# Nithro
+# Niro
 
 Security-first Discord bot by Nithron. Current phase: building v0.1 (see docs/plan.md §7). Decisions: docs/decisions.md.
 

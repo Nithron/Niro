@@ -23,7 +23,7 @@ const (
 var (
 	ErrUnknownModule   = errors.New("unknown module")
 	ErrModuleAlwaysOn  = errors.New("module cannot be disabled")
-	ErrUnknownGuild    = errors.New("guild not known to Nithro")
+	ErrUnknownGuild    = errors.New("guild not known to Niro")
 	ErrNoSettings      = errors.New("module has no settings")
 	ErrInvalidSettings = errors.New("invalid settings")
 	errNilDependencies = errors.New("config service: nil dependency")

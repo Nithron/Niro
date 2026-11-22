@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS := -s -w -X github.com/nithron/nithro/internal/buildinfo.Version=$(VERSION)
+LDFLAGS := -s -w -X github.com/nithron/niro/internal/buildinfo.Version=$(VERSION)
 COMPOSE := docker compose -f deploy/compose.dev.yml
 
 SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
@@ -20,16 +20,16 @@ dev-down: ## Stop the development dependencies (data is kept)
 	$(COMPOSE) down
 
 run: web-build ## Build the dashboard, then run bot + API + dashboard on :8080
-	go run -ldflags "$(LDFLAGS)" ./cmd/nithro all
+	go run -ldflags "$(LDFLAGS)" ./cmd/niro all
 
 run-api: ## Run only the API (use with `make web-dev`)
-	go run ./cmd/nithro api
+	go run ./cmd/niro api
 
 run-bot: ## Run only the bot
-	go run ./cmd/nithro bot
+	go run ./cmd/niro bot
 
 migrate: ## Apply database migrations
-	go run ./cmd/nithro migrate
+	go run ./cmd/niro migrate
 
 web-install: ## Install dashboard dependencies
 	cd web && pnpm install --frozen-lockfile
@@ -59,11 +59,11 @@ lint: ## Run golangci-lint and the dashboard linters
 	$(GOLANGCI) run ./...
 	cd web && pnpm lint && pnpm typecheck
 
-build: web-build ## Build the nithro binary into bin/
-	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/nithro ./cmd/nithro
+build: web-build ## Build the niro binary into bin/
+	CGO_ENABLED=0 go build -trimpath -ldflags "$(LDFLAGS)" -o bin/niro ./cmd/niro
 
 docker: ## Build the container image
-	docker build -f deploy/Dockerfile --build-arg VERSION=$(VERSION) -t nithro:$(VERSION) .
+	docker build -f deploy/Dockerfile --build-arg VERSION=$(VERSION) -t niro:$(VERSION) .
 
 clean: ## Remove build output
 	rm -rf bin web/node_modules

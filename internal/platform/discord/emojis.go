@@ -13,12 +13,12 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/assets"
+	"github.com/nithron/niro/assets"
 )
 
 // Brand emoji names (files in assets/brand/png/discord/emojis).
 const (
-	EmojiNithro = "nithro"
+	EmojiNiro   = "niro"
 	EmojiOK     = "ok"
 	EmojiWarn   = "warn"
 	EmojiError  = "error"
@@ -29,11 +29,11 @@ const (
 
 // fallbacks are used until (or if) the application emojis are uploaded.
 var fallbacks = map[string]string{
-	EmojiNithro: "", EmojiOK: "✅", EmojiWarn: "⚠️", EmojiError: "❌",
+	EmojiNiro: "", EmojiOK: "✅", EmojiWarn: "⚠️", EmojiError: "❌",
 	EmojiInfo: "ℹ️", EmojiShield: "🛡️", EmojiLock: "🔒",
 }
 
-// Emojis uploads Nithro's brand emojis to the Discord application (they are
+// Emojis uploads Niro's brand emojis to the Discord application (they are
 // owned by the app and usable in every server) and formats them in messages.
 type Emojis struct {
 	rest  rest.Applications

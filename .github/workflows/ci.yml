@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Integration tests use Docker via testcontainers; fail instead of skipping.
-      NITHRO_REQUIRE_INTEGRATION: "1"
+      NIRO_REQUIRE_INTEGRATION: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6

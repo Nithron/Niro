@@ -14,7 +14,7 @@ const tabs = [
   { to: '/guilds/$guildId/automod', key: 'tabs.automod', exact: false },
 ] as const
 
-/** Server header, tabs, and the active tab (or an invite if Nithro isn't there). */
+/** Server header, tabs, and the active tab (or an invite if Niro isn't there). */
 export function GuildLayout({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
   const guild = useGuild(guildId)

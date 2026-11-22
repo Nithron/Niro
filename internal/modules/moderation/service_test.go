@@ -12,7 +12,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/core"
+	"github.com/nithron/niro/internal/core"
 )
 
 // ---- fakes ----------------------------------------------------------------
@@ -237,7 +237,7 @@ func newEnv(t *testing.T) *env {
 			memberID: {Rank: core.Rank{ID: memberID, TopRolePosition: 1}, Name: "member"},
 			adminID:  {Rank: core.Rank{ID: adminID, TopRolePosition: 9}, Name: "admin"},
 		},
-		bot:    Member{Rank: core.Rank{ID: botID, TopRolePosition: 8}, Name: "Nithro"},
+		bot:    Member{Rank: core.Rank{ID: botID, TopRolePosition: 8}, Name: "Niro"},
 		banned: map[snowflake.ID]bool{},
 	}
 	e.notif = &fakeNotifier{p: e.plat}
@@ -426,7 +426,7 @@ func TestTempBanIsLiftedByScheduler(t *testing.T) {
 	if !out.Case.Details.Temporary || len(e.store.scheduled) != 1 {
 		t.Fatalf("temp ban not scheduled: %+v", out.Case)
 	}
-	bot := Actor{Rank: core.Rank{ID: botID}, Name: "Nithro"}
+	bot := Actor{Rank: core.Rank{ID: botID}, Name: "Niro"}
 	n, err := e.svc.RunDue(ctx, bot)
 	if err != nil || n != 1 {
 		t.Fatalf("RunDue = %d, %v", n, err)
@@ -456,7 +456,7 @@ func TestScheduledUnbanAfterManualUnbanIsNoop(t *testing.T) {
 		t.Fatal("manual unban should cancel the scheduled unban")
 	}
 	// Even if the action was already claimed, running it is harmless.
-	_, _ = e.svc.RunDue(ctx, Actor{Name: "Nithro"})
+	_, _ = e.svc.RunDue(ctx, Actor{Name: "Niro"})
 	if note := e.store.done[1]; note != "already unbanned" {
 		t.Fatalf("scheduled action note = %q", note)
 	}

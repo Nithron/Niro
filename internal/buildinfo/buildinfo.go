@@ -1,6 +1,6 @@
 // Package buildinfo exposes the version stamped in at build time:
 //
-//	go build -ldflags "-X github.com/nithron/nithro/internal/buildinfo.Version=v0.1.0"
+//	go build -ldflags "-X github.com/nithron/niro/internal/buildinfo.Version=v0.1.0"
 package buildinfo
 
 import "runtime/debug"

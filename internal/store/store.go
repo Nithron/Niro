@@ -1,4 +1,4 @@
-// Package store is Nithro's PostgreSQL persistence layer. Queries live in
+// Package store is Niro's PostgreSQL persistence layer. Queries live in
 // queries/*.sql and are compiled to type-safe Go by sqlc (package dbq);
 // migrations live in migrations/*.sql and are embedded in the binary.
 package store
@@ -20,8 +20,8 @@ import (
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/store/dbq"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/store/dbq"
 )
 
 //go:embed migrations/*.sql

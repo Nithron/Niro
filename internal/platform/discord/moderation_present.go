@@ -11,8 +11,8 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/i18n"
-	"github.com/nithron/nithro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 const (

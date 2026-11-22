@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	sessionCookie    = "nithro_session"
-	stateCookie      = "nithro_oauth_state"
+	sessionCookie    = "niro_session"
+	stateCookie      = "niro_oauth_state"
 	maxSessionLength = 7 * 24 * time.Hour
 )
 
@@ -37,7 +37,7 @@ type sessions struct{ kv KV }
 // does not reveal usable cookie values.
 func sessionKey(id string) string {
 	sum := sha256.Sum256([]byte(id))
-	return "nithro:session:" + hex.EncodeToString(sum[:])
+	return "niro:session:" + hex.EncodeToString(sum[:])
 }
 
 func newRandomToken() string {

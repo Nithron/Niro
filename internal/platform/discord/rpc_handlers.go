@@ -9,8 +9,8 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/nithron/nithro/internal/modules/moderation"
-	"github.com/nithron/nithro/internal/rpc"
+	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/rpc"
 )
 
 // RPC method names (shared with the API).
@@ -288,7 +288,7 @@ func (b *Bot) rpcAutoModCreate(ctx context.Context, r rpc.Request) (any, error) 
 		Name: rule.Name, EventType: discord.AutoModerationEventTypeMessageSend, TriggerType: triggerTypes[rule.Trigger],
 		TriggerMetadata: meta, Actions: actions, Enabled: &rule.Enabled,
 		ExemptRoles: rule.ExemptRoleIDs, ExemptChannels: rule.ExemptChannelIDs,
-	}, rest.WithCtx(ctx), rest.WithReason("Created from the Nithro dashboard"))
+	}, rest.WithCtx(ctx), rest.WithReason("Created from the Niro dashboard"))
 	if err != nil {
 		return nil, discordRPCError(err)
 	}
@@ -309,7 +309,7 @@ func (b *Bot) rpcAutoModUpdate(ctx context.Context, r rpc.Request) (any, error) 
 	updated, err := b.client.Rest.UpdateAutoModerationRule(r.GuildID, rule.ID, discord.AutoModerationRuleUpdate{
 		Name: &rule.Name, TriggerMetadata: meta, Actions: &actions, Enabled: &rule.Enabled,
 		ExemptRoles: &exemptRoles, ExemptChannels: &exemptChannels,
-	}, rest.WithCtx(ctx), rest.WithReason("Updated from the Nithro dashboard"))
+	}, rest.WithCtx(ctx), rest.WithReason("Updated from the Niro dashboard"))
 	if isNotFound(err) {
 		return nil, rpc.Errorf(rpc.CodeNotFound, "rule not found")
 	}
@@ -325,7 +325,7 @@ func (b *Bot) rpcAutoModDelete(ctx context.Context, r rpc.Request) (any, error) 
 	if err := r.Bind(&p); err != nil {
 		return nil, err
 	}
-	err := b.client.Rest.DeleteAutoModerationRule(r.GuildID, p.ID, rest.WithCtx(ctx), rest.WithReason("Deleted from the Nithro dashboard"))
+	err := b.client.Rest.DeleteAutoModerationRule(r.GuildID, p.ID, rest.WithCtx(ctx), rest.WithReason("Deleted from the Niro dashboard"))
 	if isNotFound(err) {
 		return nil, rpc.Errorf(rpc.CodeNotFound, "rule not found")
 	}

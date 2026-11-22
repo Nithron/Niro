@@ -1,12 +1,12 @@
-// Command nithro runs the Nithro Discord bot and/or its dashboard API.
+// Command niro runs the Niro Discord bot and/or its dashboard API.
 //
-//	nithro all       bot + API + dashboard in one process (self-hosting, development)
-//	nithro bot       Discord gateway only
-//	nithro api       dashboard + API only
-//	nithro migrate   apply database migrations and exit
-//	nithro version   print the version
+//	niro all       bot + API + dashboard in one process (self-hosting, development)
+//	niro bot       Discord gateway only
+//	niro api       dashboard + API only
+//	niro migrate   apply database migrations and exit
+//	niro version   print the version
 //
-// Configuration comes from NITHRO_* environment variables; in development a
+// Configuration comes from NIRO_* environment variables; in development a
 // .env file in the working directory is loaded too (see .env.example).
 package main
 
@@ -25,21 +25,21 @@ import (
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/nithron/nithro/internal/api"
-	"github.com/nithron/nithro/internal/buildinfo"
-	"github.com/nithron/nithro/internal/cache"
-	"github.com/nithron/nithro/internal/config"
-	"github.com/nithron/nithro/internal/core"
-	"github.com/nithron/nithro/internal/i18n"
-	"github.com/nithron/nithro/internal/modules/moderation"
-	"github.com/nithron/nithro/internal/observability"
-	"github.com/nithron/nithro/internal/platform/discord"
-	"github.com/nithron/nithro/internal/rpc"
-	"github.com/nithron/nithro/internal/store"
-	"github.com/nithron/nithro/web"
+	"github.com/nithron/niro/internal/api"
+	"github.com/nithron/niro/internal/buildinfo"
+	"github.com/nithron/niro/internal/cache"
+	"github.com/nithron/niro/internal/config"
+	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/observability"
+	"github.com/nithron/niro/internal/platform/discord"
+	"github.com/nithron/niro/internal/rpc"
+	"github.com/nithron/niro/internal/store"
+	"github.com/nithron/niro/web"
 )
 
-const usage = `Usage: nithro <command>
+const usage = `Usage: niro <command>
 
 Commands:
   all       run the bot, API and dashboard in one process
@@ -93,7 +93,7 @@ func run(ctx context.Context, args []string, getenv func(string) string, stdout,
 	log := observability.NewLogger(stderr, cfg.LogLevel, cfg.LogFormat).With("version", buildinfo.String())
 
 	if err := start(ctx, cmd, role, cfg, log); err != nil {
-		log.Error("nithro stopped with an error", "err", err)
+		log.Error("niro stopped with an error", "err", err)
 		return 1
 	}
 	return 0
@@ -107,7 +107,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	defer pool.Close()
 
 	// `all` migrates on start so self-hosters need one command; the hosted
-	// deployment runs `nithro migrate` as a separate release step.
+	// deployment runs `niro migrate` as a separate release step.
 	if cmd == "migrate" || cmd == "all" {
 		results, err := store.Migrate(ctx, pool)
 		if err != nil {

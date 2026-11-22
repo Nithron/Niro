@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="216" viewBox="56 148 400 216">
-  <title>Nithro mark (for light backgrounds)</title>
+  <title>Niro mark (for light backgrounds)</title>
   <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#0B8FE0"/><stop offset="1" stop-color="#0EA57D"/></linearGradient></defs>
   <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="44">
     <path d="M144 180 L88 256 L144 332" stroke="url(#g)"/>

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Build: docker build -f deploy/Dockerfile --build-arg VERSION=v0.1.0 -t nithro .
+# Build: docker build -f deploy/Dockerfile --build-arg VERSION=v0.1.0 -t niro .
 
 FROM node:26-alpine AS web
 WORKDIR /src/web
@@ -18,12 +18,12 @@ COPY . .
 COPY --from=web /src/web/dist ./web/dist
 ARG VERSION=dev
 RUN CGO_ENABLED=0 go build -trimpath \
-      -ldflags "-s -w -X github.com/nithron/nithro/internal/buildinfo.Version=${VERSION}" \
-      -o /out/nithro ./cmd/nithro
+      -ldflags "-s -w -X github.com/nithron/niro/internal/buildinfo.Version=${VERSION}" \
+      -o /out/niro ./cmd/niro
 
 FROM gcr.io/distroless/static-debian12:nonroot
-COPY --from=build /out/nithro /nithro
+COPY --from=build /out/niro /niro
 USER nonroot:nonroot
 EXPOSE 8080 9090
-ENTRYPOINT ["/nithro"]
+ENTRYPOINT ["/niro"]
 CMD ["all"]

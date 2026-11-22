@@ -17,7 +17,7 @@ export default defineConfig({
   server: {
     port: 5173,
     // In development the API runs on :8080 (`make run-api`); set
-    // NITHRO_DASHBOARD_URL=http://localhost:5173 so login returns here.
+    // NIRO_DASHBOARD_URL=http://localhost:5173 so login returns here.
     proxy: {
       '/api': 'http://localhost:8080',
       '/auth': 'http://localhost:8080',

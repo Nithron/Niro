@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <title>Nithro concept B: shield</title>
+  <title>Niro concept B: shield</title>
   <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient></defs>
   <rect width="512" height="512" rx="112" fill="#0B0E13"/>
   <path d="M256 68 L404 120 Q420 126 420 143 L420 250 Q420 370 256 448 Q92 370 92 250 L92 143 Q92 126 108 120 Z"

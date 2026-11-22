@@ -9,7 +9,7 @@ import (
 )
 
 // InvitePermissions is the v0.1 permission set requested when a server adds
-// Nithro (docs/plan.md §6). Deliberately no Administrator.
+// Niro (docs/plan.md §6). Deliberately no Administrator.
 const InvitePermissions = discord.PermissionViewChannel |
 	discord.PermissionSendMessages |
 	discord.PermissionEmbedLinks |
@@ -41,7 +41,7 @@ func InviteURL(clientID, guildID snowflake.ID) string {
 	return "https://discord.com/oauth2/authorize?" + q.Encode()
 }
 
-// CanManageGuild mirrors who may configure Nithro for a server: the owner,
+// CanManageGuild mirrors who may configure Niro for a server: the owner,
 // Administrators, and members with Manage Server.
 func CanManageGuild(owner bool, perms discord.Permissions) bool {
 	return owner || perms.Has(discord.PermissionAdministrator) || perms.Has(discord.PermissionManageGuild)
