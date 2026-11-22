@@ -1,0 +1,5 @@
+{
+  "bg": "#0B0E13", "surface": "#121622", "text": "#E6EDF7", "textOnLight": "#121418", "muted": "#9AA7B8",
+  "gradientDark": ["#4CB8FF", "#3DDBA6"], "gradientLight": ["#0B8FE0", "#0EA57D"],
+  "success": "#3DDBA6", "warning": "#F5B83D", "danger": "#FF6B6B", "info": "#4CB8FF"
+}

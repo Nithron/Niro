@@ -1,3 +1,5 @@
+![Nithro](assets/brand/png/social/readme-banner.png)
+
 # Nithro
 
 A security-first Discord bot by [Nithron](https://nithron.com): one bot for moderation, scam and raid
@@ -8,7 +10,7 @@ powered by nAI and NithronOS integration will follow.
 > - [Discovery research](docs/research/2026-11-discovery.md)
 > - [Go library check](docs/research/2026-11-go-library-check.md)
 > - [Decisions log](docs/decisions.md)
-> - [Logo concepts](assets/brand/concepts/concept-sheet.png)
+> - [Brand assets](assets/brand/README.md)
 
 ## License
 

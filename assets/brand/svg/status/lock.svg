@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><title>Lockdown</title><defs><linearGradient id="s" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="128" y2="128"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient></defs>
+  <path d="M38 58 V42 A26 26 0 0 1 90 42 V58" fill="none" stroke="url(#s)" stroke-width="15" stroke-linecap="round"/>
+  <rect x="16" y="54" width="96" height="68" rx="16" fill="url(#s)"/>
+  <circle cx="64" cy="82" r="10" fill="#0B0E13"/><path d="M64 86 V102" stroke="#0B0E13" stroke-width="10" stroke-linecap="round"/></svg>

@@ -1,8 +1,16 @@
 # Nithro
 
-Discord bot by Nithron. Current phase: discovery. See docs/research/2026-11-discovery.md.
+Security-first Discord bot by Nithron. Current phase: planning. Decisions: docs/decisions.md.
 
-- Do not write implementation code until the PM has picked a direction and approved a plan.
+- Do not write implementation code until the PM has approved the plan.
+- Stack: Go bot (disgo) + Go API; dashboard is a Vite + React + TypeScript SPA
+  embedded in the Go API binary (see docs/decisions.md).
+- Commits: author every commit as the repo owner (the configured git user) and add no
+  `Co-Authored-By` or other Claude attribution lines to commits or PR descriptions.
+- License: `LICENSE` must stay byte-identical with NithronOS and NithronAI. A change here
+  means the same change there.
+- Brand: logo = concept A (`<N>` brackets). Source SVGs live in `assets/brand/`; the
+  rendered PNGs are generated from them by `assets/brand/build.sh`.
 
 ## graphify
 
