@@ -17,18 +17,44 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgo/handler"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
 // what its features need (least privilege); see docs/plan.md §6.
-const Intents = gateway.IntentGuilds
+//   - Guild Messages + Message Content (privileged): Guardian reads messages
+//     for scam links and cross-channel spam. Message text is never stored.
+//   - Server Members (privileged): joins, for anti-raid and the age gate.
+const Intents = gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.IntentMessageContent | gateway.IntentGuildMembers
+
+// privilegedIntents drops privileged intents the application is not allowed
+// to use, so the bot still connects (with Guardian degraded) instead of
+// being refused by Discord with "disallowed intents".
+func privilegedIntents(token string, log *slog.Logger) gateway.Intents {
+	intents := Intents
+	app, err := rest.New(rest.NewClient(token)).GetCurrentApplication()
+	if err != nil {
+		log.Warn("could not check privileged intents; requesting all", "err", err)
+		return intents
+	}
+	if app.Flags&(discord.ApplicationFlagGatewayMessageContent|discord.ApplicationFlagGatewayMessageContentLimited) == 0 {
+		intents &^= gateway.IntentMessageContent
+		log.Warn("Message Content intent is not enabled for this application: Guardian cannot check message text. Enable it in the Developer Portal → Bot.")
+	}
+	if app.Flags&(discord.ApplicationFlagGatewayGuildMembers|discord.ApplicationFlagGatewayGuildMemberLimited) == 0 {
+		intents &^= gateway.IntentGuildMembers
+		log.Warn("Server Members intent is not enabled for this application: anti-raid and the account-age gate are off. Enable it in the Developer Portal → Bot.")
+	}
+	return intents
+}
 
 // Deps are the bot's collaborators.
 type Deps struct {
@@ -43,6 +69,11 @@ type Deps struct {
 	Cases   moderation.CaseStore
 	Catalog *i18n.Catalog
 	Metrics prometheus.Registerer
+
+	GuardianStore   guardian.Store
+	GuardianTracker guardian.Tracker
+	// ScamFeedURLs are the scam-domain lists to download (https only).
+	ScamFeedURLs []string
 }
 
 // Bot is a running Niro Discord client.
@@ -52,8 +83,10 @@ type Bot struct {
 	client  *bot.Client
 	emojis  *Emojis
 	metrics *metrics
-	mod     *moderation.Service
-	pending pendingBans
+	mod       *moderation.Service
+	guard     *guardian.Service
+	blocklist *guardian.DomainSet
+	pending   pendingBans
 }
 
 // New builds the client. Nothing connects until Run.
@@ -70,6 +103,7 @@ func New(deps Deps) (*Bot, error) {
 	router.SlashCommand("/about", b.handleAbout)
 	router.SlashCommand("/modules", b.handleModules)
 	b.registerModeration(router)
+	b.registerGuardian(router)
 	router.Error(b.handleError)
 	router.NotFound(func(e *handler.InteractionEvent) error {
 		b.log.Warn("unhandled interaction", "type", e.Type())
@@ -80,13 +114,15 @@ func New(deps Deps) (*Bot, error) {
 		bot.WithLogger(deps.Log.With("component", "disgo")),
 		bot.WithShardManagerConfigOpts(
 			sharding.WithAutoScaling(true), // reshard automatically when Discord asks
-			sharding.WithGatewayConfigOpts(gateway.WithIntents(Intents)),
+			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, b.log))),
 		),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers)),
 		bot.WithEventListeners(router, &events.ListenerAdapter{
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild) },
 			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
 			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
+			OnGuildMessageCreate: b.onGuildMessage,
+			OnGuildMemberJoin:    b.onMemberJoin,
 		}),
 	)
 	if err != nil {
@@ -98,6 +134,29 @@ func New(deps Deps) (*Bot, error) {
 		func(ctx context.Context, guildID snowflake.ID) (moderation.Settings, error) {
 			return moderation.LoadSettings(ctx, deps.Config, guildID)
 		}, b.log.With("module", "moderation"))
+
+	b.blocklist = guardian.NewDomainSet()
+	b.guard = guardian.NewService(guardian.Deps{
+		Store: deps.GuardianStore, Platform: newGuardianPlatform(b.client),
+		Alerts:  guardianAlerts{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		Tracker: deps.GuardianTracker, Moderation: b.mod, Blocklist: b.blocklist,
+		Settings: func(ctx context.Context, guildID snowflake.ID) (guardian.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleGuardian)
+			if err != nil || !on {
+				return guardian.Settings{}, false, err
+			}
+			s, err := guardian.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		FallbackAlertChannel: func(ctx context.Context, guildID snowflake.ID) snowflake.ID {
+			s, err := moderation.LoadSettings(ctx, deps.Config, guildID)
+			if err != nil {
+				return 0
+			}
+			return s.LogChannelID
+		},
+		Log: b.log.With("module", "guardian"),
+	})
 	return b, nil
 }
 
@@ -145,6 +204,9 @@ func (b *Bot) Run(ctx context.Context) error {
 	}
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
 	go b.runScheduler(ctx)
+	go b.guard.RunMaintenance(ctx, 15*time.Second)
+	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
+	go feed.Run(ctx)
 
 	<-ctx.Done()
 	closeCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

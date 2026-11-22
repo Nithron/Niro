@@ -321,3 +321,10 @@ var (
 
 // Verification levels (Discord's numbering; other platforms map onto it).
 const VerificationHigh = 3
+
+// Problems lists every problem code Guardian records in Evidence.Problems
+// (each has a translation).
+var Problems = []string{
+	"left_server", "bot_role_too_low", "target_is_owner", "target_is_bot", "restrict_failed", "delete_failed",
+	"kick_failed", "pause_invites_failed", "verification_failed", "slowmode_failed",
+}

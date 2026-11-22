@@ -47,7 +47,7 @@ func TestCommandsRespectDiscordLimits(t *testing.T) {
 			t.Errorf("%s: must be guild-only in v0.1", s.Name)
 		}
 	}
-	for _, want := range []string{"ping", "about", "modules", "warn", "timeout", "untimeout", "kick", "ban", "unban", "purge", "note", "history", "case"} {
+	for _, want := range []string{"ping", "about", "modules", "warn", "timeout", "untimeout", "kick", "ban", "unban", "purge", "note", "history", "case", "guardian", "lockdown", "unlock"} {
 		if !names[want] {
 			t.Errorf("missing /%s", want)
 		}
@@ -196,8 +196,15 @@ func checkOptions(t *testing.T, cmd string, opts []discord.ApplicationCommandOpt
 				t.Errorf("%s/%s: choice name too long", cmd, v.Name)
 			}
 		}
-		if sc, ok := o.(discord.ApplicationCommandOptionSubCommand); ok {
+		switch sc := o.(type) {
+		case discord.ApplicationCommandOptionSubCommand:
 			checkOptions(t, cmd+" "+sc.Name, sc.Options)
+		case discord.ApplicationCommandOptionSubCommandGroup:
+			subs := make([]discord.ApplicationCommandOption, len(sc.Options))
+			for i, x := range sc.Options {
+				subs[i] = x
+			}
+			checkOptions(t, cmd+" "+sc.Name, subs)
 		}
 	}
 }

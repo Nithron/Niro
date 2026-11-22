@@ -12,6 +12,8 @@ type metrics struct {
 	guilds       prometheus.Gauge
 	interactions *prometheus.CounterVec
 	duration     *prometheus.HistogramVec
+	// guardianActions counts Guardian responses (alert, delete, quarantine…).
+	guardianActions *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) (*metrics, error) {
@@ -26,8 +28,11 @@ func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 			Name: "niro_bot_interaction_duration_seconds", Help: "Time to handle an interaction.",
 			Buckets: []float64{.025, .05, .1, .25, .5, 1, 2.5},
 		}, []string{"name"}),
+		guardianActions: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "niro_guardian_actions_total", Help: "Guardian detections, by response.",
+		}, []string{"response"}),
 	}
-	for _, c := range []prometheus.Collector{m.guilds, m.interactions, m.duration} {
+	for _, c := range []prometheus.Collector{m.guilds, m.interactions, m.duration, m.guardianActions} {
 		if err := reg.Register(c); err != nil {
 			return nil, err
 		}

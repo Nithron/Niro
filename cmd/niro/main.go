@@ -31,6 +31,7 @@ import (
 	"github.com/nithron/niro/internal/config"
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/i18n"
+	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/moderation"
 	"github.com/nithron/niro/internal/observability"
 	"github.com/nithron/niro/internal/platform/discord"
@@ -129,7 +130,9 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	defer kv.Close()
 
 	db := store.New(pool)
-	registry, err := core.NewRegistry(core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})...)
+	modules := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
+	modules = core.WithSettings(modules, core.ModuleGuardian, guardian.SettingsSpec{})
+	registry, err := core.NewRegistry(modules...)
 	if err != nil {
 		return err
 	}
@@ -164,6 +167,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 		b, err := discord.New(discord.Deps{
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
 			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
+			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg),
 		})
 		if err != nil {
 			return err
@@ -201,6 +205,14 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	}
 
 	return g.Wait()
+}
+
+// scamFeeds returns the configured scam-domain feeds, or Niro's default.
+func scamFeeds(cfg config.Config) []string {
+	if cfg.ScamFeeds == nil {
+		return []string{guardian.DefaultFeedURL}
+	}
+	return cfg.ScamFeeds
 }
 
 // serveHTTP runs an HTTP server until ctx is done, then shuts it down gracefully.

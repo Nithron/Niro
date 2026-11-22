@@ -6,6 +6,7 @@ import (
 	"testing/fstest"
 
 	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/moderation"
 	"golang.org/x/text/language"
 )
@@ -20,6 +21,42 @@ func TestEnglishCatalogIsComplete(t *testing.T) {
 	}
 	for _, a := range moderation.Actions {
 		if k := ModAction(string(a)); c.T("en", k, nil) == string(k) {
+			t.Errorf("en.toml is missing %s", k)
+		}
+	}
+	dynamic := []Key{}
+	for _, k := range []guardian.SignalKind{guardian.SignalBurst, guardian.SignalBlockedDomain, guardian.SignalDeniedDomain,
+		guardian.SignalLookalike, guardian.SignalMaskedLink, guardian.SignalScamTemplate, guardian.SignalQuietAccount,
+		guardian.SignalNewAccount, guardian.SignalJoinFlood, guardian.SignalManual} {
+		dynamic = append(dynamic, GuardianSignal(string(k)))
+	}
+	for _, r := range []guardian.Response{guardian.ResponseAlert, guardian.ResponseDelete, guardian.ResponseQuarantine,
+		guardian.ResponseKick, guardian.ResponseRaidMode} {
+		dynamic = append(dynamic, GuardianAction(string(r)))
+	}
+	for _, s := range []guardian.Status{guardian.StatusOpen, guardian.StatusKept, guardian.StatusRestored,
+		guardian.StatusBanned, guardian.StatusActive, guardian.StatusEnded} {
+		dynamic = append(dynamic, GuardianStatus(string(s)))
+	}
+	for _, k := range []guardian.Kind{guardian.KindCompromised, guardian.KindScam, guardian.KindRaid, guardian.KindAccountAge} {
+		dynamic = append(dynamic, GuardianTitle(string(k)))
+	}
+	for _, p := range guardian.DangerousPermissions {
+		dynamic = append(dynamic, GuardianPerm(p))
+	}
+	for _, code := range []string{guardian.FindEveryoneDangerous, guardian.FindRoleAdmin, guardian.FindRoleDangerous,
+		guardian.FindBotAdmin, guardian.FindBotDangerous, guardian.FindWebhooks, guardian.FindVerificationNone,
+		guardian.FindVerificationLow, guardian.FindNoModeratorMFA, guardian.FindSelfAdmin} {
+		dynamic = append(dynamic, GuardianAudit(code))
+	}
+	for _, s := range []guardian.Severity{guardian.SeverityCritical, guardian.SeverityHigh, guardian.SeverityMedium, guardian.SeverityInfo} {
+		dynamic = append(dynamic, GuardianSeverity(string(s)))
+	}
+	for _, p := range guardian.Problems {
+		dynamic = append(dynamic, GuardianProblem(p))
+	}
+	for _, k := range dynamic {
+		if c.T("en", k, nil) == string(k) {
 			t.Errorf("en.toml is missing %s", k)
 		}
 	}
