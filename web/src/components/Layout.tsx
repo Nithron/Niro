@@ -1,19 +1,21 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { logout, type User } from '../api/client'
-import { keys } from '../api/queries'
+import { signedOut } from '../queryClient'
 import { Button, Logo } from './ui'
 
 export function Layout({ user, children }: { user: User; children: ReactNode }) {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const navigate = useNavigate()
 
   async function onLogout() {
     await logout()
-    qc.clear()
-    await qc.invalidateQueries({ queryKey: keys.me })
+    // Refetching the user returns 401, so the root route shows the login screen.
+    await navigate({ to: '/' })
+    await signedOut(qc)
   }
 
   return (

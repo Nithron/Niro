@@ -1,9 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import '../i18n'
+import { makeQueryClient } from '../queryClient'
 import { makeRouter } from '../router'
 
 type Handler = (req: Request) => Response | Promise<Response>
@@ -46,7 +47,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 function renderAt(path: string) {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const qc = makeQueryClient({ queries: { retry: false } })
   const router = makeRouter(qc, createMemoryHistory({ initialEntries: [path] }))
   return render(
     <QueryClientProvider client={qc}>
@@ -55,7 +56,33 @@ function renderAt(path: string) {
   )
 }
 
+const unauthorized = () => json({ code: 'unauthorized', message: 'log in' }, 401)
+
 describe('dashboard', () => {
+  it('returns to the login screen after logging out', async () => {
+    routes['POST /auth/logout'] = () => {
+      routes['GET /api/v1/me'] = unauthorized
+      routes['GET /api/v1/guilds'] = unauthorized
+      return new Response(null, { status: 204 })
+    }
+    renderAt('/')
+    await screen.findByText('Beta')
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
+    expect(await screen.findByRole('link', { name: 'Log in with Discord' })).toBeInTheDocument()
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+  })
+
+  it('returns to the login screen when the session expires mid-use', async () => {
+    renderAt('/')
+    await screen.findByText('Beta')
+    // The session expires; the next API call gets a 401.
+    routes['GET /api/v1/me'] = unauthorized
+    routes['GET /api/v1/guilds/100'] = unauthorized
+    await userEvent.click(screen.getByRole('link', { name: 'Manage' }))
+    expect(await screen.findByRole('link', { name: 'Log in with Discord' })).toBeInTheDocument()
+    expect(screen.queryByText('Something went wrong. Please try again.')).not.toBeInTheDocument()
+  })
+
   it('shows the Discord login when there is no session', async () => {
     routes['GET /api/v1/me'] = () => json({ code: 'unauthorized', message: 'log in' }, 401)
     renderAt('/')
