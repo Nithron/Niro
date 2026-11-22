@@ -20,3 +20,6 @@ coverage/
 
 # Claude Code local settings
 .claude/settings.local.json
+
+# graphify (local knowledge graph, rebuilt by git hooks)
+graphify-out/
