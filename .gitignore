@@ -1,0 +1,22 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Secrets (Discord bot token, OAuth secret, DB URLs)
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+coverage/
+*.log
+
+# Claude Code local settings
+.claude/settings.local.json
