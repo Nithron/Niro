@@ -159,9 +159,17 @@ func (b *Bot) onMemberJoin(e *events.GuildMemberJoin) {
 	if e.Member.JoinedAt != nil {
 		j.At = *e.Member.JoinedAt
 	}
+	w := welcomeMember(e)
 	go b.safely("guardian join", func(ctx context.Context) {
 		if err := b.guard.HandleJoin(ctx, j); err != nil {
 			b.log.Error("guardian join check failed", "guild_id", j.GuildID, "err", err)
+		}
+		// Welcome runs after Guardian, so a join that starts raid mode (or
+		// is removed by the age gate) is seen as such.
+		if b.welcome != nil {
+			if err := b.welcome.HandleJoin(ctx, w); err != nil {
+				b.log.Warn("welcome failed", "guild_id", j.GuildID, "err", err)
+			}
 		}
 	})
 }

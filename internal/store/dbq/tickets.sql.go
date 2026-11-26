@@ -167,7 +167,7 @@ func (q *Queries) DeleteTicketPanel(ctx context.Context, arg DeleteTicketPanelPa
 
 const getTicket = `-- name: GetTicket :one
 SELECT t.id, t.guild_id, t.number, t.panel_id, t.category_id, t.category_label, t.mode, t.channel_id, t.opener_id, t.opener_name, t.claimed_by, t.claimed_by_name, t.status, t.close_reason, t.closed_by, t.closed_by_name, t.closed_at, t.created_at, (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.id = $2
 `
 
@@ -210,7 +210,7 @@ func (q *Queries) GetTicket(ctx context.Context, arg GetTicketParams) (GetTicket
 
 const getTicketByChannel = `-- name: GetTicketByChannel :one
 SELECT t.id, t.guild_id, t.number, t.panel_id, t.category_id, t.category_label, t.mode, t.channel_id, t.opener_id, t.opener_name, t.claimed_by, t.claimed_by_name, t.status, t.close_reason, t.closed_by, t.closed_by_name, t.closed_at, t.created_at, (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.channel_id = $2
 `
 
@@ -253,7 +253,7 @@ func (q *Queries) GetTicketByChannel(ctx context.Context, arg GetTicketByChannel
 
 const getTicketByNumber = `-- name: GetTicketByNumber :one
 SELECT t.id, t.guild_id, t.number, t.panel_id, t.category_id, t.category_label, t.mode, t.channel_id, t.opener_id, t.opener_name, t.claimed_by, t.claimed_by_name, t.status, t.close_reason, t.closed_by, t.closed_by_name, t.closed_at, t.created_at, (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.number = $2
 `
 
@@ -473,7 +473,7 @@ func (q *Queries) ListTicketPanels(ctx context.Context, guildID int64) ([]Ticket
 
 const listTickets = `-- name: ListTickets :many
 SELECT t.id, t.guild_id, t.number, t.panel_id, t.category_id, t.category_label, t.mode, t.channel_id, t.opener_id, t.opener_name, t.claimed_by, t.claimed_by_name, t.status, t.close_reason, t.closed_by, t.closed_by_name, t.closed_at, t.created_at, (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1
   AND ($2::text IS NULL OR t.status = $2)
   AND ($3::integer IS NULL OR t.number < $3)
@@ -552,9 +552,15 @@ func (q *Queries) NextTicketNumber(ctx context.Context, guildID int64) (int32, e
 }
 
 const purgeTranscripts = `-- name: PurgeTranscripts :execrows
-DELETE FROM ticket_transcripts WHERE expires_at < $1
+WITH gone AS (
+    DELETE FROM ticket_transcripts WHERE expires_at < $1 RETURNING ticket_id
+)
+UPDATE tickets SET close_reason = '', opener_name = '', closed_by_name = '', claimed_by_name = '', category_label = ''
+WHERE id IN (SELECT ticket_id FROM gone)
 `
 
+// Deletes expired transcripts and scrubs what their tickets still hold that
+// people typed (names, the close reason), so nothing outlives retention.
 func (q *Queries) PurgeTranscripts(ctx context.Context, expiresAt time.Time) (int64, error) {
 	result, err := q.db.Exec(ctx, purgeTranscripts, expiresAt)
 	if err != nil {

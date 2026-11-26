@@ -325,4 +325,8 @@ var (
 	CmdTicketClaimDesc     = define("cmd.ticket.claim.description")
 	CmdTicketOptUser       = define("cmd.ticket.opt.user")
 	CmdTicketOptReason     = define("cmd.ticket.opt.reason")
+	TicketTranscriptFailed = define("ticket.transcript_failed")
+	TicketHideFailed       = define("ticket.hide_failed")
+	TicketProtected        = define("ticket.protected")
+	TicketNoTranscript     = define("ticket.no_transcript")
 )

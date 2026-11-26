@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"slices"
 	"strings"
@@ -61,6 +62,9 @@ type Platform interface {
 	Messages(ctx context.Context, channelID snowflake.ID, limit int) (msgs []TranscriptMessage, more bool, err error)
 	PostTranscript(ctx context.Context, channelID snowflake.ID, t Ticket, htmlGzip []byte) error
 	ServerName(guildID snowflake.ID) string
+	// MemberRoles are a member's role IDs; BotID is Niro's own user ID.
+	MemberRoles(ctx context.Context, guildID, userID snowflake.ID) ([]snowflake.ID, error)
+	BotID() snowflake.ID
 }
 
 // Answer is one answered question.
@@ -80,8 +84,10 @@ type Deps struct {
 
 // Service runs tickets.
 type Service struct {
-	d     Deps
-	locks sync.Map // per (guild, member) for opening; per ticket for changes
+	d Deps
+	// locks are striped by key (per member for opening, per ticket for
+	// changes), so their number stays fixed however many tickets there are.
+	locks [64]sync.Mutex
 }
 
 func NewService(d Deps) *Service {
@@ -95,8 +101,9 @@ func NewService(d Deps) *Service {
 }
 
 func (s *Service) lock(key string) func() {
-	mu, _ := s.locks.LoadOrStore(key, &sync.Mutex{})
-	m := mu.(*sync.Mutex)
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(key))
+	m := &s.locks[h.Sum32()%uint32(len(s.locks))]
 	m.Lock()
 	return m.Unlock
 }
@@ -330,6 +337,16 @@ func (s *Service) isStaff(ctx context.Context, t Ticket, a Actor) bool {
 	return false
 }
 
+// memberIsStaff: userID holds one of the category's staff roles (unknown
+// counts as staff, so nobody is removed by mistake).
+func (s *Service) memberIsStaff(ctx context.Context, t Ticket, userID snowflake.ID) bool {
+	roles, err := s.d.Platform.MemberRoles(ctx, t.GuildID, userID)
+	if err != nil {
+		return false // not a member: nothing to protect
+	}
+	return s.isStaff(ctx, t, Actor{ID: userID, RoleIDs: roles})
+}
+
 // IsStaff reports whether a may manage ticket t.
 func (s *Service) IsStaff(ctx context.Context, t Ticket, a Actor) bool { return s.isStaff(ctx, t, a) }
 
@@ -368,26 +385,38 @@ func (s *Service) Claim(ctx context.Context, guildID snowflake.ID, id int64, by 
 	return t, nil
 }
 
+// CloseProblems are things that went wrong after a ticket was closed.
+type CloseProblems struct {
+	TranscriptFailed bool // the transcript couldn't be saved
+	HideFailed       bool // the opener may still see the ticket
+}
+
 // Close closes a ticket (the opener or staff), stores its transcript and
 // hides it from the opener.
-func (s *Service) Close(ctx context.Context, guildID snowflake.ID, id int64, by Actor, reason string) (Ticket, error) {
+func (s *Service) Close(ctx context.Context, guildID snowflake.ID, id int64, by Actor, reason string) (Ticket, CloseProblems, error) {
+	t, p, err := s.close(ctx, guildID, id, by, reason)
+	return t, p, err
+}
+
+func (s *Service) close(ctx context.Context, guildID snowflake.ID, id int64, by Actor, reason string) (Ticket, CloseProblems, error) {
+	var problems CloseProblems
 	st, err := s.on(ctx, guildID)
 	if err != nil && !errors.Is(err, ErrModuleOff) {
-		return Ticket{}, err
+		return Ticket{}, problems, err
 	}
 	if st.RetentionDays == 0 {
 		st = DefaultSettings() // module turned off: open tickets can still be closed
 	}
 	t, unlock, err := s.ticket(ctx, guildID, id)
 	if err != nil {
-		return Ticket{}, err
+		return Ticket{}, problems, err
 	}
 	defer unlock()
 	if by.ID != t.OpenerID && !s.isStaff(ctx, t, by) {
-		return Ticket{}, ErrNotStaff
+		return Ticket{}, problems, ErrNotStaff
 	}
 	if t.Status == StatusClosed {
-		return Ticket{}, ErrWrongStatus
+		return Ticket{}, problems, ErrWrongStatus
 	}
 	reason = strings.TrimSpace(reason)
 	if utf8.RuneCountInString(reason) > MaxCloseReason {
@@ -395,18 +424,22 @@ func (s *Service) Close(ctx context.Context, guildID snowflake.ID, id int64, by 
 	}
 	closed, err := s.d.Store.CloseTicket(ctx, guildID, id, by.ID, by.Name, reason)
 	if err != nil {
-		return Ticket{}, err
+		return Ticket{}, problems, err
 	}
 	if err := s.saveTranscript(ctx, st, closed); err != nil {
+		problems.TranscriptFailed = true
 		s.d.Log.WarnContext(ctx, "saving transcript failed", "guild_id", guildID, "ticket", t.Number, "err", err)
+	} else {
+		closed.HasTranscript = true
 	}
 	if err := s.d.Platform.Announce(ctx, closed, AnnounceClosed, by); err != nil {
 		s.d.Log.WarnContext(ctx, "announcing close failed", "err", err)
 	}
 	if err := s.d.Platform.Close(ctx, closed); err != nil {
+		problems.HideFailed = true
 		s.d.Log.WarnContext(ctx, "hiding the closed ticket failed", "guild_id", guildID, "ticket", t.Number, "err", err)
 	}
-	return closed, nil
+	return closed, problems, nil
 }
 
 func (s *Service) saveTranscript(ctx context.Context, st Settings, t Ticket) error {
@@ -478,6 +511,11 @@ func (s *Service) Delete(ctx context.Context, guildID snowflake.ID, id int64, by
 	if t.Status != StatusClosed {
 		return ErrWrongStatus
 	}
+	if !t.HasTranscript {
+		// Deleting would lose the conversation: reopen and close again to
+		// retry the transcript (or delete the channel by hand).
+		return ErrNoTranscript
+	}
 	return s.d.Platform.Delete(ctx, t)
 }
 
@@ -489,8 +527,8 @@ func (s *Service) AddMember(ctx context.Context, guildID, channelID snowflake.ID
 // RemoveMember removes someone (not the opener) from the ticket in channelID (staff).
 func (s *Service) RemoveMember(ctx context.Context, guildID, channelID snowflake.ID, by Actor, userID snowflake.ID) (Ticket, error) {
 	return s.member(ctx, guildID, channelID, by, func(t Ticket) error {
-		if userID == t.OpenerID {
-			return ErrWrongStatus
+		if userID == t.OpenerID || userID == s.d.Platform.BotID() || s.memberIsStaff(ctx, t, userID) {
+			return ErrProtectedMember
 		}
 		return s.d.Platform.RemoveMember(ctx, t, userID)
 	})

@@ -384,7 +384,7 @@ type Service struct {
 	d Deps
 	// locks serialise picks per member, so two quick clicks can't both read
 	// the same roles (a unique panel would end with two roles).
-	locks sync.Map // [2]snowflake.ID -> *sync.Mutex
+	locks [64]sync.Mutex // striped by member
 	// recent remembers a member's roles right after a pick: the next click's
 	// interaction may still carry the roles from before it.
 	recentMu sync.Mutex
@@ -408,8 +408,7 @@ func NewService(d Deps) *Service {
 }
 
 func (s *Service) lock(guildID, userID snowflake.ID) func() {
-	mu, _ := s.locks.LoadOrStore([2]snowflake.ID{guildID, userID}, &sync.Mutex{})
-	m := mu.(*sync.Mutex)
+	m := &s.locks[(uint64(guildID)*31+uint64(userID))%uint64(len(s.locks))]
 	m.Lock()
 	return m.Unlock
 }

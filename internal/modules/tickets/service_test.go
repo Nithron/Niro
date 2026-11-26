@@ -313,6 +313,13 @@ func (f *fakePlatform) PostTranscript(_ context.Context, ch snowflake.ID, _ Tick
 	return nil
 }
 func (f *fakePlatform) ServerName(snowflake.ID) string { return "Test <Server>" }
+func (f *fakePlatform) BotID() snowflake.ID            { return 999 }
+func (f *fakePlatform) MemberRoles(_ context.Context, _, u snowflake.ID) ([]snowflake.ID, error) {
+	if u == mod {
+		return []snowflake.ID{staff}, nil
+	}
+	return nil, nil
+}
 
 type harness struct {
 	svc *Service
@@ -431,13 +438,13 @@ func TestOpenClaimCloseReopenDelete(t *testing.T) {
 	if c, err := h.svc.Claim(ctx, guild, tk.ID, staffer); err != nil || c.Status != StatusClaimed || c.ClaimedByName != "mo" {
 		t.Errorf("claim: %+v %v", c, err)
 	}
-	if _, err := h.svc.Close(ctx, guild, tk.ID, stranger, ""); !errors.Is(err, ErrNotStaff) {
+	if _, _, err := h.svc.Close(ctx, guild, tk.ID, stranger, ""); !errors.Is(err, ErrNotStaff) {
 		t.Errorf("stranger closed: %v", err)
 	}
 	h.pf.messages = []TranscriptMessage{{AuthorName: "ana", Content: "<script>alert(1)</script>", At: h.now}}
-	closed, err := h.svc.Close(ctx, guild, tk.ID, opener, "solved")
-	if err != nil || closed.Status != StatusClosed || closed.CloseReason != "solved" || !slices.Contains(h.pf.closed, tk.ID) {
-		t.Fatalf("close: %+v %v", closed, err)
+	closed, probs, err := h.svc.Close(ctx, guild, tk.ID, opener, "solved")
+	if err != nil || closed.Status != StatusClosed || closed.CloseReason != "solved" || !slices.Contains(h.pf.closed, tk.ID) || probs != (CloseProblems{}) {
+		t.Fatalf("close: %+v %+v %v", closed, probs, err)
 	}
 	tr, err := h.st.GetTranscript(ctx, guild, tk.ID)
 	if err != nil || !tr.ExpiresAt.Equal(h.now.Add(90*24*time.Hour)) || !slices.Equal(h.pf.posted, []snowflake.ID{77}) {
@@ -449,7 +456,7 @@ func TestOpenClaimCloseReopenDelete(t *testing.T) {
 		!strings.Contains(page, "Test &lt;Server&gt;") || !strings.Contains(page, "solved") {
 		t.Errorf("transcript not escaped or incomplete:\n%s", page)
 	}
-	if _, err := h.svc.Close(ctx, guild, tk.ID, staffer, ""); !errors.Is(err, ErrWrongStatus) {
+	if _, _, err := h.svc.Close(ctx, guild, tk.ID, staffer, ""); !errors.Is(err, ErrWrongStatus) {
 		t.Errorf("closed twice: %v", err)
 	}
 	if _, err := h.svc.Reopen(ctx, guild, tk.ID, opener); !errors.Is(err, ErrNotStaff) {
@@ -461,7 +468,7 @@ func TestOpenClaimCloseReopenDelete(t *testing.T) {
 	if err := h.svc.Delete(ctx, guild, tk.ID, staffer); !errors.Is(err, ErrWrongStatus) {
 		t.Errorf("deleted an open ticket: %v", err)
 	}
-	_, _ = h.svc.Close(ctx, guild, tk.ID, manager, "")
+	_, _, _ = h.svc.Close(ctx, guild, tk.ID, manager, "")
 	if err := h.svc.Delete(ctx, guild, tk.ID, manager); err != nil || !slices.Contains(h.pf.deleted, tk.ID) {
 		t.Errorf("delete: %v", err)
 	}
@@ -507,8 +514,13 @@ func TestMembersAndModuleOff(t *testing.T) {
 	if _, err := h.svc.AddMember(ctx, guild, tk.ChannelID, staffer, 5); err != nil || !slices.Contains(h.pf.added, 5) {
 		t.Errorf("add: %v", err)
 	}
-	if _, err := h.svc.RemoveMember(ctx, guild, tk.ChannelID, staffer, user); err == nil {
-		t.Error("removed the opener")
+	for _, who := range []snowflake.ID{user, mod, 999} { // opener, staff, Niro
+		if _, err := h.svc.RemoveMember(ctx, guild, tk.ChannelID, staffer, who); !errors.Is(err, ErrProtectedMember) {
+			t.Errorf("removed %s: %v", who, err)
+		}
+	}
+	if _, err := h.svc.RemoveMember(ctx, guild, tk.ChannelID, staffer, 5); err != nil {
+		t.Errorf("remove a helper: %v", err)
 	}
 	if _, err := h.svc.AddMember(ctx, 999, tk.ChannelID, manager, 5); !errors.Is(err, ErrNotFound) {
 		t.Errorf("other guild: %v", err)
@@ -518,7 +530,7 @@ func TestMembersAndModuleOff(t *testing.T) {
 		t.Errorf("module off: %v", err)
 	}
 	// Open tickets can still be closed with the module off.
-	if _, err := h.svc.Close(ctx, guild, tk.ID, opener, ""); err != nil {
+	if _, _, err := h.svc.Close(ctx, guild, tk.ID, opener, ""); err != nil {
 		t.Errorf("close with module off: %v", err)
 	}
 }
@@ -542,5 +554,26 @@ func TestSettings(t *testing.T) {
 		if _, err := (SettingsSpec{}).Normalize(in); (err == nil) != ok {
 			t.Errorf("%q: %v", raw, err)
 		}
+	}
+}
+
+type failingMessages struct{ *fakePlatform }
+
+func (failingMessages) Messages(context.Context, snowflake.ID, int) ([]TranscriptMessage, bool, error) {
+	return nil, false, errors.New("missing access")
+}
+
+func TestFailedTranscriptBlocksDelete(t *testing.T) {
+	ctx := context.Background()
+	h := newHarness(t)
+	h.svc.d.Platform = failingMessages{h.pf}
+	p := h.panel(t, testPanel())
+	tk, _ := h.svc.Open(ctx, guild, p.ID, p.Categories[0].ID, opener, nil)
+	_, probs, err := h.svc.Close(ctx, guild, tk.ID, staffer, "")
+	if err != nil || !probs.TranscriptFailed {
+		t.Fatalf("close: %+v %v", probs, err)
+	}
+	if err := h.svc.Delete(ctx, guild, tk.ID, staffer); !errors.Is(err, ErrNoTranscript) {
+		t.Errorf("deleted without a transcript: %v", err)
 	}
 }

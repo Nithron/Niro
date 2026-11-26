@@ -197,6 +197,22 @@ func TestRaidJoinsAreSummed(t *testing.T) {
 	}
 }
 
+func TestUnknownGuardianStateGivesNothing(t *testing.T) {
+	svc, pf, _ := newService(t, settings(t, everything), Gate{Unknown: true})
+	_ = svc.HandleJoin(context.Background(), Member{GuildID: guild, UserID: member})
+	if len(pf.posts) != 1 || len(pf.dms) != 0 || len(pf.added) != 0 {
+		t.Errorf("unknown gate: posts %d dms %d roles %v", len(pf.posts), len(pf.dms), pf.added)
+	}
+}
+
+func TestNoGoodbyeForBlockedAccounts(t *testing.T) {
+	svc, pf, _ := newService(t, settings(t, everything), Gate{Blocked: true})
+	_ = svc.HandleLeave(context.Background(), Member{GuildID: guild, UserID: member})
+	if len(pf.posts) != 0 {
+		t.Error("goodbye for an account the age gate removed")
+	}
+}
+
 func TestGoodbyeNeverPings(t *testing.T) {
 	svc, pf, _ := newService(t, settings(t, everything), Gate{})
 	_ = svc.HandleLeave(context.Background(), Member{GuildID: guild, UserID: member, Name: "ana"})

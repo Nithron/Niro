@@ -32,8 +32,9 @@ type ticketsPlatform struct {
 var _ tickets.Platform = ticketsPlatform{}
 
 // ticketAccess is what openers and staff may do in a ticket channel.
+// (Only permissions Niro itself is invited with: it can't grant others.)
 const ticketAccess = discord.PermissionViewChannel | discord.PermissionSendMessages | discord.PermissionReadMessageHistory |
-	discord.PermissionAttachFiles | discord.PermissionEmbedLinks | discord.PermissionAddReactions
+	discord.PermissionAttachFiles | discord.PermissionEmbedLinks
 
 // maxStaffAdded caps how many staff members Niro adds to a private thread
 // (they are found in the member cache).
@@ -212,19 +213,62 @@ func (tp ticketsPlatform) setThread(ctx context.Context, t tickets.Ticket, archi
 	return err
 }
 
+// Close hides the ticket from the opener and from members added with
+// /ticket add; staff keep it, with Reopen and Delete.
 func (tp ticketsPlatform) Close(ctx context.Context, t tickets.Ticket) error {
 	if t.Mode == tickets.ModeThread {
+		// Thread members can still read an archived thread: remove the
+		// opener (staff and Manage Threads holders keep access).
+		if err := tp.client.Rest.RemoveThreadMember(t.ChannelID, t.OpenerID, rest.WithCtx(ctx)); err != nil {
+			return err
+		}
 		return tp.setThread(ctx, t, true)
 	}
-	// The opener loses access; staff keep the channel with Reopen and Delete.
-	return tp.client.Rest.DeletePermissionOverwrite(t.ChannelID, t.OpenerID, rest.WithCtx(ctx))
+	ch, err := tp.client.Rest.GetChannel(t.ChannelID, rest.WithCtx(ctx))
+	if err != nil {
+		return err
+	}
+	gc, ok := ch.(discord.GuildChannel)
+	if !ok {
+		return errors.New("ticket channel is not a server channel")
+	}
+	self := tp.BotID()
+	for _, o := range gc.PermissionOverwrites() {
+		if mo, ok := o.(discord.MemberPermissionOverwrite); ok && mo.UserID != self {
+			if err := tp.client.Rest.DeletePermissionOverwrite(t.ChannelID, mo.UserID, rest.WithCtx(ctx)); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (tp ticketsPlatform) Reopen(ctx context.Context, t tickets.Ticket) error {
 	if t.Mode == tickets.ModeThread {
-		return tp.setThread(ctx, t, false)
+		if err := tp.setThread(ctx, t, false); err != nil {
+			return err
+		}
+		return tp.client.Rest.AddThreadMember(t.ChannelID, t.OpenerID, rest.WithCtx(ctx))
 	}
 	return tp.allow(ctx, t.ChannelID, t.OpenerID)
+}
+
+func (tp ticketsPlatform) BotID() snowflake.ID {
+	if u, ok := tp.client.Caches.SelfUser(); ok {
+		return u.ID
+	}
+	return 0
+}
+
+func (tp ticketsPlatform) MemberRoles(ctx context.Context, guildID, userID snowflake.ID) ([]snowflake.ID, error) {
+	if m, ok := tp.client.Caches.Member(guildID, userID); ok {
+		return slices.Clone(m.RoleIDs), nil
+	}
+	m, err := tp.client.Rest.GetMember(guildID, userID, rest.WithCtx(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return m.RoleIDs, nil
 }
 
 func (tp ticketsPlatform) allow(ctx context.Context, channelID, userID snowflake.ID) error {
@@ -284,7 +328,9 @@ func (tp ticketsPlatform) Messages(ctx context.Context, channelID snowflake.ID, 
 			return out, false, nil
 		}
 	}
-	return out, true, nil
+	// Exactly at the limit: there are more only if another message exists.
+	next, err := tp.client.Rest.GetMessages(channelID, 0, 0, after, 1, rest.WithCtx(ctx))
+	return out, err == nil && len(next) > 0, nil
 }
 
 func compareSnowflakes(a, b snowflake.ID) int {
@@ -437,6 +483,10 @@ func (b *Bot) ticketError(l discord.Locale, err error) (string, int) {
 		return b.t(l, i18n.TicketWrongStatus, nil), colorWarning
 	case errors.Is(err, tickets.ErrNotFound):
 		return b.t(l, i18n.TicketNotATicket, nil), colorWarning
+	case errors.Is(err, tickets.ErrProtectedMember):
+		return b.t(l, i18n.TicketProtected, nil), colorWarning
+	case errors.Is(err, tickets.ErrNoTranscript):
+		return b.t(l, i18n.TicketNoTranscript, nil), colorWarning
 	}
 	b.log.Warn("ticket action failed", "err", err)
 	var re *rest.Error
@@ -444,6 +494,24 @@ func (b *Bot) ticketError(l discord.Locale, err error) (string, int) {
 		return b.t(l, i18n.TicketFailed, map[string]any{"Error": escapeMarkdown(re.Message)}), colorDanger
 	}
 	return b.t(l, i18n.ErrorGeneric, nil), colorDanger
+}
+
+func (b *Bot) closedText(l discord.Locale, p tickets.CloseProblems) string {
+	lines := []string{b.t(l, i18n.TicketDone, nil)}
+	if p.TranscriptFailed {
+		lines = append(lines, b.t(l, i18n.TicketTranscriptFailed, nil))
+	}
+	if p.HideFailed {
+		lines = append(lines, b.t(l, i18n.TicketHideFailed, nil))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (b *Bot) closedReply(l discord.Locale, p tickets.CloseProblems) discord.ContainerComponent {
+	if p.TranscriptFailed || p.HideFailed {
+		return b.ticketReply(l, b.closedText(l, p), colorWarning, EmojiWarn)
+	}
+	return b.ticketReply(l, b.closedText(l, p), colorSuccess, EmojiOK)
 }
 
 func (b *Bot) ticketReply(l discord.Locale, text string, color int, emoji string) discord.ContainerComponent {
@@ -566,7 +634,7 @@ func (b *Bot) handleTicketCloseButton(_ discord.ButtonInteractionData, e *handle
 	maxReason := tickets.MaxCloseReason
 	return e.Modal(discord.ModalCreate{
 		CustomID: "/tickets/closing/" + e.Vars["id"],
-		Title:    clip(b.t(e.Locale(), i18n.TicketCloseTitle, map[string]any{"Number": t.Number}), 45),
+		Title:    truncateRunes(b.t(e.Locale(), i18n.TicketCloseTitle, map[string]any{"Number": t.Number}), 45),
 		Components: []discord.LayoutComponent{discord.NewLabel(b.t(e.Locale(), i18n.TicketCloseReason, nil),
 			discord.NewParagraphTextInput("reason").WithRequired(false).WithMaxLength(maxReason))},
 	})
@@ -582,11 +650,12 @@ func (b *Bot) handleTicketCloseForm(e *handler.ModalEvent) error {
 		return err
 	}
 	reason, _ := e.Data.OptText("reason")
-	if _, err := b.tickets.Close(e.Ctx, *gid, id, ticketActor(b.client, *gid, m), reason); err != nil {
+	_, probs, err := b.tickets.Close(e.Ctx, *gid, id, ticketActor(b.client, *gid, m), reason)
+	if err != nil {
 		text, color := b.ticketError(e.Locale(), err)
 		return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(e.Locale(), text, color, EmojiInfo))
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(e.Locale(), b.t(e.Locale(), i18n.TicketDone, nil), colorSuccess, EmojiOK))
+	return replyDeferred(e.UpdateInteractionResponse, b.closedReply(e.Locale(), probs))
 }
 
 func (b *Bot) handleTicketReopen(_ discord.ButtonInteractionData, e *handler.ComponentEvent) error {
@@ -647,8 +716,8 @@ func (b *Bot) handleTicketRemoveCmd(data discord.SlashCommandInteractionData, e 
 func (b *Bot) handleTicketCloseCmd(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
 	reason, _ := data.OptString("reason")
 	return b.ticketCmd(e, func(gid snowflake.ID, t tickets.Ticket, a tickets.Actor) (string, error) {
-		_, err := b.tickets.Close(e.Ctx, gid, t.ID, a, reason)
-		return "", err
+		_, probs, err := b.tickets.Close(e.Ctx, gid, t.ID, a, reason)
+		return b.closedText(e.Locale(), probs), err
 	})
 }
 

@@ -65,16 +65,18 @@ func (b *Bot) raidJoinSummary(ctx context.Context, channelID, guildID snowflake.
 
 func (b *Bot) welcomeGate(ctx context.Context, guildID, userID snowflake.ID, at time.Time) welcome.Gate {
 	g := b.guard.JoinGate(ctx, guildID, userID, at)
-	return welcome.Gate{Blocked: g.Blocked, Raid: g.Raid, VerifyRoleID: g.VerifyRoleID}
+	return welcome.Gate{Blocked: g.Blocked, Raid: g.Raid, VerifyRoleID: g.VerifyRoleID, Unknown: g.Unknown}
 }
 
-func (b *Bot) onWelcomeJoin(e *events.GuildMemberJoin) {
+// welcomeMember describes a join for the welcome module (run after Guardian,
+// see onMemberJoin).
+func welcomeMember(e *events.GuildMemberJoin) welcome.Member {
 	u := e.Member.User
 	m := welcome.Member{GuildID: e.GuildID, UserID: u.ID, Name: displayName(u, e.Member.Nick), Bot: u.Bot, At: time.Now()}
 	if e.Member.JoinedAt != nil {
 		m.At = *e.Member.JoinedAt
 	}
-	b.logRun("welcome", func(ctx context.Context) error { return b.welcome.HandleJoin(ctx, m) })
+	return m
 }
 
 func (b *Bot) onWelcomeLeave(e *events.GuildMemberLeave) {

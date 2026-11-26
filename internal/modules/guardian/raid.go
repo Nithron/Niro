@@ -67,20 +67,30 @@ type JoinGate struct {
 	Blocked      bool
 	Raid         bool
 	VerifyRoleID snowflake.ID
+	// Unknown: Guardian's state couldn't be read; callers should do as
+	// little as possible (no roles, no DMs).
+	Unknown bool
 }
 
-// JoinGate reports how Guardian treats userID joining guildID at at.
+// JoinGate reports how Guardian treats userID joining guildID at at. Call
+// it after HandleJoin, so a join that starts raid mode sees the raid.
 func (s *Service) JoinGate(ctx context.Context, guildID, userID snowflake.ID, at time.Time) JoinGate {
 	settings, on, err := s.d.Settings(ctx, guildID)
-	if err != nil || !on {
+	if err != nil {
+		return JoinGate{Unknown: true}
+	}
+	if !on {
 		return JoinGate{}
 	}
 	g := JoinGate{VerifyRoleID: settings.VerifyRoleID}
 	if settings.MinAccountAgeHours > 0 && settings.Mode == ModeEnforce && settings.AccountAgeAction != AgeAlert {
 		g.Blocked = AccountAge(userID, at) < time.Duration(settings.MinAccountAgeHours)*time.Hour
 	}
-	if _, err := s.d.Store.ActiveRaid(ctx, guildID); err == nil {
+	switch _, err := s.d.Store.ActiveRaid(ctx, guildID); {
+	case err == nil:
 		g.Raid = true
+	case !errors.Is(err, ErrNoRaid):
+		g.Unknown = true
 	}
 	return g
 }

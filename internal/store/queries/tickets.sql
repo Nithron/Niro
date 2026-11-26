@@ -41,22 +41,22 @@ UPDATE tickets SET channel_id = $3 WHERE guild_id = $1 AND id = $2;
 
 -- name: GetTicket :one
 SELECT sqlc.embed(t), (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.id = $2;
 
 -- name: GetTicketByNumber :one
 SELECT sqlc.embed(t), (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.number = $2;
 
 -- name: GetTicketByChannel :one
 SELECT sqlc.embed(t), (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = $1 AND t.channel_id = $2;
 
 -- name: ListTickets :many
 SELECT sqlc.embed(t), (tr.ticket_id IS NOT NULL)::boolean AS has_transcript
-FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id
+FROM tickets t LEFT JOIN ticket_transcripts tr ON tr.ticket_id = t.id AND tr.expires_at > now()
 WHERE t.guild_id = @guild_id
   AND (sqlc.narg('status')::text IS NULL OR t.status = sqlc.narg('status'))
   AND (sqlc.narg('before')::integer IS NULL OR t.number < sqlc.narg('before'))
@@ -92,4 +92,10 @@ ON CONFLICT (ticket_id) DO UPDATE SET html_gzip = EXCLUDED.html_gzip, message_co
 SELECT * FROM ticket_transcripts WHERE guild_id = $1 AND ticket_id = $2 AND expires_at > now();
 
 -- name: PurgeTranscripts :execrows
-DELETE FROM ticket_transcripts WHERE expires_at < $1;
+-- Deletes expired transcripts and scrubs what their tickets still hold that
+-- people typed (names, the close reason), so nothing outlives retention.
+WITH gone AS (
+    DELETE FROM ticket_transcripts WHERE expires_at < $1 RETURNING ticket_id
+)
+UPDATE tickets SET close_reason = '', opener_name = '', closed_by_name = '', claimed_by_name = '', category_label = ''
+WHERE id IN (SELECT ticket_id FROM gone);

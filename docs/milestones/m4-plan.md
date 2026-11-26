@@ -91,7 +91,7 @@
 
 Each slice is reviewed by an ECC reviewer (Go, plus React for the builder) before it is merged into the branch, as in M3.
 
-**Status (2026-11-26):** slices 1 to 5 are built. The role-panel review found 11 issues and the tickets/welcome security review is in progress; fixes are committed on the branch. The demo checklist is [m4-demo.md](m4-demo.md).
+**Status (2026-11-26):** slices 1 to 5 are built. The role-panel review (12 findings) and the tickets/welcome security review (12 findings) are fixed on the branch. The demo checklist is [m4-demo.md](m4-demo.md).
 
 ## 4. Questions for the PM
 

@@ -161,7 +161,11 @@ func (h handlers) checkTicketPanelRefs(ctx context.Context, gid snowflake.ID, p 
 	if !hasTextChannel(meta, p.ChannelID) {
 		return bad("The panel's channel must be a text or announcement channel in this server.")
 	}
+	announcement := slices.ContainsFunc(meta.Channels, func(m dc.MetaChannel) bool { return m.ID == p.ChannelID && m.Type == "announcement" })
 	for _, c := range p.Categories {
+		if announcement && c.Mode == tickets.ModeThread {
+			return bad("\"" + c.Label + "\" opens private threads, which announcement channels can't have. Post the panel in a text channel or use private channels.")
+		}
 		for _, r := range c.StaffRoleIDs {
 			if r == gid || !slices.ContainsFunc(meta.Roles, func(m dc.MetaRole) bool { return m.ID == r }) {
 				return bad("A staff role of \"" + c.Label + "\" doesn't exist in this server.")

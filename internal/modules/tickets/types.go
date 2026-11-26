@@ -279,6 +279,7 @@ var (
 	ErrNoTranscript    = errors.New("no transcript (it expired or the ticket was never closed)")
 	ErrBadAnswers      = errors.New("the form answers don't match the questions")
 	ErrCategoryRemoved = errors.New("that category was removed from the panel")
+	ErrProtectedMember = errors.New("the opener, staff and Niro can't be removed from a ticket")
 )
 
 // ---- settings ------------------------------------------------------------------

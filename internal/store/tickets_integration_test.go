@@ -33,7 +33,7 @@ func TestTickets(t *testing.T) {
 	if err != nil || a.Number != 1 || a.Status != tickets.StatusOpen {
 		t.Fatalf("ticket = %+v, %v", a, err)
 	}
-	b, _ := s.CreateTicket(ctx, tickets.NewTicket{GuildID: 1, PanelID: p.ID, CategoryID: "abc", Mode: tickets.ModeThread, OpenerID: 101})
+	b, _ := s.CreateTicket(ctx, tickets.NewTicket{GuildID: 1, PanelID: p.ID, CategoryID: "abc", Mode: tickets.ModeThread, OpenerID: 101, OpenerName: "bo"})
 	c, _ := s.CreateTicket(ctx, tickets.NewTicket{GuildID: 2, PanelID: 9, CategoryID: "x", Mode: tickets.ModeChannel, OpenerID: 100})
 	if b.Number != 2 || c.Number != 1 {
 		t.Errorf("numbers = %d, %d", b.Number, c.Number)
@@ -100,8 +100,14 @@ func TestTickets(t *testing.T) {
 	if _, err := s.GetTranscript(ctx, 1, b.ID); !errors.Is(err, tickets.ErrNoTranscript) {
 		t.Errorf("expired transcript served: %v", err)
 	}
+	if got, _ := s.GetTicket(ctx, 1, b.ID); got.HasTranscript {
+		t.Error("expired transcript counted as present")
+	}
 	if n, err := s.PurgeTranscripts(ctx, time.Now()); err != nil || n != 1 {
 		t.Errorf("purge = %d, %v", n, err)
+	}
+	if got, _ := s.GetTicket(ctx, 1, b.ID); got.OpenerName != "" || got.CloseReason != "" {
+		t.Errorf("purged ticket still holds names or reason: %+v", got)
 	}
 	if err := s.DeleteTicket(ctx, 1, b.ID); err != nil {
 		t.Fatal(err)

@@ -273,7 +273,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
               </Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              <Field label={t('tickets.mode')} htmlFor={`tc-${i}-mode`}>
+              <Field label={t('tickets.mode')} help={t(`tickets.modeHelp.${c.mode}`)} htmlFor={`tc-${i}-mode`}>
                 <Select id={`tc-${i}-mode`} value={c.mode} onChange={(e) => setCat(i, { mode: e.target.value as TicketCategory['mode'] })}>
                   <option value="thread">{t('tickets.modes.thread')}</option>
                   <option value="channel">{t('tickets.modes.channel')}</option>

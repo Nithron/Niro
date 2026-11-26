@@ -659,6 +659,10 @@
     "addQuestion": "Add a question",
     "opening": "First message in the ticket",
     "removeCategory": "Remove category",
-    "addCategory": "Add a category"
+    "addCategory": "Add a category",
+    "modeHelp": {
+      "thread": "Niro adds the opener and the staff it knows about (up to 25); members with Manage Threads see every private thread. Make the staff role mentionable so everyone with it is added.",
+      "channel": "Everyone with a staff role can always see the ticket. Most reliable for larger teams."
+    }
   }
 }

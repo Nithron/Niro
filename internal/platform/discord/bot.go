@@ -157,8 +157,7 @@ func New(deps Deps) (*Bot, error) {
 			OnGuildMessageDelete: b.onLogMessageDelete,
 			OnGuildMemberJoin: func(e *events.GuildMemberJoin) {
 				b.onLogMemberJoin(e)
-				b.onMemberJoin(e)
-				b.onWelcomeJoin(e)
+				b.onMemberJoin(e) // Guardian, then welcome
 			},
 			OnGuildMemberLeave: func(e *events.GuildMemberLeave) {
 				b.onLogMemberLeave(e)

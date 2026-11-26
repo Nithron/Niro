@@ -84,7 +84,7 @@ func (f *fakeTickets) GetTranscript(_ context.Context, g snowflake.ID, id int64)
 func setTicketMeta(h *harness) {
 	h.rpc.handlers[dc.RPCGuildMeta] = func(_ any, out any) error {
 		*(out.(*dc.GuildMeta)) = dc.GuildMeta{
-			Channels: []dc.MetaChannel{{ID: 500, Name: "help", Type: "text"}, {ID: 510, Name: "Tickets", Type: "category"}},
+			Channels: []dc.MetaChannel{{ID: 500, Name: "help", Type: "text"}, {ID: 510, Name: "Tickets", Type: "category"}, {ID: 520, Name: "news", Type: "announcement"}},
 			Roles:    []dc.MetaRole{{ID: 600, Name: "Staff", Position: 1}},
 		}
 		return nil
@@ -128,6 +128,7 @@ func TestTicketPanelsAPI(t *testing.T) {
 		{"unknown staff role", func(m map[string]any) { cat(m)["staffRoleIds"] = []string{"999"} }, 400, "staff role"},
 		{"@everyone as staff", func(m map[string]any) { cat(m)["staffRoleIds"] = []string{"100"} }, 400, "staff role"},
 		{"parent not a category", func(m map[string]any) { cat(m)["parentId"] = "500" }, 400, "channel category"},
+		{"threads in an announcement channel", func(m map[string]any) { m["channelId"] = "520"; cat(m)["mode"] = "thread" }, 400, "announcement"},
 		{"question too long", func(m map[string]any) {
 			cat(m)["questions"] = []any{map[string]any{"label": strings.Repeat("q", 46), "long": false, "required": false}}
 		}, 400, ""},

@@ -23,7 +23,8 @@ CREATE TABLE guild_ticket_counters (
     last_ticket integer NOT NULL DEFAULT 0
 );
 
--- Tickets. No message text: that is only in the transcript. panel_id has no
+-- Tickets. No message text: that is only in the transcript. Names and the
+-- close reason are scrubbed when the transcript expires. panel_id has no
 -- foreign key: tickets outlive deleted panels.
 CREATE TABLE tickets (
     id              bigserial   PRIMARY KEY,

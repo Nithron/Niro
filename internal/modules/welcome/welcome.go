@@ -136,6 +136,7 @@ type Gate struct {
 	Blocked      bool         // the account-age gate removes or quarantines them
 	Raid         bool         // raid mode is on
 	VerifyRoleID snowflake.ID // the verification gate's role (0 = no gate)
+	Unknown      bool         // Guardian's state couldn't be read: no roles or DMs
 }
 
 // Platform talks to the chat platform.
@@ -233,13 +234,13 @@ func (s *Service) HandleJoin(ctx context.Context, m Member) error {
 			errs = append(errs, fmt.Errorf("posting welcome: %w", err))
 		}
 	}
-	if st.DMEnabled {
+	if st.DMEnabled && !g.Unknown {
 		d := st.DMMessage.Render(s.vars(ctx, m, st.WelcomeChannelID), s.d.Platform.Escape)
 		if err := s.d.Platform.DM(ctx, m.UserID, d); err != nil {
 			s.d.Log.DebugContext(ctx, "welcome DM failed (DMs closed?)", "guild_id", m.GuildID, "err", err)
 		}
 	}
-	if g.VerifyRoleID == 0 {
+	if g.VerifyRoleID == 0 && !g.Unknown {
 		if err := s.giveAutoRoles(ctx, st, m.GuildID, m.UserID); err != nil {
 			errs = append(errs, err)
 		}
@@ -288,8 +289,8 @@ func (s *Service) HandleLeave(ctx context.Context, m Member) error {
 	if err != nil || !on || m.Bot || !st.GoodbyeEnabled {
 		return err
 	}
-	if s.d.Gate(ctx, m.GuildID, m.UserID, m.At).Raid {
-		return nil // raiders leaving (or being kicked) aren't worth a goodbye each
+	if g := s.d.Gate(ctx, m.GuildID, m.UserID, m.At); g.Raid || g.Blocked {
+		return nil // raiders and accounts the age gate removed get no goodbye
 	}
 	d := st.GoodbyeMessage.Render(s.vars(ctx, m, st.GoodbyeChannelID), s.d.Platform.Escape)
 	return s.d.Platform.Post(ctx, st.GoodbyeChannelID, d, 0)
