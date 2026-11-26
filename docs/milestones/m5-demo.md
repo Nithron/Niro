@@ -45,7 +45,7 @@ What to check before M5 is accepted. Part A is what's built and can be checked n
 
 ## Part B: launch (needs you)
 
-12. **Hosting:** the HostStronger VPS (Ubuntu, 24 GB RAM, Falkenstein, Germany). Create the DNS records for `niro.nithron.com`, then send SSH access if you want me to run [the runbook's first setup](../ops/runbook.md#first-setup).
+12. **Hosting:** the HostStronger VPS (Ubuntu, 24 GB RAM, Falkenstein, Germany), shared with the website and Minecraft ([Shared server](../ops/runbook.md#shared-server)). Set up on 2026-11-26 except what needs you: the `niro` DNS record at Cloudflare, one `import` line in the website's Caddyfile, the production Discord credentials and the alerts webhook.
 13. **nOS:** answered from the nOS docs. nOS has Docker Engine and Compose v2, so the self-host guide works there; only the dashboard's HTTPS differs, because nOS's Caddy holds ports 80 and 443 ([On nOS](../self-host.md#on-nos)). Nothing to do before launch.
 14. **Off-site backups:** optional, off for now. The encrypted dumps stay on the VPS. The runbook's [Off-site copies](../ops/runbook.md#off-site-copies) turns them on later.
 15. **Legal:** filled in from the Nithron website's business details (controller, address, enterprise number, HostStronger in Germany, courts of West Flanders). The draft notices are gone, and CI now fails if a placeholder comes back.

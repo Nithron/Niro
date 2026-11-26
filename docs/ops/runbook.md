@@ -151,4 +151,4 @@ To turn them on:
 
 | Date | What | Result |
 |---|---|---|
-| | | |
+| 2026-11-26 | First setup on the Nithron VPS: Docker 29.10.1 installed (no other service touched), `/opt/niro` at `39154b0`, Postgres, Valkey, migrations, backup, Prometheus, node_exporter and Grafana started. Bot, API and Alertmanager wait for the production credentials and the webhook | First encrypted dump taken and decrypted off the server (18 tables). Website, ai.nithron.com and Minecraft checked before and after |
