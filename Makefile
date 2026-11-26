@@ -7,7 +7,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 OAPI := go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
-.PHONY: fuzz audit help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
+.PHONY: fuzz audit monitoring-check help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
         generate generate-check test test-short lint build docker clean
 
 help: ## Show this help
@@ -81,6 +81,12 @@ fuzz: ## Run every fuzz target for FUZZTIME (default 30s each)
 	@set -e; for t in $(FUZZ_TARGETS); do \
 	  echo "== $${t##*:}"; go test -run='^$$' -fuzz="^$${t##*:}$$" -fuzztime=$(FUZZTIME) $${t%%:*}; \
 	done
+
+monitoring-check: ## Validate the alert rules (with their unit tests) and the Alertmanager config
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.16.0 check rules alerts.yml
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.16.0 test rules alerts_test.yml
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint amtool prom/alertmanager:v0.35.1 check-config alertmanager.yml
+	python3 -c "import json,sys; json.load(open('deploy/monitoring/grafana-dashboard.json'))"
 
 audit: ## Check Go and dashboard dependencies for known vulnerabilities
 	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...

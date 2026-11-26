@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -114,6 +115,43 @@ func (c *Client) ForgetGuild(ctx context.Context, g snowflake.ID) error {
 			if cursor = e.Cursor; cursor == 0 {
 				break
 			}
+		}
+	}
+	for chunk := range slices.Chunk(keys, 500) {
+		if err := c.c.Do(ctx, c.c.B().Del().Key(chunk...).Build()).Error(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ForgetMessages deletes the cached message text of the given channels (the
+// server log's edit/delete cache), for an immediate erasure. One SCAN over the
+// message keys, filtered here, is cheaper than one SCAN per channel.
+func (c *Client) ForgetMessages(ctx context.Context, channels []snowflake.ID) error {
+	if len(channels) == 0 {
+		return nil
+	}
+	want := make(map[string]bool, len(channels))
+	for _, ch := range channels {
+		want[ch.String()] = true
+	}
+	const prefix = "niro:logging:msg:"
+	var keys []string
+	var cursor uint64
+	for {
+		e, err := c.c.Do(ctx, c.c.B().Scan().Cursor(cursor).Match(prefix+"*").Count(1000).Build()).AsScanEntry()
+		if err != nil {
+			return err
+		}
+		for _, k := range e.Elements {
+			ch, _, _ := strings.Cut(strings.TrimPrefix(k, prefix), ":")
+			if want[ch] {
+				keys = append(keys, k)
+			}
+		}
+		if cursor = e.Cursor; cursor == 0 {
+			break
 		}
 	}
 	for chunk := range slices.Chunk(keys, 500) {

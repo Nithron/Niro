@@ -96,16 +96,21 @@
 
 ### 2.3 Observability
 - **New metrics:**
-  - per-shard status, plus gateway disconnects, resumes and reconnects;
-  - gateway events by type, and handler latency;
-  - Discord REST errors and 429s by route;
-  - pgxpool stats, Valkey errors, and RPC queue depth;
-  - job last success;
+  - per-shard status and heartbeat latency;
+  - gateway events by type (`Ready` counts full reconnects, `Resumed` resumes);
+  - Discord REST requests and time by route and status (429s included). Interaction and webhook tokens never reach a label;
+  - Postgres pool use and wait time;
+  - the rate limiter's Valkey errors (Valkey itself is covered by `/readyz`);
+  - each job's last success, runs and failures;
   - build info.
+
+  Bot-side RPC queue depth is left out: a bot that stops answering shows up as 502s in the API metrics.
 - `/readyz` reports not-ready unless every shard is connected.
-- **Shipped files:**
-  - `deploy/monitoring/alerts.yml` (Prometheus rules): bot not ready, shard down for more than 5 minutes, 429 storms, DB errors, a job overdue, a backup overdue, and disk and memory.
-  - A Grafana dashboard JSON.
+- **Shipped files** in `deploy/monitoring/`:
+  - `alerts.yml` (Prometheus rules): Niro down, a shard down for more than 5 minutes, reconnect storms, 429 storms, Discord and API errors, the pool nearly full, a job overdue or failing, a backup overdue, and disk and memory.
+  - `alerts_test.yml`, promtool unit tests that prove the main alerts fire (Niro stopped, a shard down, a stale job, a 429 storm).
+  - `prometheus.yml`, `alertmanager.yml` (to a Discord webhook read from a file) and `grafana-dashboard.json`.
+  - `make monitoring-check` runs the checks and tests in CI.
 
 ### 2.4 Load and soak test
 - **`cmd/niro-soak`** (`make soak`):
@@ -185,7 +190,7 @@
 |---|---|---|---|
 | 1 | **Security hardening:** rate limits, the vulnerability fix and audit jobs in CI, the spec-wide authorization test, bot-side scoping, sessions, headers, fuzz targets | Unit and integration tests for the limiter and sessions; the spec-walking authorization test; fuzz seeds; Vitest for 429 and sign-out everywhere | CI green, including govulncheck, the audit and fuzzing |
 | 2 | **Data lifecycle:** leave handling and the 30-day purge, delete now, retention jobs, job metrics, migration 6 | Store integration tests (cascade purge, grace period, rejoin restores), domain tests, API tests | A server that Niro left is gone after the grace period (time-shifted test); delete now works in the test server |
-| 3 | **Observability:** metrics, per-shard readiness, alert rules, Grafana dashboard | Metric tests; `promtool check rules` in CI | Alerts fire in a local Prometheus when the bot is stopped |
+| 3 | **Observability:** metrics, per-shard readiness, alert rules, Grafana dashboard | Metric tests; `promtool check rules` and `promtool test rules` in CI | The rule tests show the alerts fire when the bot is stopped, a shard drops or a job stalls |
 | 4 | **Load and soak:** `niro-soak`, the fake REST server, baselines; shard resume on Niro Dev | The harness itself; a short version in CI | Baselines recorded; resume confirmed live |
 | 5 | **Self-hosting and backups:** compose, Caddy, backup service, restore test, self-host guide | Restore test in CI; `docker compose config` in CI | Guide followed from scratch on a clean VM |
 | 6 | **Hosted:** `deploy/hosted`, monitoring stack, runbook | — | The hosted bot runs on `niro.nithron.com` with TLS, alerts and backups |

@@ -34,6 +34,9 @@ type FeedUpdater struct {
 	Client *http.Client
 	Log    *slog.Logger
 	Now    func() time.Time
+	// Done, if set, is told after each round whether every feed could be
+	// checked and refreshed (job metrics).
+	Done func(error)
 }
 
 // Run loads the stored list, refreshes stale feeds, and repeats every few
@@ -48,10 +51,12 @@ func (f *FeedUpdater) Run(ctx context.Context) {
 	f.reload(ctx)
 	for {
 		changed := false
+		var failed error
 		for _, u := range f.URLs {
 			last, err := f.Store.FeedUpdatedAt(ctx, u)
 			if err != nil {
 				f.Log.WarnContext(ctx, "reading feed status failed", "feed", u, "err", err)
+				failed = err
 				continue
 			}
 			if f.Now().Sub(last) < feedInterval {
@@ -60,6 +65,7 @@ func (f *FeedUpdater) Run(ctx context.Context) {
 			n, err := f.update(ctx, u)
 			if err != nil {
 				f.Log.WarnContext(ctx, "updating scam-domain feed failed", "feed", u, "err", err)
+				failed = err
 				continue
 			}
 			f.Log.InfoContext(ctx, "scam-domain feed updated", "feed", u, "domains", n)
@@ -67,6 +73,9 @@ func (f *FeedUpdater) Run(ctx context.Context) {
 		}
 		if changed {
 			f.reload(ctx)
+		}
+		if f.Done != nil && ctx.Err() == nil {
+			f.Done(failed)
 		}
 		select {
 		case <-ctx.Done():

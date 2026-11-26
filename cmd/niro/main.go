@@ -157,6 +157,12 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	if err != nil {
 		return err
 	}
+	if err := observability.RegisterBuildInfo(metrics, buildinfo.String()); err != nil {
+		return err
+	}
+	if err := store.RegisterPoolMetrics(metrics, pool); err != nil {
+		return err
+	}
 	checks.Add("postgres", db.Ping)
 	checks.Add("valkey", kv.Ping)
 

@@ -2,7 +2,7 @@ import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { clsx } from 'clsx'
 import type {
   AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
+  ComponentProps,
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
@@ -36,7 +36,7 @@ export function Button({
   variant = 'primary',
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+}: ComponentProps<'button'> & { variant?: Variant }) {
   return <button className={clsx(buttonBase, variants[variant], className)} {...props} />
 }
 

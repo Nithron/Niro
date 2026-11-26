@@ -6,6 +6,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// RegisterBuildInfo exposes niro_build_info{version} = 1, so dashboards and
+// alerts can tell which release is running.
+func RegisterBuildInfo(reg prometheus.Registerer, version string) error {
+	g := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "niro_build_info", Help: "The running Niro version."}, []string{"version"})
+	g.WithLabelValues(version).Set(1)
+	return reg.Register(g)
+}
+
 // Jobs records how background jobs went, so an alert can fire when one keeps
 // failing or stops running: niro_job_last_success_timestamp_seconds and
 // niro_job_failures_total, both by job name.

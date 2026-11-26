@@ -40,6 +40,10 @@ type Runner struct {
 	Now func() time.Time
 	// Done, if set, is told how each run went (job metrics).
 	Done func(err error)
+	// Delay holds back the first run. After a restart, servers that re-added
+	// Niro while it was down are only marked as present again once the
+	// gateway has delivered them; purging before that could delete them.
+	Delay time.Duration
 }
 
 // RunOnce applies every rule once. A failing rule doesn't stop the others.
@@ -74,11 +78,19 @@ func (r Runner) RunOnce(ctx context.Context) error {
 
 // Run applies the policy now and then every interval until ctx ends.
 func (r Runner) Run(ctx context.Context, every time.Duration) {
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(r.Delay):
+	}
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
 		err := r.RunOnce(ctx)
-		if err != nil && ctx.Err() == nil {
+		if ctx.Err() != nil {
+			return // shutting down: not a failed run
+		}
+		if err != nil {
 			r.Log.ErrorContext(ctx, "retention run failed", "err", err)
 		}
 		if r.Done != nil {

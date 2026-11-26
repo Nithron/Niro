@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
 	"time"
 
@@ -112,6 +113,8 @@ type Lifecycle interface {
 // GuildCache holds per-server keys outside Postgres.
 type GuildCache interface {
 	ForgetGuild(ctx context.Context, id snowflake.ID) error
+	// ForgetMessages drops cached message text for these channels.
+	ForgetMessages(ctx context.Context, channels []snowflake.ID) error
 }
 
 // Bot is a running Niro Discord client.
@@ -164,7 +167,8 @@ func New(deps Deps) (*Bot, error) {
 		),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers, cache.FlagVoiceStates)),
 		bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(b.gatewayHandlers())),
-		bot.WithEventListeners(router, &events.ListenerAdapter{
+		bot.WithRestClientConfigOpts(rest.WithHTTPClient(&http.Client{Timeout: 20 * time.Second, Transport: b.metrics.restTransport(http.DefaultTransport)})),
+		bot.WithEventListeners(router, bot.NewListenerFunc(b.metrics.countEvent), &events.ListenerAdapter{
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild); b.refreshInvites(e.GuildID) },
 			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
 			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
@@ -317,7 +321,7 @@ func (b *Bot) runScheduler(ctx context.Context) {
 	for {
 		if self, ok := b.client.Caches.SelfUser(); ok {
 			actor := moderation.Actor{Rank: core.Rank{ID: self.ID}, Name: self.Username}
-			b.mod.RunScheduler(ctx, actor, 30*time.Second)
+			b.mod.RunScheduler(ctx, actor, 30*time.Second, b.deps.Jobs.Reporter("scheduler"))
 			return
 		}
 		select {
@@ -343,13 +347,14 @@ func (b *Bot) Run(ctx context.Context) error {
 	}
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
 	go b.runScheduler(ctx)
-	go b.guard.RunMaintenance(ctx, 15*time.Second)
-	go b.tickets.RunMaintenance(ctx, time.Hour)
+	go b.guard.RunMaintenance(ctx, 15*time.Second, b.deps.Jobs.Reporter("guardian_purge"))
+	go b.tickets.RunMaintenance(ctx, time.Hour, b.deps.Jobs.Reporter("transcript_purge"))
+	go b.watchShards(ctx, 15*time.Second)
 	if b.deps.Lifecycle != nil {
-		r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention")}
+		r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention"), Delay: 15 * time.Minute}
 		go r.Run(ctx, time.Hour)
 	}
-	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
+	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian"), Done: b.deps.Jobs.Reporter("scam_feed")}
 	go feed.Run(ctx)
 
 	<-ctx.Done()
@@ -360,14 +365,24 @@ func (b *Bot) Run(ctx context.Context) error {
 	return nil
 }
 
-// Ready reports whether at least one shard is connected (readiness check).
+// Ready reports whether every shard is connected (readiness check). One
+// shard down means a share of servers gets no moderation or protection, so
+// it counts as not ready.
 func (b *Bot) Ready(context.Context) error {
+	total, down := 0, 0
 	for s := range b.client.ShardManager.Shards() {
-		if s.Status() == gateway.StatusReady {
-			return nil
+		total++
+		if s.Status() != gateway.StatusReady {
+			down++
 		}
 	}
-	return fmt.Errorf("no shard is connected")
+	switch {
+	case total == 0:
+		return fmt.Errorf("no shard is running")
+	case down > 0:
+		return fmt.Errorf("%d of %d shards are not connected", down, total)
+	}
+	return nil
 }
 
 func (b *Bot) syncCommands() error {
