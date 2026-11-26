@@ -429,7 +429,7 @@ export interface components {
         User: {
             id: components["schemas"]["Snowflake"];
             username: string;
-            /** @description Display name */
+            /** @description Display name, if set */
             globalName?: string;
             /** Format: uri */
             avatarUrl: string;
@@ -482,7 +482,7 @@ export interface components {
         ModerationSettings: {
             /** @description Channel for case logs; "0" disables the log */
             logChannelId: string;
-            /** @description DM users about warnings */
+            /** @description DM users about warnings, timeouts, kicks and bans */
             dmUsers: boolean;
             requireReason: boolean;
         };
@@ -515,7 +515,7 @@ export interface components {
             items: components["schemas"]["Case"][];
             /** @description Matching cases in total */
             total: number;
-            /** @description Cursor for the next page */
+            /** @description Cursor for the next page, absent on the last page */
             nextBefore?: number;
         };
         CaseUpdate: {
@@ -647,7 +647,7 @@ export interface components {
             items: components["schemas"]["GuardianEvent"][];
             /**
              * Format: int64
-             * @description Cursor for the next page
+             * @description Cursor for the next page, absent on the last page
              */
             nextBefore?: number;
         };
@@ -1538,6 +1538,7 @@ export interface operations {
                     "application/json": components["schemas"]["Invite"];
                 };
             };
+            400: components["responses"]["BadRequest"];
         };
     };
 }

@@ -2,6 +2,9 @@ openapi: 3.0.3
 info:
   title: Niro API
   version: 0.1.0
+  license:
+    name: Nithron Community License (NCL) v1.0
+    url: https://github.com/Nithron/Niro/blob/main/LICENSE
   description: |
     API behind the Niro dashboard. Authentication is a session cookie set by
     the Discord OAuth2 login flow (`/auth/login` → `/auth/callback`), which is
@@ -517,6 +520,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Invite" }
+        "400": { $ref: "#/components/responses/BadRequest" }
 components:
   securitySchemes:
     sessionCookie:
@@ -580,7 +584,7 @@ components:
       properties:
         id: { $ref: "#/components/schemas/Snowflake" }
         username: { type: string }
-        globalName: { type: string, description: Display name, if set }
+        globalName: { type: string, description: "Display name, if set" }
         avatarUrl: { type: string, format: uri }
     GuildSummary:
       type: object
@@ -641,7 +645,7 @@ components:
           type: string
           pattern: "^[0-9]{1,20}$"
           description: Channel for case logs; "0" disables the log
-        dmUsers: { type: boolean, description: DM users about warnings, timeouts, kicks and bans }
+        dmUsers: { type: boolean, description: "DM users about warnings, timeouts, kicks and bans" }
         requireReason: { type: boolean }
     CaseAction:
       type: string
@@ -674,7 +678,7 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Case" }
         total: { type: integer, description: Matching cases in total }
-        nextBefore: { type: integer, description: Cursor for the next page, absent on the last page }
+        nextBefore: { type: integer, description: "Cursor for the next page, absent on the last page" }
     CaseUpdate:
       type: object
       required: [reason]
@@ -809,7 +813,7 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/GuardianEvent" }
-        nextBefore: { type: integer, format: int64, description: Cursor for the next page, absent on the last page }
+        nextBefore: { type: integer, format: int64, description: "Cursor for the next page, absent on the last page" }
     GuardianResolve:
       type: object
       required: [action]

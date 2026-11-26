@@ -27,5 +27,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // e2e/ holds the Playwright suite (pnpm e2e).
+    exclude: ['e2e/**', 'node_modules/**'],
   },
 })

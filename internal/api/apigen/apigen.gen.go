@@ -571,7 +571,7 @@ type CaseAction string
 type CaseList struct {
 	Items []Case `json:"items"`
 
-	// NextBefore Cursor for the next page
+	// NextBefore Cursor for the next page, absent on the last page
 	NextBefore *int `json:"nextBefore,omitempty"`
 
 	// Total Matching cases in total
@@ -630,7 +630,7 @@ type GuardianEventResponse string
 type GuardianEventList struct {
 	Items []GuardianEvent `json:"items"`
 
-	// NextBefore Cursor for the next page
+	// NextBefore Cursor for the next page, absent on the last page
 	NextBefore *int64 `json:"nextBefore,omitempty"`
 }
 
@@ -800,7 +800,7 @@ type LoggingSettings struct {
 
 // ModerationSettings defines model for ModerationSettings.
 type ModerationSettings struct {
-	// DmUsers DM users about warnings
+	// DmUsers DM users about warnings, timeouts, kicks and bans
 	DmUsers bool `json:"dmUsers"`
 
 	// LogChannelId Channel for case logs; "0" disables the log
@@ -844,7 +844,7 @@ type Snowflake = string
 type User struct {
 	AvatarUrl string `json:"avatarUrl"`
 
-	// GlobalName Display name
+	// GlobalName Display name, if set
 	GlobalName *string `json:"globalName,omitempty"`
 
 	// Id Example: 1234567890123456789
@@ -4424,6 +4424,20 @@ func (response GetInvite200JSONResponse) VisitGetInviteResponse(w http.ResponseW
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetInvite400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetInvite400JSONResponse) VisitGetInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
 	_, err := buf.WriteTo(w)
 	return err
 }
