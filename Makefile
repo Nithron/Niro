@@ -88,8 +88,10 @@ SOAK_VALKEY ?= localhost:6379
 soak: ## Load test: 2,500 servers, 100 msg/s for 2 hours (SOAK_DB must be a throwaway database)
 	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 2500 -rate 100 -duration 2h -warmup 5m
 
-soak-short: ## A one-minute load test (CI)
-	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 200 -rate 50 -duration 60s -warmup 20s -raid-every 20s -report 20s
+# The warm-up must outlast the server log's per-channel workers, which stop
+# after a minute idle; before that the goroutine count is still climbing.
+soak-short: ## A three-minute load test (CI)
+	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 200 -rate 50 -duration 3m -warmup 90s -raid-every 30s -report 30s
 
 deploy-check: monitoring-check ## Validate the compose file (with the example settings) and the monitoring config
 	@tmp=$$(mktemp -d) && cp -r deploy "$$tmp/" && cp deploy/.env.example "$$tmp/deploy/.env" && \

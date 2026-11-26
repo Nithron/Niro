@@ -107,7 +107,7 @@ jobs:
           retention-days: 7
 
   soak:
-    name: Load test (one minute)
+    name: Load test (three minutes)
     runs-on: ubuntu-latest
     services:
       postgres:
