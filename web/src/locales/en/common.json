@@ -79,7 +79,8 @@
     "guardian": "Guardian",
     "detections": "Detections",
     "audit": "Security audit",
-    "logging": "Logging"
+    "logging": "Logging",
+    "roles": "Role panels"
   },
   "common": {
     "save": "Save",
@@ -528,5 +529,56 @@
     "unknownVariables": "Unknown variables (shown as typed): {{list}}",
     "preview": "Preview",
     "emptyPreview": "Add a block to see the preview."
+  },
+  "rolePanels": {
+    "title": "Role panels",
+    "subtitle": "Messages with buttons or a menu that let members pick their own roles.",
+    "moduleOff": "The Role panels module is turned off. Panels stay posted, but clicks only say the module is off until you turn it on in Modules.",
+    "new": "New panel",
+    "empty": "No role panels yet.",
+    "notPosted": "Not posted",
+    "confirmDelete": "Delete \"{{name}}\" and its message in Discord?",
+    "roleCount_one": "{{count}} role",
+    "roleCount_other": "{{count}} roles",
+    "newTitle": "New role panel",
+    "editTitle": "Edit role panel",
+    "name": "Name",
+    "nameHelp": "Only shown here, to tell panels apart.",
+    "channel": "Post in",
+    "chooseChannel": "Choose a channel…",
+    "style": "Style",
+    "styles": {
+      "buttons": "Buttons",
+      "select": "Menu"
+    },
+    "mode": "Mode",
+    "modes": {
+      "toggle": "Toggle",
+      "unique": "Pick one",
+      "verify": "Verify"
+    },
+    "modeHelp": {
+      "toggle": "Members add and remove each role.",
+      "unique": "Members can have only one role from this panel; picking another swaps it.",
+      "verify": "Members can only add the roles, never remove them. Guardian's minimum account age applies."
+    },
+    "roles": "Roles",
+    "roleN": "Role {{n}}",
+    "labelN": "Role {{n}} label",
+    "emojiN": "Role {{n}} emoji",
+    "descriptionN": "Role {{n}} description",
+    "label": "Label",
+    "description": "Description (menu only)",
+    "chooseRole": "Choose a role…",
+    "addRole": "Add a role",
+    "blockedRoles": "Not offered because they are managed by an integration or have dangerous permissions: {{list}}",
+    "maxRoles": "Most roles per member",
+    "maxRolesHelp": "0 means no limit.",
+    "requiredRole": "Who can use it",
+    "requiredRoleHelp": "Optionally limit the panel to members with a role.",
+    "anyone": "Everyone",
+    "message": "Message",
+    "menuPlaceholder": "Pick your roles",
+    "saveAndPost": "Save and post"
   }
 }

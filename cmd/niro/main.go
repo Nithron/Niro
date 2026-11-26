@@ -169,7 +169,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 		b, err := discord.New(discord.Deps{
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
 			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
-			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(),
+			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(), RolePanels: db,
 		})
 		if err != nil {
 			return err
@@ -189,16 +189,17 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 				PublicURL: cfg.PublicURL, DashboardURL: cfg.DashboardURL,
 				SecureCookies: cfg.SecureCookies(), ClientID: cfg.Discord.ClientID,
 			},
-			Log:       log,
-			OAuth:     api.NewDiscordOAuth(cfg.Discord.ClientID, cfg.Discord.ClientSecret, cfg.OAuthRedirectURI()),
-			KV:        kv,
-			Guilds:    db,
-			Configs:   configs,
-			Cases:     db,
-			Guardian:  db,
-			RPC:       rpc.NewClient(kv.Raw(), 10*time.Second),
-			Dashboard: web.Dist(),
-			Metrics:   metrics,
+			Log:        log,
+			OAuth:      api.NewDiscordOAuth(cfg.Discord.ClientID, cfg.Discord.ClientSecret, cfg.OAuthRedirectURI()),
+			KV:         kv,
+			Guilds:     db,
+			Configs:    configs,
+			Cases:      db,
+			Guardian:   db,
+			RolePanels: db,
+			RPC:        rpc.NewClient(kv.Raw(), 10*time.Second),
+			Dashboard:  web.Dist(),
+			Metrics:    metrics,
 		})
 		if err != nil {
 			return err

@@ -271,3 +271,18 @@ var (
 	LogBulkNoContent  = define("log.bulk.no_content")
 	LogBulkEmpty      = define("log.bulk.empty")
 )
+
+// Role panels (M4).
+var (
+	RolesDisabled          = define("roles.disabled")
+	RolesAdded             = define("roles.added")
+	RolesRemoved           = define("roles.removed")
+	RolesNothing           = define("roles.nothing")
+	RolesNotOnPanel        = define("roles.not_on_panel")
+	RolesNeedsRole         = define("roles.needs_role")
+	RolesTooMany           = define("roles.too_many")
+	RolesTooNew            = define("roles.too_new")
+	RolesFailed            = define("roles.failed")
+	RolesPanelGone         = define("roles.panel_gone")
+	RolesSelectPlaceholder = define("roles.select_placeholder")
+)

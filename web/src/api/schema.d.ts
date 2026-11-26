@@ -273,6 +273,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/role-panels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Role panels */
+        get: operations["listRolePanels"];
+        put?: never;
+        /** Create a role panel and post it */
+        post: operations["createRolePanel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/role-panels/{panelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Save a role panel and update its message */
+        put: operations["updateRolePanel"];
+        post?: never;
+        /** Delete a role panel and its message */
+        delete: operations["deleteRolePanel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/guilds/{guildId}/guardian/events": {
         parameters: {
             query?: never;
@@ -477,6 +518,8 @@ export interface components {
                 position: number;
                 /** @description Bot or integration role (can't be assigned) */
                 managed: boolean;
+                /** @description Grants a dangerous permission, so Niro won't hand it out */
+                dangerous: boolean;
             }[];
         };
         ModerationSettings: {
@@ -609,6 +652,39 @@ export interface components {
                 url: string;
                 emoji?: string;
             }[];
+        };
+        RolePanelRole: {
+            roleId: components["schemas"]["Snowflake"];
+            label: string;
+            emoji?: string;
+            /** @description Select menus only */
+            description?: string;
+        };
+        RolePanel: {
+            /**
+             * Format: int64
+             * @description Ignored on input
+             */
+            id?: number;
+            name: string;
+            channelId: components["schemas"]["Snowflake"];
+            /** @description The posted message (ignored on input) */
+            messageId?: string;
+            message: components["schemas"]["MessageDocument"];
+            /** @enum {string} */
+            style: "buttons" | "select";
+            /** @enum {string} */
+            mode: "toggle" | "unique" | "verify";
+            roles: components["schemas"]["RolePanelRole"][];
+            /** @description Toggle mode: most roles a member may hold from the panel (0 = no limit) */
+            maxRoles: number;
+            /** @description "0" when anyone may use the panel */
+            requiredRoleId: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        RolePanelList: {
+            items: components["schemas"]["RolePanel"][];
         };
         /** @description The log channel per category; "0" uses the default channel. */
         LoggingChannels: {
@@ -1323,6 +1399,118 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listRolePanels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The server's role panels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanelList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    createRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    deleteRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             409: components["responses"]["BotNotInGuild"];
         };
     };

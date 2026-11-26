@@ -436,3 +436,17 @@ Then contact the moderators of **{{.Server}}**: they can restore your access."""
 "log.bulk.files" = "files:"
 "log.bulk.no_content" = "(message content logging is off)"
 "log.bulk.empty" = "(no text)"
+
+# ---- Role panels (M4) -----------------------------------------------------------
+
+"roles.disabled" = "Role panels are turned off in this server."
+"roles.added" = "**Added:** {{.Roles}}"
+"roles.removed" = "**Removed:** {{.Roles}}"
+"roles.nothing" = "Nothing changed: you already have what you picked."
+"roles.not_on_panel" = "That role isn't on this panel any more."
+"roles.needs_role" = "You need {{.Role}} to use this panel."
+"roles.too_many" = "You picked more roles than this panel allows."
+"roles.too_new" = "Your account is too new for this panel. Try again {{.When}}."
+"roles.failed" = "Niro can't hand out {{.Roles}} any more (a moderator needs to fix the panel)."
+"roles.panel_gone" = "This panel was deleted."
+"roles.select_placeholder" = "Pick your roles"

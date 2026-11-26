@@ -364,6 +364,74 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/role-panels:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listRolePanels
+      summary: Role panels
+      responses:
+        "200":
+          description: The server's role panels
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanelList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    post:
+      operationId: createRolePanel
+      summary: Create a role panel and post it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolePanel" }
+      responses:
+        "201":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/role-panels/{panelId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - name: panelId
+        in: path
+        required: true
+        schema: { type: integer, format: int64, minimum: 1 }
+    put:
+      operationId: updateRolePanel
+      summary: Save a role panel and update its message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolePanel" }
+      responses:
+        "200":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    delete:
+      operationId: deleteRolePanel
+      summary: Delete a role panel and its message
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
   /guilds/{guildId}/guardian/events:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -629,13 +697,14 @@ components:
           type: array
           items:
             type: object
-            required: [id, name, color, position, managed]
+            required: [id, name, color, position, managed, dangerous]
             properties:
               id: { $ref: "#/components/schemas/Snowflake" }
               name: { type: string }
               color: { type: integer }
               position: { type: integer }
-              managed: { type: boolean, description: Bot or integration role (can't be assigned) }
+              managed: { type: boolean, description: "Bot or integration role (can't be assigned)" }
+              dangerous: { type: boolean, description: "Grants a dangerous permission, so Niro won't hand it out" }
     ModerationSettings:
       type: object
       required: [logChannelId, dmUsers, requireReason]
@@ -785,6 +854,36 @@ components:
               label: { type: string, maxLength: 80 }
               url: { type: string, maxLength: 2048 }
               emoji: { type: string, maxLength: 32 }
+    RolePanelRole:
+      type: object
+      additionalProperties: false
+      required: [roleId, label]
+      properties:
+        roleId: { $ref: "#/components/schemas/Snowflake" }
+        label: { type: string, maxLength: 80 }
+        emoji: { type: string, maxLength: 32 }
+        description: { type: string, maxLength: 100, description: Select menus only }
+    RolePanel:
+      type: object
+      additionalProperties: false
+      required: [name, channelId, message, style, mode, roles, maxRoles, requiredRoleId]
+      properties:
+        id: { type: integer, format: int64, description: Ignored on input }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        channelId: { $ref: "#/components/schemas/Snowflake" }
+        messageId: { type: string, pattern: "^[0-9]{1,20}$", description: "The posted message (ignored on input)" }
+        message: { $ref: "#/components/schemas/MessageDocument" }
+        style: { type: string, enum: [buttons, select] }
+        mode: { type: string, enum: [toggle, unique, verify] }
+        roles: { type: array, minItems: 1, maxItems: 25, items: { $ref: "#/components/schemas/RolePanelRole" } }
+        maxRoles: { type: integer, minimum: 0, maximum: 25, description: "Toggle mode: most roles a member may hold from the panel (0 = no limit)" }
+        requiredRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when anyone may use the panel' }
+        updatedAt: { type: string, format: date-time }
+    RolePanelList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RolePanel" } }
     LoggingChannels:
       type: object
       additionalProperties: false

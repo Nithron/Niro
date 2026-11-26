@@ -440,28 +440,94 @@ func (e GuardianStatus) Valid() bool {
 
 // Defines values for GuildMetaChannelsType.
 const (
-	Announcement GuildMetaChannelsType = "announcement"
-	Category     GuildMetaChannelsType = "category"
-	Forum        GuildMetaChannelsType = "forum"
-	Other        GuildMetaChannelsType = "other"
-	Text         GuildMetaChannelsType = "text"
-	Voice        GuildMetaChannelsType = "voice"
+	GuildMetaChannelsTypeAnnouncement GuildMetaChannelsType = "announcement"
+	GuildMetaChannelsTypeCategory     GuildMetaChannelsType = "category"
+	GuildMetaChannelsTypeForum        GuildMetaChannelsType = "forum"
+	GuildMetaChannelsTypeOther        GuildMetaChannelsType = "other"
+	GuildMetaChannelsTypeText         GuildMetaChannelsType = "text"
+	GuildMetaChannelsTypeVoice        GuildMetaChannelsType = "voice"
 )
 
 // Valid indicates whether the value is a known member of the GuildMetaChannelsType enum.
 func (e GuildMetaChannelsType) Valid() bool {
 	switch e {
-	case Announcement:
+	case GuildMetaChannelsTypeAnnouncement:
 		return true
-	case Category:
+	case GuildMetaChannelsTypeCategory:
 		return true
-	case Forum:
+	case GuildMetaChannelsTypeForum:
 		return true
-	case Other:
+	case GuildMetaChannelsTypeOther:
 		return true
-	case Text:
+	case GuildMetaChannelsTypeText:
 		return true
-	case Voice:
+	case GuildMetaChannelsTypeVoice:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MessageBlockType.
+const (
+	MessageBlockTypeGallery   MessageBlockType = "gallery"
+	MessageBlockTypeLinks     MessageBlockType = "links"
+	MessageBlockTypeSection   MessageBlockType = "section"
+	MessageBlockTypeSeparator MessageBlockType = "separator"
+	MessageBlockTypeText      MessageBlockType = "text"
+)
+
+// Valid indicates whether the value is a known member of the MessageBlockType enum.
+func (e MessageBlockType) Valid() bool {
+	switch e {
+	case MessageBlockTypeGallery:
+		return true
+	case MessageBlockTypeLinks:
+		return true
+	case MessageBlockTypeSection:
+		return true
+	case MessageBlockTypeSeparator:
+		return true
+	case MessageBlockTypeText:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RolePanelMode.
+const (
+	Toggle RolePanelMode = "toggle"
+	Unique RolePanelMode = "unique"
+	Verify RolePanelMode = "verify"
+)
+
+// Valid indicates whether the value is a known member of the RolePanelMode enum.
+func (e RolePanelMode) Valid() bool {
+	switch e {
+	case Toggle:
+		return true
+	case Unique:
+		return true
+	case Verify:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RolePanelStyle.
+const (
+	Buttons RolePanelStyle = "buttons"
+	Select  RolePanelStyle = "select"
+)
+
+// Valid indicates whether the value is a known member of the RolePanelStyle enum.
+func (e RolePanelStyle) Valid() bool {
+	switch e {
+	case Buttons:
+		return true
+	case Select:
 		return true
 	default:
 		return false
@@ -722,6 +788,9 @@ type GuildMeta struct {
 	Roles []struct {
 		Color int `json:"color"`
 
+		// Dangerous Grants a dangerous permission, so Niro won't hand it out
+		Dangerous bool `json:"dangerous"`
+
 		// Id Example: 1234567890123456789
 		Id Snowflake `json:"id"`
 
@@ -798,6 +867,39 @@ type LoggingSettings struct {
 	NoMessageContent bool `json:"noMessageContent"`
 }
 
+// MessageBlock defines model for MessageBlock.
+type MessageBlock struct {
+	Divider *bool `json:"divider,omitempty"`
+	Images  *[]struct {
+		Description *string `json:"description,omitempty"`
+		Url         string  `json:"url"`
+	} `json:"images,omitempty"`
+	Large *bool `json:"large,omitempty"`
+	Links *[]struct {
+		Emoji *string `json:"emoji,omitempty"`
+		Label string  `json:"label"`
+		Url   string  `json:"url"`
+	} `json:"links,omitempty"`
+
+	// Text Markdown; text and section blocks. Variables: {user}, {user.name}, {user.id}, {server}, {memberCount}, {channel}
+	Text *string `json:"text,omitempty"`
+
+	// Thumbnail https image URL; section blocks
+	Thumbnail *string          `json:"thumbnail,omitempty"`
+	Type      MessageBlockType `json:"type"`
+}
+
+// MessageBlockType defines model for MessageBlock.Type.
+type MessageBlockType string
+
+// MessageDocument A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+type MessageDocument struct {
+	// AccentColor Colour bar as 0xRRGGBB; absent for none
+	AccentColor *int           `json:"accentColor,omitempty"`
+	Blocks      []MessageBlock `json:"blocks"`
+	Version     int            `json:"version"`
+}
+
 // ModerationSettings defines model for ModerationSettings.
 type ModerationSettings struct {
 	// DmUsers DM users about warnings, timeouts, kicks and bans
@@ -835,6 +937,54 @@ type RaidStatus struct {
 	Manual    *bool      `json:"manual,omitempty"`
 	Problems  []string   `json:"problems"`
 	StartedAt *time.Time `json:"startedAt,omitempty"`
+}
+
+// RolePanel defines model for RolePanel.
+type RolePanel struct {
+	// ChannelId Example: 1234567890123456789
+	ChannelId Snowflake `json:"channelId"`
+
+	// Id Ignored on input
+	Id *int64 `json:"id,omitempty"`
+
+	// MaxRoles Toggle mode: most roles a member may hold from the panel (0 = no limit)
+	MaxRoles int `json:"maxRoles"`
+
+	// Message A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	Message MessageDocument `json:"message"`
+
+	// MessageId The posted message (ignored on input)
+	MessageId *string       `json:"messageId,omitempty"`
+	Mode      RolePanelMode `json:"mode"`
+	Name      string        `json:"name"`
+
+	// RequiredRoleId "0" when anyone may use the panel
+	RequiredRoleId string          `json:"requiredRoleId"`
+	Roles          []RolePanelRole `json:"roles"`
+	Style          RolePanelStyle  `json:"style"`
+	UpdatedAt      *time.Time      `json:"updatedAt,omitempty"`
+}
+
+// RolePanelMode defines model for RolePanel.Mode.
+type RolePanelMode string
+
+// RolePanelStyle defines model for RolePanel.Style.
+type RolePanelStyle string
+
+// RolePanelList defines model for RolePanelList.
+type RolePanelList struct {
+	Items []RolePanel `json:"items"`
+}
+
+// RolePanelRole defines model for RolePanelRole.
+type RolePanelRole struct {
+	// Description Select menus only
+	Description *string `json:"description,omitempty"`
+	Emoji       *string `json:"emoji,omitempty"`
+	Label       string  `json:"label"`
+
+	// RoleId Example: 1234567890123456789
+	RoleId Snowflake `json:"roleId"`
 }
 
 // Snowflake Example: 1234567890123456789
@@ -915,6 +1065,12 @@ type ResolveGuardianEventJSONRequestBody = GuardianResolve
 // UpdateGuildModuleJSONRequestBody defines body for UpdateGuildModule for application/json ContentType.
 type UpdateGuildModuleJSONRequestBody = ModuleUpdate
 
+// CreateRolePanelJSONRequestBody defines body for CreateRolePanel for application/json ContentType.
+type CreateRolePanelJSONRequestBody = RolePanel
+
+// UpdateRolePanelJSONRequestBody defines body for UpdateRolePanel for application/json ContentType.
+type UpdateRolePanelJSONRequestBody = RolePanel
+
 // UpdateGuardianSettingsJSONRequestBody defines body for UpdateGuardianSettings for application/json ContentType.
 type UpdateGuardianSettingsJSONRequestBody = GuardianSettings
 
@@ -989,6 +1145,18 @@ type ServerInterface interface {
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string)
+	// ListRolePanels Role panels
+	// (GET /guilds/{guildId}/role-panels)
+	ListRolePanels(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// CreateRolePanel Create a role panel and post it
+	// (POST /guilds/{guildId}/role-panels)
+	CreateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// DeleteRolePanel Delete a role panel and its message
+	// (DELETE /guilds/{guildId}/role-panels/{panelId})
+	DeleteRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64)
+	// UpdateRolePanel Save a role panel and update its message
+	// (PUT /guilds/{guildId}/role-panels/{panelId})
+	UpdateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64)
 	// GetGuardianSettings Guardian settings
 	// (GET /guilds/{guildId}/settings/guardian)
 	GetGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
@@ -1141,6 +1309,30 @@ func (_ Unimplemented) ListGuildModules(w http.ResponseWriter, r *http.Request, 
 // UpdateGuildModule Enable or disable a module
 // (PUT /guilds/{guildId}/modules/{moduleId})
 func (_ Unimplemented) UpdateGuildModule(w http.ResponseWriter, r *http.Request, guildId GuildId, moduleId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListRolePanels Role panels
+// (GET /guilds/{guildId}/role-panels)
+func (_ Unimplemented) ListRolePanels(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateRolePanel Create a role panel and post it
+// (POST /guilds/{guildId}/role-panels)
+func (_ Unimplemented) CreateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteRolePanel Delete a role panel and its message
+// (DELETE /guilds/{guildId}/role-panels/{panelId})
+func (_ Unimplemented) DeleteRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateRolePanel Save a role panel and update its message
+// (PUT /guilds/{guildId}/role-panels/{panelId})
+func (_ Unimplemented) UpdateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1918,6 +2110,128 @@ func (siw *ServerInterfaceWrapper) UpdateGuildModule(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ListRolePanels operation middleware
+func (siw *ServerInterfaceWrapper) ListRolePanels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRolePanels(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRolePanel operation middleware
+func (siw *ServerInterfaceWrapper) CreateRolePanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRolePanel(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteRolePanel operation middleware
+func (siw *ServerInterfaceWrapper) DeleteRolePanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "panelId" -------------
+	var panelId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "panelId", chi.URLParam(r, "panelId"), &panelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "panelId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteRolePanel(w, r, guildId, panelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateRolePanel operation middleware
+func (siw *ServerInterfaceWrapper) UpdateRolePanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "panelId" -------------
+	var panelId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "panelId", chi.URLParam(r, "panelId"), &panelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "panelId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateRolePanel(w, r, guildId, panelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetGuardianSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetGuardianSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -2294,6 +2608,18 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/guilds/{guildId}/settings/logging", wrapper.UpdateLoggingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/role-panels", wrapper.ListRolePanels)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/guilds/{guildId}/role-panels", wrapper.CreateRolePanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/role-panels/{panelId}", wrapper.DeleteRolePanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/role-panels/{panelId}", wrapper.UpdateRolePanel)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events", wrapper.ListGuardianEvents)
@@ -3977,6 +4303,316 @@ func (response UpdateGuildModule409JSONResponse) VisitUpdateGuildModuleResponse(
 	return err
 }
 
+type ListRolePanelsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type ListRolePanelsResponseObject interface {
+	VisitListRolePanelsResponse(w http.ResponseWriter) error
+}
+
+type ListRolePanels200JSONResponse RolePanelList
+
+func (response ListRolePanels200JSONResponse) VisitListRolePanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRolePanels401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListRolePanels401JSONResponse) VisitListRolePanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRolePanels403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListRolePanels403JSONResponse) VisitListRolePanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRolePanels409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListRolePanels409JSONResponse) VisitListRolePanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRolePanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *CreateRolePanelJSONRequestBody
+}
+
+type CreateRolePanelResponseObject interface {
+	VisitCreateRolePanelResponse(w http.ResponseWriter) error
+}
+
+type CreateRolePanel201JSONResponse RolePanel
+
+func (response CreateRolePanel201JSONResponse) VisitCreateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRolePanel400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response CreateRolePanel400JSONResponse) VisitCreateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRolePanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateRolePanel401JSONResponse) VisitCreateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRolePanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateRolePanel403JSONResponse) VisitCreateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRolePanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response CreateRolePanel409JSONResponse) VisitCreateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRolePanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	PanelId int64   `json:"panelId"`
+}
+
+type DeleteRolePanelResponseObject interface {
+	VisitDeleteRolePanelResponse(w http.ResponseWriter) error
+}
+
+type DeleteRolePanel204Response struct {
+}
+
+func (response DeleteRolePanel204Response) VisitDeleteRolePanelResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteRolePanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteRolePanel401JSONResponse) VisitDeleteRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRolePanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteRolePanel403JSONResponse) VisitDeleteRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRolePanel404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteRolePanel404JSONResponse) VisitDeleteRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteRolePanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response DeleteRolePanel409JSONResponse) VisitDeleteRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	PanelId int64   `json:"panelId"`
+	Body    *UpdateRolePanelJSONRequestBody
+}
+
+type UpdateRolePanelResponseObject interface {
+	VisitUpdateRolePanelResponse(w http.ResponseWriter) error
+}
+
+type UpdateRolePanel200JSONResponse RolePanel
+
+func (response UpdateRolePanel200JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanel400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateRolePanel400JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateRolePanel401JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateRolePanel403JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanel404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateRolePanel404JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateRolePanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateRolePanel409JSONResponse) VisitUpdateRolePanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetGuardianSettingsRequestObject struct {
 	GuildId GuildId `json:"guildId"`
 }
@@ -4542,6 +5178,18 @@ type StrictServerInterface interface {
 	// UpdateGuildModule Enable or disable a module
 	// (PUT /guilds/{guildId}/modules/{moduleId})
 	UpdateGuildModule(ctx context.Context, request UpdateGuildModuleRequestObject) (UpdateGuildModuleResponseObject, error)
+	// ListRolePanels Role panels
+	// (GET /guilds/{guildId}/role-panels)
+	ListRolePanels(ctx context.Context, request ListRolePanelsRequestObject) (ListRolePanelsResponseObject, error)
+	// CreateRolePanel Create a role panel and post it
+	// (POST /guilds/{guildId}/role-panels)
+	CreateRolePanel(ctx context.Context, request CreateRolePanelRequestObject) (CreateRolePanelResponseObject, error)
+	// DeleteRolePanel Delete a role panel and its message
+	// (DELETE /guilds/{guildId}/role-panels/{panelId})
+	DeleteRolePanel(ctx context.Context, request DeleteRolePanelRequestObject) (DeleteRolePanelResponseObject, error)
+	// UpdateRolePanel Save a role panel and update its message
+	// (PUT /guilds/{guildId}/role-panels/{panelId})
+	UpdateRolePanel(ctx context.Context, request UpdateRolePanelRequestObject) (UpdateRolePanelResponseObject, error)
 	// GetGuardianSettings Guardian settings
 	// (GET /guilds/{guildId}/settings/guardian)
 	GetGuardianSettings(ctx context.Context, request GetGuardianSettingsRequestObject) (GetGuardianSettingsResponseObject, error)
@@ -5190,6 +5838,126 @@ func (sh *strictHandler) UpdateGuildModule(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateGuildModuleResponseObject); ok {
 		if err := validResponse.VisitUpdateGuildModuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListRolePanels operation middleware
+func (sh *strictHandler) ListRolePanels(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request ListRolePanelsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListRolePanels(ctx, request.(ListRolePanelsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRolePanels")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRolePanelsResponseObject); ok {
+		if err := validResponse.VisitListRolePanelsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateRolePanel operation middleware
+func (sh *strictHandler) CreateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request CreateRolePanelRequestObject
+
+	request.GuildId = guildId
+
+	var body CreateRolePanelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.CreateRolePanel(ctx, request.(CreateRolePanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRolePanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateRolePanelResponseObject); ok {
+		if err := validResponse.VisitCreateRolePanelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteRolePanel operation middleware
+func (sh *strictHandler) DeleteRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	var request DeleteRolePanelRequestObject
+
+	request.GuildId = guildId
+	request.PanelId = panelId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.DeleteRolePanel(ctx, request.(DeleteRolePanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteRolePanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteRolePanelResponseObject); ok {
+		if err := validResponse.VisitDeleteRolePanelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateRolePanel operation middleware
+func (sh *strictHandler) UpdateRolePanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	var request UpdateRolePanelRequestObject
+
+	request.GuildId = guildId
+	request.PanelId = panelId
+
+	var body UpdateRolePanelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateRolePanel(ctx, request.(UpdateRolePanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateRolePanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateRolePanelResponseObject); ok {
+		if err := validResponse.VisitUpdateRolePanelResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

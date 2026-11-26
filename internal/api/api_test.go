@@ -147,13 +147,14 @@ const (
 )
 
 type harness struct {
-	t     *testing.T
-	h     http.Handler
-	kv    *memKV
-	oauth *fakeOAuth
-	rpc   *fakeRPC
-	cases *fakeCases
-	guard *fakeGuardian
+	t      *testing.T
+	h      http.Handler
+	kv     *memKV
+	oauth  *fakeOAuth
+	rpc    *fakeRPC
+	cases  *fakeCases
+	guard  *fakeGuardian
+	panels *fakePanels
 }
 
 func newHarness(t *testing.T) *harness {
@@ -169,6 +170,7 @@ func newHarness(t *testing.T) *harness {
 	mods := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
 	mods = core.WithSettings(mods, core.ModuleGuardian, guardian.SettingsSpec{})
 	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleLogging, logging.SettingsSpec{})...)
+	fpanels := &fakePanels{}
 	fguard := &fakeGuardian{}
 	frpc := &fakeRPC{handlers: map[string]func(params any, out any) error{}}
 	fcases := &fakeCases{}
@@ -177,17 +179,18 @@ func newHarness(t *testing.T) *harness {
 	h, err := New(Deps{
 		Config: Config{PublicURL: pub, DashboardURL: pub, ClientID: 999},
 		Log:    log, OAuth: oauth, KV: kv,
-		Guilds:    fakeDir{active: map[snowflake.ID]bool{managedGuild: true}},
-		Configs:   cfgs,
-		Cases:     fcases,
-		Guardian:  fguard,
-		RPC:       frpc,
-		Dashboard: fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
+		Guilds:     fakeDir{active: map[snowflake.ID]bool{managedGuild: true}},
+		Configs:    cfgs,
+		Cases:      fcases,
+		Guardian:   fguard,
+		RolePanels: fpanels,
+		RPC:        frpc,
+		Dashboard:  fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases, guard: fguard}
+	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases, guard: fguard, panels: fpanels}
 }
 
 func (h *harness) do(method, target, body, cookie string, hdr map[string]string) *httptest.ResponseRecorder {

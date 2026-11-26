@@ -124,6 +124,23 @@ type ModCase struct {
 	DeletedBy       pgtype.Int8
 }
 
+type RolePanel struct {
+	ID             int64
+	GuildID        int64
+	Name           string
+	ChannelID      int64
+	MessageID      pgtype.Int8
+	Message        []byte
+	Style          string
+	Mode           string
+	Roles          []byte
+	MaxRoles       int32
+	RequiredRoleID pgtype.Int8
+	UpdatedBy      pgtype.Int8
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
 type ScamDomain struct {
 	Domain  string
 	Source  string

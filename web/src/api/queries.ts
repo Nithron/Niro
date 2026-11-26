@@ -9,6 +9,7 @@ import {
   type GuardianSettings,
   type GuardianStatus,
   type LoggingSettings,
+  type RolePanel,
   type ModerationSettings,
   type ModuleState,
 } from './client'
@@ -245,6 +246,40 @@ export function useSaveGuardianSettings(guildId: string) {
     mutationFn: (body: GuardianSettings) =>
       unwrap(api.PUT('/guilds/{guildId}/settings/guardian', { params: { path: { guildId } }, body })),
     onSuccess: (saved) => qc.setQueryData(guardKeys.settings(guildId), saved),
+  })
+}
+
+export const panelKeys = {
+  list: (g: string) => ['guilds', g, 'role-panels'] as const,
+}
+
+export function useRolePanels(guildId: string) {
+  return useQuery({
+    queryKey: panelKeys.list(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/role-panels', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveRolePanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (p: RolePanel) =>
+      p.id
+        ? unwrap(api.PUT('/guilds/{guildId}/role-panels/{panelId}', { params: { path: { guildId, panelId: p.id } }, body: p }))
+        : unwrap(api.POST('/guilds/{guildId}/role-panels', { params: { path: { guildId } }, body: p })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: panelKeys.list(guildId) }),
+  })
+}
+
+export function useDeleteRolePanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (panelId: number) => {
+      const { error, response } = await api.DELETE('/guilds/{guildId}/role-panels/{panelId}', { params: { path: { guildId, panelId } } })
+      if (error) throw new ApiError(response.status, error.code, error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: panelKeys.list(guildId) }),
   })
 }
 

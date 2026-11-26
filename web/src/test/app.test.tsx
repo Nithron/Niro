@@ -387,3 +387,51 @@ describe('logging page', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
   })
 })
+
+describe('role panels page', () => {
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [{ id: '500', name: 'roles', type: 'text', position: 0 }],
+        roles: [
+          { id: '600', name: 'Red', color: 0, position: 3, managed: false, dangerous: false },
+          { id: '601', name: 'Admins', color: 0, position: 4, managed: false, dangerous: true },
+          { id: '602', name: 'Bot', color: 0, position: 5, managed: true, dangerous: false },
+        ],
+      })
+    routes['GET /api/v1/guilds/100/role-panels'] = () => json({ items: [] })
+  })
+
+  it('builds a panel, previews it and saves it', async () => {
+    routes['POST /api/v1/guilds/100/role-panels'] = async (req) => json({ ...(await req.json()), id: 1, messageId: '900' }, 201)
+    renderAt('/guilds/100/roles')
+    await userEvent.click(await screen.findByRole('button', { name: 'New panel' }))
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Colours')
+    await userEvent.selectOptions(screen.getByLabelText('Post in'), '500')
+    await userEvent.selectOptions(screen.getByLabelText('Mode'), 'unique')
+    await userEvent.click(screen.getByRole('button', { name: 'Add a role' }))
+    const role = screen.getByLabelText('Role 1')
+    expect(within(role).queryByText('@Admins')).toBeNull()
+    expect(within(role).queryByText('@Bot')).toBeNull()
+    expect(screen.getByText(/dangerous permissions: @Admins, @Bot|dangerous permissions: @Bot, @Admins/)).toBeInTheDocument()
+    await userEvent.selectOptions(role, '600')
+    await userEvent.type(screen.getByLabelText('Role 1 label'), 'Red team')
+    expect(screen.getByRole('figure', { name: 'Preview' })).toHaveTextContent('Red team')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save and post' }))
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'POST',
+          path: '/api/v1/guilds/100/role-panels',
+          body: expect.objectContaining({
+            name: 'Colours', channelId: '500', mode: 'unique', style: 'buttons',
+            roles: [{ roleId: '600', label: 'Red team' }],
+          }),
+        }),
+      ),
+    )
+    expect(await screen.findByRole('button', { name: 'New panel' })).toBeInTheDocument()
+  })
+})

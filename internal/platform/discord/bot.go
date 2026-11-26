@@ -27,6 +27,7 @@ import (
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/modules/roles"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -81,6 +82,7 @@ type Deps struct {
 
 	GuardianStore   guardian.Store
 	GuardianTracker guardian.Tracker
+	RolePanels      roles.Store
 	// LogCache keeps recent messages and invite snapshots for the server log.
 	LogCache interface {
 		logging.MessageCache
@@ -100,6 +102,7 @@ type Bot struct {
 	mod       *moderation.Service
 	guard     *guardian.Service
 	logs      *logging.Service
+	roles     *roles.Service
 	ruleNames ruleNameCache
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
@@ -121,6 +124,7 @@ func New(deps Deps) (*Bot, error) {
 	router.SlashCommand("/modules", b.handleModules)
 	b.registerModeration(router)
 	b.registerGuardian(router)
+	b.registerRoles(router)
 	router.Error(b.handleError)
 	router.NotFound(func(e *handler.InteractionEvent) error {
 		b.log.Warn("unhandled interaction", "type", e.Type())
@@ -177,6 +181,14 @@ func New(deps Deps) (*Bot, error) {
 		return nil, fmt.Errorf("building discord client: %w", err)
 	}
 	b.emojis = NewEmojis(b.client.Rest, b.client.ApplicationID, b.log)
+	b.roles = roles.NewService(roles.Deps{
+		Store:    deps.RolePanels,
+		Platform: rolesPlatform{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		Enabled: func(ctx context.Context, guildID snowflake.ID) (bool, error) {
+			return deps.Config.IsEnabled(ctx, guildID, core.ModuleRoles)
+		},
+		VerifyGate: b.verifyGate,
+	})
 	b.logs = logging.NewService(logging.Deps{
 		Settings: func(ctx context.Context, guildID snowflake.ID) (logging.Settings, bool, error) {
 			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleLogging)

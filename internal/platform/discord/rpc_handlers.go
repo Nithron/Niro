@@ -44,6 +44,9 @@ type MetaRole struct {
 	Color    int          `json:"color"`
 	Position int          `json:"position"`
 	Managed  bool         `json:"managed"`
+	// Dangerous: the role grants a dangerous permission, so Niro won't hand
+	// it out (role panels, auto-roles).
+	Dangerous bool `json:"dangerous"`
 }
 
 type CaseReasonParams struct {
@@ -83,6 +86,7 @@ func (b *Bot) RegisterRPC(srv *rpc.Server) {
 	srv.Handle(RPCAutoModUpdate, b.rpcAutoModUpdate)
 	srv.Handle(RPCAutoModDelete, b.rpcAutoModDelete)
 	b.registerGuardianRPC(srv)
+	b.registerRolesRPC(srv)
 }
 
 func caseRPCError(err error) error {
@@ -132,7 +136,8 @@ func (b *Bot) rpcGuildMeta(ctx context.Context, r rpc.Request) (any, error) {
 		if role.ID == r.GuildID {
 			continue // @everyone
 		}
-		meta.Roles = append(meta.Roles, MetaRole{ID: role.ID, Name: role.Name, Color: role.Color, Position: role.Position, Managed: role.Managed})
+		meta.Roles = append(meta.Roles, MetaRole{ID: role.ID, Name: role.Name, Color: role.Color, Position: role.Position, Managed: role.Managed,
+			Dangerous: len(dangerousNames(role.Permissions)) > 0})
 	}
 	slices.SortFunc(meta.Roles, func(a, b MetaRole) int { return b.Position - a.Position })
 	slices.SortFunc(meta.Channels, func(a, b MetaChannel) int { return a.Position - b.Position })
