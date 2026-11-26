@@ -196,9 +196,14 @@ func (s Settings) cachesMessages() bool {
 		s.Destination(KindMessageBulkDelete) != 0
 }
 
-// ignored reports whether message or voice activity is ignored.
+// ignored reports whether message or voice activity is ignored. Activity
+// in the log channels themselves is never logged (deleting a log entry must
+// not produce another one).
 func (s Settings) ignored(channelID, parentID snowflake.ID, roleIDs []snowflake.ID, bot bool) bool {
 	if bot && s.IgnoreBots {
+		return true
+	}
+	if channelID != 0 && (channelID == s.DefaultChannelID || slices.Contains(s.Channels.All(), channelID)) {
 		return true
 	}
 	if slices.Contains(s.IgnoreChannelIDs, channelID) || (parentID != 0 && slices.Contains(s.IgnoreChannelIDs, parentID)) {

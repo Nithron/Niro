@@ -24,8 +24,8 @@ type guardianPlatform struct {
 
 var _ guardian.Platform = guardianPlatform{}
 
-func newGuardianPlatform(client *bot.Client) guardianPlatform {
-	return guardianPlatform{modPlatform{client: client}}
+func newGuardianPlatform(client *bot.Client, onDelete func(snowflake.ID, []snowflake.ID)) guardianPlatform {
+	return guardianPlatform{modPlatform{client: client, onDelete: onDelete}}
 }
 
 func (p guardianPlatform) GuildName(guildID snowflake.ID) string {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/modules/guardian"
+	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
 	"golang.org/x/text/language"
 )
@@ -54,6 +55,15 @@ func TestEnglishCatalogIsComplete(t *testing.T) {
 	}
 	for _, p := range guardian.Problems {
 		dynamic = append(dynamic, GuardianProblem(p))
+	}
+	for _, k := range logging.Kinds {
+		dynamic = append(dynamic, LogTitle(string(k)))
+	}
+	for _, a := range []string{"block_message", "send_alert", "timeout", "block_interaction"} {
+		dynamic = append(dynamic, LogAutoModAction(a))
+	}
+	for _, s := range []string{"guardian", "purge"} {
+		dynamic = append(dynamic, LogNiroSource(s))
 	}
 	for _, k := range dynamic {
 		if c.T("en", k, nil) == string(k) {

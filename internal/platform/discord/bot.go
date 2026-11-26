@@ -25,15 +25,24 @@ import (
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/i18n"
 	"github.com/nithron/niro/internal/modules/guardian"
+	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
 // what its features need (least privilege); see docs/plan.md §6.
 //   - Guild Messages + Message Content (privileged): Guardian reads messages
-//     for scam links and cross-channel spam. Message text is never stored.
-//   - Server Members (privileged): joins, for anti-raid and the age gate.
-const Intents = gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.IntentMessageContent | gateway.IntentGuildMembers
+//     for scam links and cross-channel spam; the server log shows edited and
+//     deleted text. Message text is never stored in Postgres.
+//   - Server Members (privileged): joins and leaves, for anti-raid, the age
+//     gate and the server log.
+//   - Guild Moderation: audit-log entries (who banned, kicked, changed what).
+//   - Guild Voice States: voice joins, leaves and moves for the server log.
+//   - Guild Invites: which invite a new member used.
+//   - AutoMod Execution: AutoMod actions for the server log.
+const Intents = gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.IntentMessageContent |
+	gateway.IntentGuildMembers | gateway.IntentGuildModeration | gateway.IntentGuildVoiceStates |
+	gateway.IntentGuildInvites | gateway.IntentAutoModerationExecution
 
 // privilegedIntents drops privileged intents the application is not allowed
 // to use, so the bot still connects (with Guardian degraded) instead of
@@ -72,6 +81,11 @@ type Deps struct {
 
 	GuardianStore   guardian.Store
 	GuardianTracker guardian.Tracker
+	// LogCache keeps recent messages and invite snapshots for the server log.
+	LogCache interface {
+		logging.MessageCache
+		logging.InviteSnapshots
+	}
 	// ScamFeedURLs are the scam-domain lists to download (https only).
 	ScamFeedURLs []string
 }
@@ -85,6 +99,8 @@ type Bot struct {
 	metrics   *metrics
 	mod       *moderation.Service
 	guard     *guardian.Service
+	logs      *logging.Service
+	ruleNames ruleNameCache
 	blocklist *guardian.DomainSet
 	pending   pendingBans
 }
@@ -116,20 +132,74 @@ func New(deps Deps) (*Bot, error) {
 			sharding.WithAutoScaling(true), // reshard automatically when Discord asks
 			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, b.log))),
 		),
-		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers)),
+		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers, cache.FlagVoiceStates)),
+		bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(b.gatewayHandlers())),
 		bot.WithEventListeners(router, &events.ListenerAdapter{
-			OnGuildReady:         func(e *events.GuildReady) { b.recordGuild(e.Guild) },
-			OnGuildJoin:          func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
-			OnGuildLeave:         func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
-			OnGuildMessageCreate: b.onGuildMessage,
-			OnGuildMemberJoin:    b.onMemberJoin,
+			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild); b.refreshInvites(e.GuildID) },
+			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
+			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
+			OnGuildMessageCreate: func(e *events.GuildMessageCreate) {
+				b.onLogMessageCreate(e)
+				b.onGuildMessage(e)
+			},
+			OnGuildMessageUpdate: b.onLogMessageUpdate,
+			OnGuildMessageDelete: b.onLogMessageDelete,
+			OnGuildMemberJoin: func(e *events.GuildMemberJoin) {
+				b.onLogMemberJoin(e)
+				b.onMemberJoin(e)
+			},
+			OnGuildMemberLeave:         b.onLogMemberLeave,
+			OnGuildAuditLogEntryCreate: b.onLogAudit,
+			OnGuildVoiceJoin: func(e *events.GuildVoiceJoin) {
+				b.onLogVoice(e.VoiceState.GuildID, e.Member, nil, e.VoiceState.ChannelID)
+			},
+			OnGuildVoiceMove: func(e *events.GuildVoiceMove) {
+				b.onLogVoice(e.VoiceState.GuildID, e.Member, e.OldVoiceState.ChannelID, e.VoiceState.ChannelID)
+			},
+			OnGuildVoiceLeave: func(e *events.GuildVoiceLeave) {
+				b.onLogVoice(e.OldVoiceState.GuildID, e.Member, e.OldVoiceState.ChannelID, nil)
+			},
+			OnAutoModerationActionExecution: b.onLogAutoMod,
+			OnGuildInviteCreate: func(e *events.InviteCreate) {
+				if e.GuildID != nil {
+					b.refreshInvites(*e.GuildID)
+				}
+			},
+			OnGuildInviteDelete: func(e *events.InviteDelete) {
+				if e.GuildID != nil {
+					b.refreshInvites(*e.GuildID)
+				}
+			},
 		}),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building discord client: %w", err)
 	}
 	b.emojis = NewEmojis(b.client.Rest, b.client.ApplicationID, b.log)
-	b.mod = moderation.NewService(deps.Cases, modPlatform{client: b.client},
+	b.logs = logging.NewService(logging.Deps{
+		Settings: func(ctx context.Context, guildID snowflake.ID) (logging.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleLogging)
+			if err != nil || !on {
+				return logging.Settings{}, false, err
+			}
+			s, err := logging.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		Cache: deps.LogCache, Snapshots: deps.LogCache, Invites: invitePlatform{client: b.client},
+		Sink: newLogSink(b.client, b.presenter(), b.guildLocale, b.metrics, b.log.With("module", "logging")),
+		ModLogChannel: func(ctx context.Context, guildID snowflake.ID) snowflake.ID {
+			s, err := moderation.LoadSettings(ctx, deps.Config, guildID)
+			if err != nil {
+				return 0
+			}
+			return s.LogChannelID
+		},
+		GuardianAlertChannel: func(ctx context.Context, guildID snowflake.ID) snowflake.ID {
+			return b.guard.AlertChannel(ctx, guildID)
+		},
+		Log: b.log.With("module", "logging"),
+	})
+	b.mod = moderation.NewService(deps.Cases, modPlatform{client: b.client, onDelete: b.markDeletes("purge")},
 		modNotifier{client: b.client, p: b.presenter(), locale: b.guildLocale},
 		func(ctx context.Context, guildID snowflake.ID) (moderation.Settings, error) {
 			return moderation.LoadSettings(ctx, deps.Config, guildID)
@@ -137,7 +207,7 @@ func New(deps Deps) (*Bot, error) {
 
 	b.blocklist = guardian.NewDomainSet()
 	b.guard = guardian.NewService(guardian.Deps{
-		Store: deps.GuardianStore, Platform: newGuardianPlatform(b.client),
+		Store: deps.GuardianStore, Platform: newGuardianPlatform(b.client, b.markDeletes("guardian")),
 		Alerts:  guardianAlerts{client: b.client, p: b.presenter(), locale: b.guildLocale},
 		Tracker: deps.GuardianTracker, Moderation: b.mod, Blocklist: b.blocklist,
 		Settings: func(ctx context.Context, guildID snowflake.ID) (guardian.Settings, bool, error) {
@@ -155,7 +225,8 @@ func New(deps Deps) (*Bot, error) {
 			}
 			return s.LogChannelID
 		},
-		Log: b.log.With("module", "guardian"),
+		OnEvent: b.logGuardianEvent,
+		Log:     b.log.With("module", "guardian"),
 	})
 	return b, nil
 }

@@ -169,7 +169,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 		b, err := discord.New(discord.Deps{
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
 			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
-			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg),
+			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(),
 		})
 		if err != nil {
 			return err

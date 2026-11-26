@@ -16,7 +16,11 @@ import (
 )
 
 // modPlatform implements moderation.Platform on Discord.
-type modPlatform struct{ client *bot.Client }
+type modPlatform struct {
+	client *bot.Client
+	// onDelete is told before Niro deletes messages (for the server log).
+	onDelete func(channelID snowflake.ID, ids []snowflake.ID)
+}
 
 var _ moderation.Platform = modPlatform{}
 
@@ -121,6 +125,9 @@ func (p modPlatform) RecentMessages(ctx context.Context, channelID, before snowf
 }
 
 func (p modPlatform) DeleteMessages(ctx context.Context, channelID snowflake.ID, ids []snowflake.ID, reason string) error {
+	if p.onDelete != nil {
+		p.onDelete(channelID, ids)
+	}
 	if len(ids) == 1 {
 		return p.client.Rest.DeleteMessage(channelID, ids[0], rest.WithCtx(ctx), rest.WithReason(reason))
 	}

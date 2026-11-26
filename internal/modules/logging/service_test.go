@@ -277,6 +277,20 @@ func TestIgnoredMessagesAreNotCached(t *testing.T) {
 	h.none(t)
 }
 
+func TestLogChannelsAreNotLogged(t *testing.T) {
+	ctx := context.Background()
+	h := newHarness(t, everything)
+	m := msg(5, "a moderator's note in the log channel")
+	m.ChannelID = logChannel
+	_ = h.svc.HandleMessage(ctx, m)
+	_ = h.svc.HandleMessageDelete(ctx, testGuild, logChannel, 0, 5)
+	_ = h.svc.HandleBulkDelete(ctx, testGuild, logChannel, 0, []snowflake.ID{1, 2})
+	h.none(t)
+	if h.cache.Len() != 0 {
+		t.Error("log channel message cached")
+	}
+}
+
 func TestNothingIsCachedWhenMessagesAreNotLogged(t *testing.T) {
 	ctx := context.Background()
 	h := newHarness(t, `{"channels":{"members":"900"}}`)
