@@ -6,13 +6,32 @@ A security-first Discord bot by [Nithron](https://nithron.com): one bot for mode
 protection, logging, roles, welcome and tickets, managed from a web dashboard. AI features
 powered by nAI and NithronOS integration will follow.
 
-> **Status:** building v0.1. M0 Foundations, M1 Moderation and M2 Guardian are done; M3 Logging is built and
-> waiting for its demo ([M3 plan](docs/milestones/m3-plan.md)), followed by the first public release, `v0.1.0-alpha.1`.
-> - [Discovery research](docs/research/2026-11-discovery.md)
-> - [Go library check](docs/research/2026-11-go-library-check.md)
-> - [Build plan](docs/plan.md) · [Dev setup](docs/dev-setup.md)
-> - [Decisions log](docs/decisions.md)
-> - [Brand assets](assets/brand/README.md)
+> **Status: alpha (`v0.1.0-alpha.1`).** Moderation, Guardian protection and server logging work end to end.
+> Role panels, welcome and tickets (M4) and the self-host guide and hosted launch (M5) come next; see the
+> [build plan](docs/plan.md). Expect breaking changes before `v0.1.0`.
+
+## What works today
+
+- **Moderation:** `/warn`, `/timeout`, `/kick`, `/ban` (with confirmation and temporary bans), `/purge`, numbered
+  cases with a moderation log, and Discord's native AutoMod managed from the dashboard.
+- **Guardian:** hacked-account bursts and scam links are caught and the member quarantined, with a
+  Restore / Ban / Keep review flow; anti-raid mode, `/lockdown`, a verification gate and a permission audit.
+  Niro never opens links users post.
+- **Logging:** message edits and deletes (bulk deletes as a file), joins with the invite used, member,
+  moderation, server, voice, AutoMod and Guardian events, routed per category.
+- **Dashboard:** Discord login and every setting above, applied live without a restart.
+- **Privacy:** least-privilege permissions (never Administrator), no message text in the database, and
+  servers can turn message-text logging off.
+
+Self-hosting works from source today ([dev setup](docs/dev-setup.md)); the supported self-host guide and
+container images arrive with `v0.1.0`.
+
+## Docs
+
+- [Build plan](docs/plan.md) · [Decisions log](docs/decisions.md) · [Changelog](CHANGELOG.md)
+- [Dev setup](docs/dev-setup.md) · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
+- Research: [discovery](docs/research/2026-11-discovery.md), [Go library check](docs/research/2026-11-go-library-check.md)
+- [Brand assets](assets/brand/README.md)
 
 ## License
 

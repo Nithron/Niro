@@ -80,7 +80,7 @@ None of the new intents is privileged. `privilegedIntents` keeps degrading grace
 
 Each slice is one commit (or a few) on `m3-logging`. CI stays green at every slice.
 
-**Status (2026-11-26):** slices 1–5 are built, plus an ECC Go review whose 11 findings were fixed. The demo checklist is [m3-demo.md](m3-demo.md). Changes from the draft design: moderation, member and server entries come straight from audit-log entries (each carries its executor, so no correlation buffer was needed); deletes of messages that weren't cached are not logged; AutoMod entries show the rule's keyword, never the matched text, when message content is off. Slice 6 waits for the M3 demo.
+**Status (2026-11-26):** slices 1–5 are built, plus an ECC Go review whose 11 findings were fixed. The demo checklist is [m3-demo.md](m3-demo.md). Changes from the draft design: moderation, member and server entries come straight from audit-log entries (each carries its executor, so no correlation buffer was needed); deletes of messages that weren't cached are not logged; AutoMod entries show the rule's keyword, never the matched text, when message content is off. Slice 6 waits for the M3 demo. **2026-11-26:** demo passed; slice 6 is in progress (§4).
 
 | # | Slice | Tests | Done check |
 |---|---|---|---|

@@ -26,6 +26,7 @@
 | 20 | 2026-11-22 | **M2 accepted** (merged in #6). M3 is planned in [M3 plan](milestones/m3-plan.md) | Done |
 | 21 | 2026-11-26 | **M3 choices:** every logged action goes to the log channel, Niro's own too (skipped only where the log channel *is* the moderation log, which already has the case card); the alpha release is source only; no CLA or DCO for contributions; a Playwright suite for the dashboard's critical flows before going public; the decisions log stands in for `docs/adr/` | Decided |
 | 22 | 2026-11-26 | **Server log design (M3):** log entries are posted to Discord, not stored. Message text lives only in Valkey (7-day TTL, removed on delete). Moderation, member-update and server changes come from audit-log entries over the gateway, so each has its executor. Bulk deletes use a replaced disgo `MESSAGE_DELETE_BULK` handler (disgo splits them otherwise). Deletes of messages that weren't cached are not logged. M3 adds the non-privileged Guild Moderation, Guild Voice States, Guild Invites (missing from plan §6) and AutoMod Execution intents | Decided |
+| 23 | 2026-11-26 | **M3 accepted** (demo passed; merged in #7). Release `v0.1.0-alpha.1` prepared: full-history secret scan (gitleaks, clean; now a CI job), `SECURITY.md`, `CONTRIBUTING.md`, issue and PR templates, `LICENSE` checked identical with NithronOS and NithronAI | Done |
 
 ## Notes on these decisions
 

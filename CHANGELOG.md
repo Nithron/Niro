@@ -2,7 +2,9 @@
 
 All notable changes to Niro. Versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## v0.1.0-alpha.1 (2026-11-26)
+
+First public release: moderation, Guardian and logging. Source only; container images and the self-host guide come with `v0.1.0`.
 
 ### M3: Logging
 
