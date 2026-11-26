@@ -25,6 +25,7 @@
 | 19 | 2026-11-22 | **Guardian defaults:** enforce mode; quarantine = 7-day timeout; a member is quarantined only on strong signals (score ≥ 3), cross-posted plain text only alerts; raid = 10 joins in 30 s for 30 min. No Manage Webhooks permission (the audit says webhooks weren't checked) | Decided, tune after the demo |
 | 20 | 2026-11-22 | **M2 accepted** (merged in #6). M3 is planned in [M3 plan](milestones/m3-plan.md) | Done |
 | 21 | 2026-11-26 | **M3 choices:** every logged action goes to the log channel, Niro's own too (skipped only where the log channel *is* the moderation log, which already has the case card); the alpha release is source only; no CLA or DCO for contributions; a Playwright suite for the dashboard's critical flows before going public; the decisions log stands in for `docs/adr/` | Decided |
+| 22 | 2026-11-26 | **Server log design (M3):** log entries are posted to Discord, not stored. Message text lives only in Valkey (7-day TTL, removed on delete). Moderation, member-update and server changes come from audit-log entries over the gateway, so each has its executor. Bulk deletes use a replaced disgo `MESSAGE_DELETE_BULK` handler (disgo splits them otherwise). Deletes of messages that weren't cached are not logged. M3 adds the non-privileged Guild Moderation, Guild Voice States, Guild Invites (missing from plan §6) and AutoMod Execution intents | Decided |
 
 ## Notes on these decisions
 

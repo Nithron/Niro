@@ -4,6 +4,19 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### M3: Logging
+
+- **Message logs:** edits with the text before and after, deletions with the deleted text, and bulk deletions (`/purge`, Discord's own bulk delete) as one entry with a `.txt` file of the messages.
+- **Member logs:** joins with the account's age (new accounts flagged) and the invite used, leaves with when they joined and their roles, nickname and role changes with who made them.
+- **Moderation logs:** bans, unbans, kicks and timeouts, with who did it and the reason from Discord's audit log, including actions taken outside Niro.
+- **Server logs:** channels and roles created, changed (including permissions and the new position changes) or deleted, and server setting changes.
+- **Voice, AutoMod and Guardian:** voice joins, moves and leaves (off by default), AutoMod actions (one entry per trigger) and Guardian detections.
+- **Routing:** a default log channel plus an optional channel per category, and every event type can be turned on or off. Ignore channels, roles and bots for message and voice logs. Niro never logs its own log channels.
+- **No double posts:** Niro's own moderation actions are logged everywhere except in the moderation log channel, which already has the case card; Guardian detections aren't repeated in the Guardian alert channel.
+- **Privacy:** message text is kept in Valkey for at most 7 days and dropped as soon as a message is deleted; it is never stored in the database. Servers can turn message text off entirely. Log entries never ping anyone.
+- **Dashboard:** a Logging page with channels per category, event switches, ignore lists and the privacy switch.
+- **Quality:** a Playwright suite covers the dashboard's critical flows in CI, and CI now lints the OpenAPI spec and vets the SQL queries.
+
 ### M2: Guardian protection
 
 - **Hacked accounts:** the same message, link or file posted in several channels within a minute is caught; every copy is deleted and the member is quarantined (a timeout, or swapping their roles for a quarantine role). A member silent for a month who suddenly posts links adds suspicion to other signals.
