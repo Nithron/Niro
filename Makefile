@@ -97,7 +97,7 @@ deploy-check: monitoring-check ## Validate the compose file (with the example se
 	@tmp=$$(mktemp -d) && cp -r deploy "$$tmp/" && cp deploy/.env.example "$$tmp/deploy/.env" && \
 	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x NIRO_DOMAIN=example.com docker compose -f "$$tmp/deploy/compose.yml" --profile tls config -q && \
 	  cp deploy/hosted/.env.example "$$tmp/deploy/hosted/.env" && cp deploy/hosted/offsite.env.example "$$tmp/deploy/hosted/offsite.env" && \
-	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x GRAFANA_ADMIN_PASSWORD=x BACKUP_AGE_RECIPIENT=age1example docker compose -f "$$tmp/deploy/hosted/compose.yml" --profile offsite config -q && \
+	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x GRAFANA_ADMIN_PASSWORD=x BACKUP_AGE_RECIPIENT=age1example docker compose -f "$$tmp/deploy/hosted/compose.yml" --profile tls --profile offsite config -q && \
 	  echo "deploy/compose.yml and deploy/hosted/compose.yml are valid"; rc=$$?; rm -rf "$$tmp"; exit $$rc
 
 monitoring-check: ## Validate the alert rules (with their unit tests) and the Alertmanager config

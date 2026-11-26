@@ -6,8 +6,8 @@ How the hosted Niro (`niro.nithron.com`) runs and what to do when something happ
 
 | Service | What it does | Reachable from |
 |---|---|---|
-| `caddy` | HTTPS for `niro.nithron.com`, proxies to `api` | the internet (80, 443) |
-| `api` | Dashboard and API (`niro api`) | Caddy |
+| `caddy` | HTTPS for `niro.nithron.com`, proxies to `api`. On the shared Nithron VPS, the host's own Caddy does this instead ([Shared server](#shared-server)) | the internet (80, 443) |
+| `api` | Dashboard and API (`niro api`) | Caddy; `127.0.0.1:8080` on the server |
 | `bot` | The Discord bot, every shard (`niro bot`). **One replica only** | not exposed |
 | `migrate` | Runs database migrations, then exits. `bot` and `api` wait for it | not exposed |
 | `postgres`, `valkey` | Data and caches | the compose network |
@@ -51,6 +51,20 @@ alias dc='docker compose -f deploy/hosted/compose.yml'
    ```
    Check that `dc ps` shows `migrate` exited 0 and everything else running.
 6. Set up an external uptime check on `https://niro.nithron.com/` (any uptime service, every minute) that alerts by email. It covers the case where the whole server is down and can't alert by itself.
+
+## Shared server
+
+The Nithron VPS also runs the Nithron website and a Minecraft server. The rules there:
+
+- **Don't disturb them.** The website is `caddy`, `nithron-form` and `nithron-stats.timer` (set up from the nithron-site repository); Minecraft is `idyllium`. Niro's setup never restarts, upgrades or reconfigures them, and only adds firewall rules if it needs any (it doesn't: nothing of Niro's is published beyond `127.0.0.1`).
+- **No Niro Caddy.** The host's Caddy holds ports 80 and 443, so `COMPOSE_PROFILES` leaves out `tls`. [`deploy/hosted/host-caddy.caddy`](../../deploy/hosted/host-caddy.caddy) goes to `/etc/caddy/sites.d/niro.caddy`, and the website's Caddyfile (in the nithron-site repository) has, at the top level:
+  ```caddy
+  import /etc/caddy/sites.d/*.caddy
+  ```
+  After changing the snippet: `caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy`. A reload doesn't drop connections.
+- **Cloudflare:** `niro.nithron.com` is a proxied `A` record to the VPS, like the website. The snippet passes on `CF-Connecting-IP` so rate limits see each visitor.
+- **The checkout** is `/opt/niro`. Images are built off the server and loaded with `docker save | ssh … docker load`, so a build never takes CPU from the Minecraft server.
+- **Docker** logs to json-file with rotation and uses `live-restore`, so a Docker upgrade doesn't stop the containers (`/etc/docker/daemon.json`).
 
 ## Deploy a release
 

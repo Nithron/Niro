@@ -53,6 +53,9 @@ services:
   api:
     <<: *niro
     command: ["api"]
+    # For a web server on the host (the shared Nithron VPS); Niro's own Caddy
+    # (profile "tls") reaches it over the compose network instead.
+    ports: ["127.0.0.1:${NIRO_HTTP_PORT:-8080}:8080"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       valkey: { condition: service_healthy }
@@ -91,6 +94,9 @@ services:
     networks: [niro]
 
   caddy:
+    # Only on a server of Niro's own. Where the host already runs a web server on
+    # 80 and 443, leave the profile off and use deploy/hosted/host-caddy.caddy.
+    profiles: [tls]
     logging: *logging
     image: caddy:2-alpine
     restart: unless-stopped
