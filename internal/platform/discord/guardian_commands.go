@@ -408,5 +408,7 @@ func (b *Bot) handleVerifyButton(_ discord.ButtonInteractionData, e *handler.Com
 		b.log.Warn("verification role failed", "guild_id", *gid, "err", err)
 		return reply(EmojiError, b.t(l, i18n.GuardianVerifyFailed, nil), colorDanger)
 	}
+	guildID, userID := *gid, m.User.ID
+	b.logRun("welcome auto-roles", func(ctx context.Context) error { return b.welcome.HandleVerified(ctx, guildID, userID) })
 	return reply(EmojiOK, b.t(l, i18n.GuardianVerifyOK, nil), colorSuccess)
 }

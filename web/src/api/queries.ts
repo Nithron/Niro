@@ -10,6 +10,7 @@ import {
   type GuardianStatus,
   type LoggingSettings,
   type RolePanel,
+  type WelcomeSettings,
   type ModerationSettings,
   type ModuleState,
 } from './client'
@@ -280,6 +281,22 @@ export function useDeleteRolePanel(guildId: string) {
       if (error) throw new ApiError(response.status, error.code, error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: panelKeys.list(guildId) }),
+  })
+}
+
+export function useWelcomeSettings(guildId: string) {
+  return useQuery({
+    queryKey: ['guilds', guildId, 'settings', 'welcome'] as const,
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/settings/welcome', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveWelcomeSettings(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: WelcomeSettings) => unwrap(api.PUT('/guilds/{guildId}/settings/welcome', { params: { path: { guildId } }, body })),
+    onSuccess: (saved) => qc.setQueryData(['guilds', guildId, 'settings', 'welcome'], saved),
   })
 }
 

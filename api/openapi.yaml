@@ -432,6 +432,39 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/settings/welcome:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getWelcomeSettings
+      summary: Welcome and goodbye settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WelcomeSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateWelcomeSettings
+      summary: Save welcome and goodbye settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WelcomeSettings" }
+      responses:
+        "200":
+          description: The saved settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WelcomeSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
   /guilds/{guildId}/guardian/events:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -884,6 +917,21 @@ components:
       required: [items]
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/RolePanel" } }
+    WelcomeSettings:
+      type: object
+      additionalProperties: false
+      required: [welcomeEnabled, welcomeChannelId, welcomeMessage, pingMember, dmEnabled, dmMessage, goodbyeEnabled, goodbyeChannelId, goodbyeMessage, autoRoleIds]
+      properties:
+        welcomeEnabled: { type: boolean }
+        welcomeChannelId: { type: string, pattern: "^[0-9]{1,20}$" }
+        welcomeMessage: { $ref: "#/components/schemas/MessageDocument" }
+        pingMember: { type: boolean, description: "Let the welcome message notify the new member (and only them)" }
+        dmEnabled: { type: boolean }
+        dmMessage: { $ref: "#/components/schemas/MessageDocument" }
+        goodbyeEnabled: { type: boolean }
+        goodbyeChannelId: { type: string, pattern: "^[0-9]{1,20}$" }
+        goodbyeMessage: { $ref: "#/components/schemas/MessageDocument" }
+        autoRoleIds: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/Snowflake" } }
     LoggingChannels:
       type: object
       additionalProperties: false

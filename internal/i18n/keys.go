@@ -286,3 +286,6 @@ var (
 	RolesPanelGone         = define("roles.panel_gone")
 	RolesSelectPlaceholder = define("roles.select_placeholder")
 )
+
+// Welcome (M4).
+var WelcomeRaidSummary = define("welcome.raid_summary")

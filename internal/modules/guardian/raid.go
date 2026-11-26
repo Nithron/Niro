@@ -59,6 +59,32 @@ func (s *Service) HandleJoin(ctx context.Context, j Join) error {
 	return nil
 }
 
+// JoinGate is how Guardian treats a new member, for other modules (the
+// welcome module): whether the account-age gate removes or quarantines
+// them, whether raid mode is on, and the verified role of the verification
+// gate (0 if it isn't set up).
+type JoinGate struct {
+	Blocked      bool
+	Raid         bool
+	VerifyRoleID snowflake.ID
+}
+
+// JoinGate reports how Guardian treats userID joining guildID at at.
+func (s *Service) JoinGate(ctx context.Context, guildID, userID snowflake.ID, at time.Time) JoinGate {
+	settings, on, err := s.d.Settings(ctx, guildID)
+	if err != nil || !on {
+		return JoinGate{}
+	}
+	g := JoinGate{VerifyRoleID: settings.VerifyRoleID}
+	if settings.MinAccountAgeHours > 0 && settings.Mode == ModeEnforce && settings.AccountAgeAction != AgeAlert {
+		g.Blocked = AccountAge(userID, at) < time.Duration(settings.MinAccountAgeHours)*time.Hour
+	}
+	if _, err := s.d.Store.ActiveRaid(ctx, guildID); err == nil {
+		g.Raid = true
+	}
+	return g
+}
+
 func (s *Service) accountAgeGate(ctx context.Context, settings Settings, j Join, age time.Duration) error {
 	ev := NewEvent{
 		GuildID: j.GuildID, UserID: j.UserID, UserName: j.UserName, Kind: KindAccountAge, Score: 1,

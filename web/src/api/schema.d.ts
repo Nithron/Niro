@@ -314,6 +314,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/settings/welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Welcome and goodbye settings */
+        get: operations["getWelcomeSettings"];
+        /** Save welcome and goodbye settings */
+        put: operations["updateWelcomeSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/guilds/{guildId}/guardian/events": {
         parameters: {
             query?: never;
@@ -685,6 +705,19 @@ export interface components {
         };
         RolePanelList: {
             items: components["schemas"]["RolePanel"][];
+        };
+        WelcomeSettings: {
+            welcomeEnabled: boolean;
+            welcomeChannelId: string;
+            welcomeMessage: components["schemas"]["MessageDocument"];
+            /** @description Let the welcome message notify the new member (and only them) */
+            pingMember: boolean;
+            dmEnabled: boolean;
+            dmMessage: components["schemas"]["MessageDocument"];
+            goodbyeEnabled: boolean;
+            goodbyeChannelId: string;
+            goodbyeMessage: components["schemas"]["MessageDocument"];
+            autoRoleIds: components["schemas"]["Snowflake"][];
         };
         /** @description The log channel per category; "0" uses the default channel. */
         LoggingChannels: {
@@ -1511,6 +1544,61 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getWelcomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateWelcomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WelcomeSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
             409: components["responses"]["BotNotInGuild"];
         };
     };

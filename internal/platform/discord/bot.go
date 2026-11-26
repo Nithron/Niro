@@ -28,6 +28,7 @@ import (
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
 	"github.com/nithron/niro/internal/modules/roles"
+	"github.com/nithron/niro/internal/modules/welcome"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -103,6 +104,7 @@ type Bot struct {
 	guard     *guardian.Service
 	logs      *logging.Service
 	roles     *roles.Service
+	welcome   *welcome.Service
 	ruleNames ruleNameCache
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
@@ -152,8 +154,12 @@ func New(deps Deps) (*Bot, error) {
 			OnGuildMemberJoin: func(e *events.GuildMemberJoin) {
 				b.onLogMemberJoin(e)
 				b.onMemberJoin(e)
+				b.onWelcomeJoin(e)
 			},
-			OnGuildMemberLeave:         b.onLogMemberLeave,
+			OnGuildMemberLeave: func(e *events.GuildMemberLeave) {
+				b.onLogMemberLeave(e)
+				b.onWelcomeLeave(e)
+			},
 			OnGuildAuditLogEntryCreate: b.onLogAudit,
 			OnGuildVoiceJoin: func(e *events.GuildVoiceJoin) {
 				b.onLogVoice(e.VoiceState.GuildID, e.Member, nil, e.VoiceState.ChannelID)
@@ -188,6 +194,20 @@ func New(deps Deps) (*Bot, error) {
 			return deps.Config.IsEnabled(ctx, guildID, core.ModuleRoles)
 		},
 		VerifyGate: b.verifyGate,
+	})
+	b.welcome = welcome.NewService(welcome.Deps{
+		Settings: func(ctx context.Context, guildID snowflake.ID) (welcome.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleWelcome)
+			if err != nil || !on {
+				return welcome.Settings{}, false, err
+			}
+			s, err := welcome.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		Platform:    newWelcomePlatform(b.client, b.presenter(), b.guildLocale),
+		Gate:        b.welcomeGate,
+		RaidSummary: b.raidJoinSummary,
+		Log:         b.log.With("module", "welcome"),
 	})
 	b.logs = logging.NewService(logging.Deps{
 		Settings: func(ctx context.Context, guildID snowflake.ID) (logging.Settings, bool, error) {

@@ -450,3 +450,7 @@ Then contact the moderators of **{{.Server}}**: they can restore your access."""
 "roles.failed" = "Niro can't hand out {{.Roles}} any more (a moderator needs to fix the panel)."
 "roles.panel_gone" = "This panel was deleted."
 "roles.select_placeholder" = "Pick your roles"
+
+# ---- Welcome (M4) -----------------------------------------------------------------
+
+"welcome.raid_summary" = "{{.Count}} members joined during raid mode. Niro didn't greet them one by one."

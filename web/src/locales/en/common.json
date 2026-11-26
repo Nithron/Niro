@@ -80,7 +80,8 @@
     "detections": "Detections",
     "audit": "Security audit",
     "logging": "Logging",
-    "roles": "Role panels"
+    "roles": "Role panels",
+    "welcome": "Welcome"
   },
   "common": {
     "save": "Save",
@@ -582,5 +583,25 @@
     "saveAndPost": "Save and post",
     "unavailable": "not allowed",
     "unsafeRoles": "Remove {{list}}: Niro no longer hands out these roles (managed or with dangerous permissions)."
+  },
+  "welcomeSettings": {
+    "title": "Welcome and goodbye",
+    "subtitle": "Greet new members, say goodbye, and give roles on join. Changes apply immediately.",
+    "moduleOff": "The Welcome module is turned off. Settings are kept, but nothing is posted until you turn it on in Modules.",
+    "guardianNote": "Guardian comes first: members removed by the account-age gate aren't greeted, joins during raid mode are summed up in one message (no DMs or roles), and with the verification gate set up, roles are given when a member verifies.",
+    "welcome": "Welcome message",
+    "welcomeEnabled": "Post a welcome message",
+    "channel": "Channel",
+    "chooseChannel": "Choose a channel…",
+    "pingMember": "Notify the new member",
+    "pingMemberHelp": "The message pings only the member who joined, never @everyone or roles.",
+    "dm": "Direct message",
+    "dmHelp": "Off by default: many people find unsolicited DMs annoying. Members with DMs closed simply get nothing.",
+    "dmEnabled": "Send new members a DM",
+    "goodbye": "Goodbye message",
+    "goodbyeEnabled": "Post a goodbye message",
+    "autoRoles": "Roles on join",
+    "autoRolesHelp": "Up to 10 roles. Roles managed by integrations or with dangerous permissions are never given.",
+    "notAllowed": "not allowed"
   }
 }

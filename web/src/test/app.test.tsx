@@ -435,3 +435,43 @@ describe('role panels page', () => {
     expect(await screen.findByRole('button', { name: 'New panel' })).toBeInTheDocument()
   })
 })
+
+describe('welcome page', () => {
+  const doc = (text: string) => ({ version: 1, blocks: [{ type: 'text', text }] })
+  const settings = {
+    welcomeEnabled: false, welcomeChannelId: '0', welcomeMessage: doc('Welcome to **{server}**, {user}!'), pingMember: true,
+    dmEnabled: false, dmMessage: doc('Hi'), goodbyeEnabled: false, goodbyeChannelId: '0', goodbyeMessage: doc('Bye {user.name}'),
+    autoRoleIds: [],
+  }
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [{ id: '500', name: 'welcome', type: 'text', position: 0 }],
+        roles: [
+          { id: '600', name: 'Member', color: 0, position: 1, managed: false, dangerous: false },
+          { id: '601', name: 'Admins', color: 0, position: 2, managed: false, dangerous: true },
+        ],
+      })
+  })
+
+  it('previews variables and saves', async () => {
+    routes['GET /api/v1/guilds/100/settings/welcome'] = () => json(settings)
+    routes['PUT /api/v1/guilds/100/settings/welcome'] = async (req) => json(await req.json())
+    renderAt('/guilds/100/welcome')
+    await userEvent.click(await screen.findByRole('switch', { name: 'Post a welcome message' }))
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled() // no channel yet
+    await userEvent.selectOptions(screen.getByLabelText('Channel'), '500')
+    expect(screen.getByRole('figure', { name: 'Preview' })).toHaveTextContent('Welcome to Beta, @ana!')
+    expect(screen.getByRole('checkbox', { name: /@Admins/ })).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: '@Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'PUT',
+          body: expect.objectContaining({ welcomeEnabled: true, welcomeChannelId: '500', autoRoleIds: ['600'], dmEnabled: false }),
+        }),
+      ),
+    )
+  })
+})

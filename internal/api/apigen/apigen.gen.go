@@ -1002,6 +1002,28 @@ type User struct {
 	Username string    `json:"username"`
 }
 
+// WelcomeSettings defines model for WelcomeSettings.
+type WelcomeSettings struct {
+	AutoRoleIds []Snowflake `json:"autoRoleIds"`
+	DmEnabled   bool        `json:"dmEnabled"`
+
+	// DmMessage A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	DmMessage        MessageDocument `json:"dmMessage"`
+	GoodbyeChannelId string          `json:"goodbyeChannelId"`
+	GoodbyeEnabled   bool            `json:"goodbyeEnabled"`
+
+	// GoodbyeMessage A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	GoodbyeMessage MessageDocument `json:"goodbyeMessage"`
+
+	// PingMember Let the welcome message notify the new member (and only them)
+	PingMember       bool   `json:"pingMember"`
+	WelcomeChannelId string `json:"welcomeChannelId"`
+	WelcomeEnabled   bool   `json:"welcomeEnabled"`
+
+	// WelcomeMessage A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	WelcomeMessage MessageDocument `json:"welcomeMessage"`
+}
+
 // GuildId Example: 1234567890123456789
 type GuildId = Snowflake
 
@@ -1079,6 +1101,9 @@ type UpdateLoggingSettingsJSONRequestBody = LoggingSettings
 
 // UpdateModerationSettingsJSONRequestBody defines body for UpdateModerationSettings for application/json ContentType.
 type UpdateModerationSettingsJSONRequestBody = ModerationSettings
+
+// UpdateWelcomeSettingsJSONRequestBody defines body for UpdateWelcomeSettings for application/json ContentType.
+type UpdateWelcomeSettingsJSONRequestBody = WelcomeSettings
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1175,6 +1200,12 @@ type ServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// GetWelcomeSettings Welcome and goodbye settings
+	// (GET /guilds/{guildId}/settings/welcome)
+	GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// UpdateWelcomeSettings Save welcome and goodbye settings
+	// (PUT /guilds/{guildId}/settings/welcome)
+	UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(w http.ResponseWriter, r *http.Request, params GetInviteParams)
@@ -1369,6 +1400,18 @@ func (_ Unimplemented) GetModerationSettings(w http.ResponseWriter, r *http.Requ
 // UpdateModerationSettings Save moderation settings
 // (PUT /guilds/{guildId}/settings/moderation)
 func (_ Unimplemented) UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetWelcomeSettings Welcome and goodbye settings
+// (GET /guilds/{guildId}/settings/welcome)
+func (_ Unimplemented) GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateWelcomeSettings Save welcome and goodbye settings
+// (PUT /guilds/{guildId}/settings/welcome)
+func (_ Unimplemented) UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2388,6 +2431,58 @@ func (siw *ServerInterfaceWrapper) UpdateModerationSettings(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// GetWelcomeSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetWelcomeSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWelcomeSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWelcomeSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWelcomeSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetInvite operation middleware
 func (siw *ServerInterfaceWrapper) GetInvite(w http.ResponseWriter, r *http.Request) {
 
@@ -2620,6 +2715,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/guilds/{guildId}/role-panels/{panelId}", wrapper.UpdateRolePanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/settings/welcome", wrapper.GetWelcomeSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/settings/welcome", wrapper.UpdateWelcomeSettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events", wrapper.ListGuardianEvents)
@@ -5042,6 +5143,149 @@ func (response UpdateModerationSettings409JSONResponse) VisitUpdateModerationSet
 	return err
 }
 
+type GetWelcomeSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetWelcomeSettingsResponseObject interface {
+	VisitGetWelcomeSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetWelcomeSettings200JSONResponse WelcomeSettings
+
+func (response GetWelcomeSettings200JSONResponse) VisitGetWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWelcomeSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetWelcomeSettings401JSONResponse) VisitGetWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWelcomeSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetWelcomeSettings403JSONResponse) VisitGetWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWelcomeSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetWelcomeSettings409JSONResponse) VisitGetWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWelcomeSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *UpdateWelcomeSettingsJSONRequestBody
+}
+
+type UpdateWelcomeSettingsResponseObject interface {
+	VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateWelcomeSettings200JSONResponse WelcomeSettings
+
+func (response UpdateWelcomeSettings200JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWelcomeSettings400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateWelcomeSettings400JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWelcomeSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateWelcomeSettings401JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWelcomeSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateWelcomeSettings403JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWelcomeSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateWelcomeSettings409JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetInviteRequestObject struct {
 	Params GetInviteParams
 }
@@ -5208,6 +5452,12 @@ type StrictServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(ctx context.Context, request UpdateModerationSettingsRequestObject) (UpdateModerationSettingsResponseObject, error)
+	// GetWelcomeSettings Welcome and goodbye settings
+	// (GET /guilds/{guildId}/settings/welcome)
+	GetWelcomeSettings(ctx context.Context, request GetWelcomeSettingsRequestObject) (GetWelcomeSettingsResponseObject, error)
+	// UpdateWelcomeSettings Save welcome and goodbye settings
+	// (PUT /guilds/{guildId}/settings/welcome)
+	UpdateWelcomeSettings(ctx context.Context, request UpdateWelcomeSettingsRequestObject) (UpdateWelcomeSettingsResponseObject, error)
 	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -6135,6 +6385,65 @@ func (sh *strictHandler) UpdateModerationSettings(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateModerationSettingsResponseObject); ok {
 		if err := validResponse.VisitUpdateModerationSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWelcomeSettings operation middleware
+func (sh *strictHandler) GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetWelcomeSettingsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetWelcomeSettings(ctx, request.(GetWelcomeSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWelcomeSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWelcomeSettingsResponseObject); ok {
+		if err := validResponse.VisitGetWelcomeSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateWelcomeSettings operation middleware
+func (sh *strictHandler) UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request UpdateWelcomeSettingsRequestObject
+
+	request.GuildId = guildId
+
+	var body UpdateWelcomeSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateWelcomeSettings(ctx, request.(UpdateWelcomeSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateWelcomeSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateWelcomeSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateWelcomeSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

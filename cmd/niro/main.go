@@ -34,6 +34,7 @@ import (
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/modules/welcome"
 	"github.com/nithron/niro/internal/observability"
 	"github.com/nithron/niro/internal/platform/discord"
 	"github.com/nithron/niro/internal/rpc"
@@ -134,6 +135,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	modules := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
 	modules = core.WithSettings(modules, core.ModuleGuardian, guardian.SettingsSpec{})
 	modules = core.WithSettings(modules, core.ModuleLogging, logging.SettingsSpec{})
+	modules = core.WithSettings(modules, core.ModuleWelcome, welcome.SettingsSpec{})
 	registry, err := core.NewRegistry(modules...)
 	if err != nil {
 		return err
