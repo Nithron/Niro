@@ -9,6 +9,10 @@ import {
   type GuardianSettings,
   type GuardianStatus,
   type LoggingSettings,
+  type RolePanel,
+  type TicketPanel,
+  type TicketSettings,
+  type WelcomeSettings,
   type ModerationSettings,
   type ModuleState,
 } from './client'
@@ -245,6 +249,119 @@ export function useSaveGuardianSettings(guildId: string) {
     mutationFn: (body: GuardianSettings) =>
       unwrap(api.PUT('/guilds/{guildId}/settings/guardian', { params: { path: { guildId } }, body })),
     onSuccess: (saved) => qc.setQueryData(guardKeys.settings(guildId), saved),
+  })
+}
+
+export const panelKeys = {
+  list: (g: string) => ['guilds', g, 'role-panels'] as const,
+}
+
+export function useRolePanels(guildId: string) {
+  return useQuery({
+    queryKey: panelKeys.list(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/role-panels', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveRolePanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (p: RolePanel) =>
+      p.id
+        ? unwrap(api.PUT('/guilds/{guildId}/role-panels/{panelId}', { params: { path: { guildId, panelId: p.id } }, body: p }))
+        : unwrap(api.POST('/guilds/{guildId}/role-panels', { params: { path: { guildId } }, body: p })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: panelKeys.list(guildId) }),
+  })
+}
+
+export function useDeleteRolePanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (panelId: number) => {
+      const { error, response } = await api.DELETE('/guilds/{guildId}/role-panels/{panelId}', { params: { path: { guildId, panelId } } })
+      if (error) throw new ApiError(response.status, error.code, error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: panelKeys.list(guildId) }),
+  })
+}
+
+export function useWelcomeSettings(guildId: string) {
+  return useQuery({
+    queryKey: ['guilds', guildId, 'settings', 'welcome'] as const,
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/settings/welcome', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveWelcomeSettings(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: WelcomeSettings) => unwrap(api.PUT('/guilds/{guildId}/settings/welcome', { params: { path: { guildId } }, body })),
+    onSuccess: (saved) => qc.setQueryData(['guilds', guildId, 'settings', 'welcome'], saved),
+  })
+}
+
+export const ticketKeys = {
+  settings: (g: string) => ['guilds', g, 'settings', 'tickets'] as const,
+  panels: (g: string) => ['guilds', g, 'ticket-panels'] as const,
+  list: (g: string, status?: string) => ['guilds', g, 'tickets', status ?? 'all'] as const,
+}
+
+export function useTicketSettings(guildId: string) {
+  return useQuery({
+    queryKey: ticketKeys.settings(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/settings/tickets', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveTicketSettings(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: TicketSettings) => unwrap(api.PUT('/guilds/{guildId}/settings/tickets', { params: { path: { guildId } }, body })),
+    onSuccess: (saved) => qc.setQueryData(ticketKeys.settings(guildId), saved),
+  })
+}
+
+export function useTicketPanels(guildId: string) {
+  return useQuery({
+    queryKey: ticketKeys.panels(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/ticket-panels', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveTicketPanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (p: TicketPanel) =>
+      p.id
+        ? unwrap(api.PUT('/guilds/{guildId}/ticket-panels/{panelId}', { params: { path: { guildId, panelId: p.id } }, body: p }))
+        : unwrap(api.POST('/guilds/{guildId}/ticket-panels', { params: { path: { guildId } }, body: p })),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ticketKeys.panels(guildId) }),
+  })
+}
+
+export function useDeleteTicketPanel(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (panelId: number) => {
+      const { error, response } = await api.DELETE('/guilds/{guildId}/ticket-panels/{panelId}', { params: { path: { guildId, panelId } } })
+      if (error) throw new ApiError(response.status, error.code, error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ticketKeys.panels(guildId) }),
+  })
+}
+
+export function useTickets(guildId: string, status?: 'open' | 'claimed' | 'closed') {
+  return useInfiniteQuery({
+    queryKey: ticketKeys.list(guildId, status),
+    queryFn: ({ pageParam }) =>
+      unwrap(api.GET('/guilds/{guildId}/tickets', { params: { path: { guildId }, query: { status, before: pageParam, limit: 25 } } })),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (last) => last.nextBefore,
+    retry,
   })
 }
 

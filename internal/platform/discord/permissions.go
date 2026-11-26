@@ -23,6 +23,7 @@ const InvitePermissions = discord.PermissionViewChannel |
 	discord.PermissionManageChannels |
 	discord.PermissionManageThreads |
 	discord.PermissionCreatePrivateThreads |
+	discord.PermissionSendMessagesInThreads | // thread-mode tickets (decision 25)
 	discord.PermissionViewAuditLog |
 	discord.PermissionManageGuild
 

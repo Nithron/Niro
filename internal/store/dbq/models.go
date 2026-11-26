@@ -102,6 +102,11 @@ type GuildConfig struct {
 	UpdatedAt time.Time
 }
 
+type GuildTicketCounter struct {
+	GuildID    int64
+	LastTicket int32
+}
+
 type ModCase struct {
 	GuildID         int64
 	CaseNumber      int32
@@ -122,6 +127,23 @@ type ModCase struct {
 	UpdatedAt       time.Time
 	DeletedAt       pgtype.Timestamptz
 	DeletedBy       pgtype.Int8
+}
+
+type RolePanel struct {
+	ID             int64
+	GuildID        int64
+	Name           string
+	ChannelID      int64
+	MessageID      pgtype.Int8
+	Message        []byte
+	Style          string
+	Mode           string
+	Roles          []byte
+	MaxRoles       int32
+	RequiredRoleID pgtype.Int8
+	UpdatedBy      pgtype.Int8
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type ScamDomain struct {
@@ -147,4 +169,47 @@ type ScheduledAction struct {
 	LastError  pgtype.Text
 	DoneAt     pgtype.Timestamptz
 	CreatedAt  time.Time
+}
+
+type Ticket struct {
+	ID            int64
+	GuildID       int64
+	Number        int32
+	PanelID       int64
+	CategoryID    string
+	CategoryLabel string
+	Mode          string
+	ChannelID     pgtype.Int8
+	OpenerID      int64
+	OpenerName    string
+	ClaimedBy     pgtype.Int8
+	ClaimedByName string
+	Status        string
+	CloseReason   string
+	ClosedBy      pgtype.Int8
+	ClosedByName  string
+	ClosedAt      pgtype.Timestamptz
+	CreatedAt     time.Time
+}
+
+type TicketPanel struct {
+	ID         int64
+	GuildID    int64
+	Name       string
+	ChannelID  int64
+	MessageID  pgtype.Int8
+	Message    []byte
+	Categories []byte
+	UpdatedBy  pgtype.Int8
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
+type TicketTranscript struct {
+	TicketID     int64
+	GuildID      int64
+	HtmlGzip     []byte
+	MessageCount int32
+	ExpiresAt    time.Time
+	CreatedAt    time.Time
 }

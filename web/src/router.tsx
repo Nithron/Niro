@@ -16,6 +16,9 @@ import { CaseDetailPage, CasesPage, caseActions } from './pages/Cases'
 import { DetectionsPage } from './pages/Detections'
 import { GuardianSettingsPage } from './pages/GuardianSettings'
 import { LoggingSettingsPage } from './pages/LoggingSettings'
+import { RolePanelsPage } from './pages/RolePanels'
+import { TicketsPage } from './pages/Tickets'
+import { WelcomeSettingsPage } from './pages/WelcomeSettings'
 import { GuildLayout, ModulesPage } from './pages/Guild'
 import { LoginPage } from './pages/Login'
 import { ModerationSettingsPage } from './pages/ModerationSettings'
@@ -141,9 +144,36 @@ const loggingRoute = createRoute({
   },
 })
 
+const rolePanelsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/roles',
+  component: function RolePanelsRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <RolePanelsPage guildId={guildId} />
+  },
+})
+
+const welcomeRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/welcome',
+  component: function WelcomeRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <WelcomeSettingsPage guildId={guildId} />
+  },
+})
+
+const ticketsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/tickets',
+  component: function TicketsRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <TicketsPage guildId={guildId} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute]),
+  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute, rolePanelsRoute, welcomeRoute, ticketsRoute]),
 ])
 
 export function makeRouter(queryClient: QueryClient, history?: RouterHistory) {

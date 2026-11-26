@@ -7,8 +7,8 @@ protection, logging, roles, welcome and tickets, managed from a web dashboard. A
 powered by nAI and NithronOS integration will follow.
 
 > **Status: alpha (`v0.1.0-alpha.1`).** Moderation, Guardian protection and server logging work end to end.
-> Role panels, welcome and tickets (M4) and the self-host guide and hosted launch (M5) come next; see the
-> [build plan](docs/plan.md). Expect breaking changes before `v0.1.0`.
+> Role panels, welcome and tickets (M4) are built and waiting for their demo; the self-host guide and hosted
+> launch (M5) come next. See the [build plan](docs/plan.md). Expect breaking changes before `v0.1.0`.
 
 ## What works today
 

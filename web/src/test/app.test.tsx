@@ -387,3 +387,150 @@ describe('logging page', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument()
   })
 })
+
+describe('role panels page', () => {
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [{ id: '500', name: 'roles', type: 'text', position: 0 }],
+        roles: [
+          { id: '600', name: 'Red', color: 0, position: 3, managed: false, dangerous: false },
+          { id: '601', name: 'Admins', color: 0, position: 4, managed: false, dangerous: true },
+          { id: '602', name: 'Bot', color: 0, position: 5, managed: true, dangerous: false },
+        ],
+      })
+    routes['GET /api/v1/guilds/100/role-panels'] = () => json({ items: [] })
+  })
+
+  it('builds a panel, previews it and saves it', async () => {
+    routes['POST /api/v1/guilds/100/role-panels'] = async (req) => json({ ...(await req.json()), id: 1, messageId: '900' }, 201)
+    renderAt('/guilds/100/roles')
+    await userEvent.click(await screen.findByRole('button', { name: 'New panel' }))
+
+    await userEvent.type(screen.getByLabelText('Name'), 'Colours')
+    await userEvent.selectOptions(screen.getByLabelText('Post in'), '500')
+    await userEvent.selectOptions(screen.getByLabelText('Mode'), 'unique')
+    await userEvent.click(screen.getByRole('button', { name: 'Add a role' }))
+    const role = screen.getByLabelText('Role 1')
+    expect(within(role).queryByText('@Admins')).toBeNull()
+    expect(within(role).queryByText('@Bot')).toBeNull()
+    expect(screen.getByText(/dangerous permissions: @Admins, @Bot|dangerous permissions: @Bot, @Admins/)).toBeInTheDocument()
+    await userEvent.selectOptions(role, '600')
+    await userEvent.type(screen.getByLabelText('Role 1 label'), 'Red team')
+    expect(screen.getByRole('figure', { name: 'Preview' })).toHaveTextContent('Red team')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save and post' }))
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'POST',
+          path: '/api/v1/guilds/100/role-panels',
+          body: expect.objectContaining({
+            name: 'Colours', channelId: '500', mode: 'unique', style: 'buttons',
+            roles: [{ roleId: '600', label: 'Red team' }],
+          }),
+        }),
+      ),
+    )
+    expect(await screen.findByRole('button', { name: 'New panel' })).toBeInTheDocument()
+  })
+})
+
+describe('welcome page', () => {
+  const doc = (text: string) => ({ version: 1, blocks: [{ type: 'text', text }] })
+  const settings = {
+    welcomeEnabled: false, welcomeChannelId: '0', welcomeMessage: doc('Welcome to **{server}**, {user}!'), pingMember: true,
+    dmEnabled: false, dmMessage: doc('Hi'), goodbyeEnabled: false, goodbyeChannelId: '0', goodbyeMessage: doc('Bye {user.name}'),
+    autoRoleIds: [],
+  }
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [{ id: '500', name: 'welcome', type: 'text', position: 0 }],
+        roles: [
+          { id: '600', name: 'Member', color: 0, position: 1, managed: false, dangerous: false },
+          { id: '601', name: 'Admins', color: 0, position: 2, managed: false, dangerous: true },
+        ],
+      })
+  })
+
+  it('previews variables and saves', async () => {
+    routes['GET /api/v1/guilds/100/settings/welcome'] = () => json(settings)
+    routes['PUT /api/v1/guilds/100/settings/welcome'] = async (req) => json(await req.json())
+    renderAt('/guilds/100/welcome')
+    await userEvent.click(await screen.findByRole('switch', { name: 'Post a welcome message' }))
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled() // no channel yet
+    await userEvent.selectOptions(screen.getByLabelText('Channel'), '500')
+    expect(screen.getByRole('figure', { name: 'Preview' })).toHaveTextContent('Welcome to Beta, @ana!')
+    expect(screen.getByRole('checkbox', { name: /@Admins/ })).toBeDisabled()
+    await userEvent.click(screen.getByRole('checkbox', { name: '@Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'PUT',
+          body: expect.objectContaining({ welcomeEnabled: true, welcomeChannelId: '500', autoRoleIds: ['600'], dmEnabled: false }),
+        }),
+      ),
+    )
+  })
+})
+
+describe('tickets page', () => {
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [
+          { id: '500', name: 'help', type: 'text', position: 0 },
+          { id: '510', name: 'Tickets', type: 'category', position: 1 },
+        ],
+        roles: [{ id: '600', name: 'Staff', color: 0, position: 1, managed: false, dangerous: false }],
+      })
+    routes['GET /api/v1/guilds/100/settings/tickets'] = () => json({ retentionDays: 90, transcriptChannelId: '0' })
+    routes['GET /api/v1/guilds/100/ticket-panels'] = () => json({ items: [] })
+    routes['GET /api/v1/guilds/100/tickets'] = () =>
+      json({
+        items: [
+          { number: 2, categoryLabel: 'Support', mode: 'thread', openerId: '7', openerName: 'ana', status: 'closed', createdAt: '2026-11-26T10:00:00Z', hasTranscript: true },
+          { number: 1, categoryLabel: 'Support', mode: 'thread', openerId: '8', openerName: 'bo', status: 'open', createdAt: '2026-11-26T09:00:00Z', hasTranscript: false },
+        ],
+      })
+  })
+
+  it('lists tickets with transcript links', async () => {
+    renderAt('/guilds/100/tickets')
+    const link = await screen.findByRole('link', { name: 'Transcript' })
+    expect(link).toHaveAttribute('href', '/api/v1/guilds/100/tickets/2/transcript')
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getAllByRole('link', { name: 'Transcript' })).toHaveLength(1)
+  })
+
+  it('creates a panel with a category, staff and a question', async () => {
+    routes['POST /api/v1/guilds/100/ticket-panels'] = async (req) => json({ ...(await req.json()), id: 1, messageId: '900' }, 201)
+    renderAt('/guilds/100/tickets')
+    await userEvent.click(await screen.findByRole('button', { name: 'New panel' }))
+    await userEvent.type(screen.getByLabelText('Name'), 'Help desk')
+    await userEvent.selectOptions(screen.getByLabelText('Post in'), '500')
+    await userEvent.type(screen.getByLabelText('Button label'), 'Support')
+    await userEvent.selectOptions(screen.getByLabelText('Ticket type'), 'channel')
+    await userEvent.selectOptions(screen.getByLabelText('Create channels in'), '510')
+    await userEvent.click(screen.getByRole('checkbox', { name: '@Staff' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add a question' }))
+    await userEvent.type(screen.getByLabelText('Question 1'), "What's wrong?")
+    expect(screen.getByRole('figure', { name: 'Preview' })).toHaveTextContent('Support')
+    await userEvent.click(screen.getByRole('button', { name: 'Save and post' }))
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'POST',
+          path: '/api/v1/guilds/100/ticket-panels',
+          body: expect.objectContaining({
+            name: 'Help desk', channelId: '500',
+            categories: [expect.objectContaining({ label: 'Support', mode: 'channel', parentId: '510', staffRoleIds: ['600'],
+              questions: [{ label: "What's wrong?", long: false, required: true }] })],
+          }),
+        }),
+      ),
+    )
+  })
+})

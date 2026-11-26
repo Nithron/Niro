@@ -27,6 +27,9 @@ import (
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/modules/roles"
+	"github.com/nithron/niro/internal/modules/tickets"
+	"github.com/nithron/niro/internal/modules/welcome"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -81,6 +84,8 @@ type Deps struct {
 
 	GuardianStore   guardian.Store
 	GuardianTracker guardian.Tracker
+	RolePanels      roles.Store
+	Tickets         tickets.Store
 	// LogCache keeps recent messages and invite snapshots for the server log.
 	LogCache interface {
 		logging.MessageCache
@@ -100,6 +105,9 @@ type Bot struct {
 	mod       *moderation.Service
 	guard     *guardian.Service
 	logs      *logging.Service
+	roles     *roles.Service
+	welcome   *welcome.Service
+	tickets   *tickets.Service
 	ruleNames ruleNameCache
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
@@ -121,6 +129,8 @@ func New(deps Deps) (*Bot, error) {
 	router.SlashCommand("/modules", b.handleModules)
 	b.registerModeration(router)
 	b.registerGuardian(router)
+	b.registerRoles(router)
+	b.registerTickets(router)
 	router.Error(b.handleError)
 	router.NotFound(func(e *handler.InteractionEvent) error {
 		b.log.Warn("unhandled interaction", "type", e.Type())
@@ -147,9 +157,12 @@ func New(deps Deps) (*Bot, error) {
 			OnGuildMessageDelete: b.onLogMessageDelete,
 			OnGuildMemberJoin: func(e *events.GuildMemberJoin) {
 				b.onLogMemberJoin(e)
-				b.onMemberJoin(e)
+				b.onMemberJoin(e) // Guardian, then welcome
 			},
-			OnGuildMemberLeave:         b.onLogMemberLeave,
+			OnGuildMemberLeave: func(e *events.GuildMemberLeave) {
+				b.onLogMemberLeave(e)
+				b.onWelcomeLeave(e)
+			},
 			OnGuildAuditLogEntryCreate: b.onLogAudit,
 			OnGuildVoiceJoin: func(e *events.GuildVoiceJoin) {
 				b.onLogVoice(e.VoiceState.GuildID, e.Member, nil, e.VoiceState.ChannelID)
@@ -177,6 +190,41 @@ func New(deps Deps) (*Bot, error) {
 		return nil, fmt.Errorf("building discord client: %w", err)
 	}
 	b.emojis = NewEmojis(b.client.Rest, b.client.ApplicationID, b.log)
+	b.roles = roles.NewService(roles.Deps{
+		Store:    deps.RolePanels,
+		Platform: rolesPlatform{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		Enabled: func(ctx context.Context, guildID snowflake.ID) (bool, error) {
+			return deps.Config.IsEnabled(ctx, guildID, core.ModuleRoles)
+		},
+		VerifyGate: b.verifyGate,
+	})
+	b.tickets = tickets.NewService(tickets.Deps{
+		Store:    deps.Tickets,
+		Platform: ticketsPlatform{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		Settings: func(ctx context.Context, guildID snowflake.ID) (tickets.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleTickets)
+			if err != nil || !on {
+				return tickets.Settings{}, false, err
+			}
+			s, err := tickets.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		Log: b.log.With("module", "tickets"),
+	})
+	b.welcome = welcome.NewService(welcome.Deps{
+		Settings: func(ctx context.Context, guildID snowflake.ID) (welcome.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleWelcome)
+			if err != nil || !on {
+				return welcome.Settings{}, false, err
+			}
+			s, err := welcome.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		Platform:    newWelcomePlatform(b.client, b.presenter(), b.guildLocale),
+		Gate:        b.welcomeGate,
+		RaidSummary: b.raidJoinSummary,
+		Log:         b.log.With("module", "welcome"),
+	})
 	b.logs = logging.NewService(logging.Deps{
 		Settings: func(ctx context.Context, guildID snowflake.ID) (logging.Settings, bool, error) {
 			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleLogging)
@@ -277,6 +325,7 @@ func (b *Bot) Run(ctx context.Context) error {
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
 	go b.runScheduler(ctx)
 	go b.guard.RunMaintenance(ctx, 15*time.Second)
+	go b.tickets.RunMaintenance(ctx, time.Hour)
 	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
 	go feed.Run(ctx)
 

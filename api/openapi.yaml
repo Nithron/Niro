@@ -364,6 +364,250 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/role-panels:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listRolePanels
+      summary: Role panels
+      responses:
+        "200":
+          description: The server's role panels
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanelList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    post:
+      operationId: createRolePanel
+      summary: Create a role panel and post it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolePanel" }
+      responses:
+        "201":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/role-panels/{panelId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - name: panelId
+        in: path
+        required: true
+        schema: { type: integer, format: int64, minimum: 1 }
+    put:
+      operationId: updateRolePanel
+      summary: Save a role panel and update its message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RolePanel" }
+      responses:
+        "200":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RolePanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    delete:
+      operationId: deleteRolePanel
+      summary: Delete a role panel and its message
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/settings/welcome:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getWelcomeSettings
+      summary: Welcome and goodbye settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WelcomeSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateWelcomeSettings
+      summary: Save welcome and goodbye settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WelcomeSettings" }
+      responses:
+        "200":
+          description: The saved settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WelcomeSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/settings/tickets:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getTicketSettings
+      summary: Ticket settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateTicketSettings
+      summary: Save ticket settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketSettings" }
+      responses:
+        "200":
+          description: The saved settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/ticket-panels:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listTicketPanels
+      summary: Ticket panels
+      responses:
+        "200":
+          description: The server's ticket panels
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketPanelList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    post:
+      operationId: createTicketPanel
+      summary: Create a ticket panel and post it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketPanel" }
+      responses:
+        "201":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketPanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/ticket-panels/{panelId}:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - name: panelId
+        in: path
+        required: true
+        schema: { type: integer, format: int64, minimum: 1 }
+    put:
+      operationId: updateTicketPanel
+      summary: Save a ticket panel and update its message
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TicketPanel" }
+      responses:
+        "200":
+          description: The panel, as posted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketPanel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    delete:
+      operationId: deleteTicketPanel
+      summary: Delete a ticket panel and its message (open tickets stay)
+      responses:
+        "204": { description: Deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/tickets:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: listTickets
+      summary: Tickets, newest first
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [open, claimed, closed] } }
+        - { name: before, in: query, required: false, schema: { type: integer, minimum: 1 }, description: "Ticket number cursor" }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+      responses:
+        "200":
+          description: A page of tickets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TicketList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/tickets/{number}/transcript:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+      - name: number
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      operationId: getTicketTranscript
+      summary: A closed ticket's transcript, as a standalone page (sandboxed, no scripts)
+      responses:
+        "200":
+          description: The transcript page
+          headers:
+            Content-Security-Policy:
+              schema: { type: string }
+          content:
+            text/html:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
   /guilds/{guildId}/guardian/events:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -629,13 +873,14 @@ components:
           type: array
           items:
             type: object
-            required: [id, name, color, position, managed]
+            required: [id, name, color, position, managed, dangerous]
             properties:
               id: { $ref: "#/components/schemas/Snowflake" }
               name: { type: string }
               color: { type: integer }
               position: { type: integer }
-              managed: { type: boolean, description: Bot or integration role (can't be assigned) }
+              managed: { type: boolean, description: "Bot or integration role (can't be assigned)" }
+              dangerous: { type: boolean, description: "Grants a dangerous permission, so Niro won't hand it out" }
     ModerationSettings:
       type: object
       required: [logChannelId, dmUsers, requireReason]
@@ -745,6 +990,161 @@ components:
         accountAgeAction: { type: string, enum: [alert, kick, quarantine] }
         verifyRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when the verification gate is not set up' }
         verifyMinAccountAgeHours: { type: integer, minimum: 0, maximum: 8760 }
+    MessageDocument:
+      type: object
+      additionalProperties: false
+      description: A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+      required: [version, blocks]
+      properties:
+        version: { type: integer, minimum: 1, maximum: 1 }
+        accentColor: { type: integer, minimum: 0, maximum: 16777215, description: "Colour bar as 0xRRGGBB; absent for none" }
+        blocks: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/MessageBlock" } }
+    MessageBlock:
+      type: object
+      additionalProperties: false
+      required: [type]
+      properties:
+        type: { type: string, enum: [text, section, gallery, separator, links] }
+        text: { type: string, maxLength: 4000, description: "Markdown; text and section blocks. Variables: {user}, {user.name}, {user.id}, {server}, {memberCount}, {channel}" }
+        thumbnail: { type: string, maxLength: 2048, description: "https image URL; section blocks" }
+        images:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            additionalProperties: false
+            required: [url]
+            properties:
+              url: { type: string, maxLength: 2048 }
+              description: { type: string, maxLength: 1024 }
+        divider: { type: boolean }
+        large: { type: boolean }
+        links:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            additionalProperties: false
+            required: [label, url]
+            properties:
+              label: { type: string, maxLength: 80 }
+              url: { type: string, maxLength: 2048 }
+              emoji: { type: string, maxLength: 32 }
+    RolePanelRole:
+      type: object
+      additionalProperties: false
+      required: [roleId, label]
+      properties:
+        roleId: { $ref: "#/components/schemas/Snowflake" }
+        label: { type: string, maxLength: 80 }
+        emoji: { type: string, maxLength: 32 }
+        description: { type: string, maxLength: 100, description: Select menus only }
+    RolePanel:
+      type: object
+      additionalProperties: false
+      required: [name, channelId, message, style, mode, roles, maxRoles, requiredRoleId]
+      properties:
+        id: { type: integer, format: int64, description: Ignored on input }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        channelId: { $ref: "#/components/schemas/Snowflake" }
+        messageId: { type: string, pattern: "^[0-9]{1,20}$", description: "The posted message (ignored on input)" }
+        message: { $ref: "#/components/schemas/MessageDocument" }
+        style: { type: string, enum: [buttons, select] }
+        mode: { type: string, enum: [toggle, unique, verify] }
+        roles: { type: array, minItems: 1, maxItems: 25, items: { $ref: "#/components/schemas/RolePanelRole" } }
+        maxRoles: { type: integer, minimum: 0, maximum: 25, description: "Toggle mode: most roles a member may hold from the panel (0 = no limit)" }
+        requiredRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when anyone may use the panel' }
+        updatedAt: { type: string, format: date-time }
+    RolePanelList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RolePanel" } }
+    WelcomeSettings:
+      type: object
+      additionalProperties: false
+      required: [welcomeEnabled, welcomeChannelId, welcomeMessage, pingMember, dmEnabled, dmMessage, goodbyeEnabled, goodbyeChannelId, goodbyeMessage, autoRoleIds]
+      properties:
+        welcomeEnabled: { type: boolean }
+        welcomeChannelId: { type: string, pattern: "^[0-9]{1,20}$" }
+        welcomeMessage: { $ref: "#/components/schemas/MessageDocument" }
+        pingMember: { type: boolean, description: "Let the welcome message notify the new member (and only them)" }
+        dmEnabled: { type: boolean }
+        dmMessage: { $ref: "#/components/schemas/MessageDocument" }
+        goodbyeEnabled: { type: boolean }
+        goodbyeChannelId: { type: string, pattern: "^[0-9]{1,20}$" }
+        goodbyeMessage: { $ref: "#/components/schemas/MessageDocument" }
+        autoRoleIds: { type: array, maxItems: 10, items: { $ref: "#/components/schemas/Snowflake" } }
+    TicketSettings:
+      type: object
+      additionalProperties: false
+      required: [retentionDays, transcriptChannelId]
+      properties:
+        retentionDays: { type: integer, minimum: 1, maximum: 365, description: How long transcripts are kept }
+        transcriptChannelId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" for none' }
+    TicketQuestion:
+      type: object
+      additionalProperties: false
+      required: [label, long, required]
+      properties:
+        label: { type: string, maxLength: 45 }
+        placeholder: { type: string, maxLength: 100 }
+        long: { type: boolean }
+        required: { type: boolean }
+    TicketCategory:
+      type: object
+      additionalProperties: false
+      required: [label, mode, parentId, staffRoleIds, questions, opening, maxOpen]
+      properties:
+        id: { type: string, maxLength: 16, description: "Kept across edits; empty for a new category" }
+        label: { type: string, maxLength: 80 }
+        emoji: { type: string, maxLength: 32 }
+        mode: { type: string, enum: [thread, channel] }
+        parentId: { type: string, pattern: "^[0-9]{1,20}$", description: 'Channel mode: the category new channels go in; "0" for none' }
+        staffRoleIds: { type: array, minItems: 1, maxItems: 10, items: { $ref: "#/components/schemas/Snowflake" } }
+        questions: { type: array, maxItems: 5, items: { $ref: "#/components/schemas/TicketQuestion" } }
+        opening: { $ref: "#/components/schemas/MessageDocument" }
+        maxOpen: { type: integer, minimum: 1, maximum: 5 }
+    TicketPanel:
+      type: object
+      additionalProperties: false
+      required: [name, channelId, message, categories]
+      properties:
+        id: { type: integer, format: int64, description: Ignored on input }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        channelId: { $ref: "#/components/schemas/Snowflake" }
+        messageId: { type: string, pattern: "^[0-9]{1,20}$", description: "The posted message (ignored on input)" }
+        message: { $ref: "#/components/schemas/MessageDocument" }
+        categories: { type: array, minItems: 1, maxItems: 5, items: { $ref: "#/components/schemas/TicketCategory" } }
+        updatedAt: { type: string, format: date-time }
+    TicketPanelList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/TicketPanel" } }
+    Ticket:
+      type: object
+      required: [number, categoryLabel, mode, openerId, openerName, status, createdAt, hasTranscript]
+      properties:
+        number: { type: integer }
+        categoryLabel: { type: string }
+        mode: { type: string, enum: [thread, channel] }
+        channelId: { $ref: "#/components/schemas/Snowflake" }
+        openerId: { $ref: "#/components/schemas/Snowflake" }
+        openerName: { type: string }
+        claimedByName: { type: string }
+        status: { type: string, enum: [open, claimed, closed] }
+        closeReason: { type: string }
+        closedByName: { type: string }
+        closedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        hasTranscript: { type: boolean }
+    TicketList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Ticket" } }
+        nextBefore: { type: integer, description: "Cursor for the next page, absent on the last page" }
     LoggingChannels:
       type: object
       additionalProperties: false

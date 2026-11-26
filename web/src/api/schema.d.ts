@@ -273,6 +273,167 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/role-panels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Role panels */
+        get: operations["listRolePanels"];
+        put?: never;
+        /** Create a role panel and post it */
+        post: operations["createRolePanel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/role-panels/{panelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Save a role panel and update its message */
+        put: operations["updateRolePanel"];
+        post?: never;
+        /** Delete a role panel and its message */
+        delete: operations["deleteRolePanel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/settings/welcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Welcome and goodbye settings */
+        get: operations["getWelcomeSettings"];
+        /** Save welcome and goodbye settings */
+        put: operations["updateWelcomeSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/settings/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Ticket settings */
+        get: operations["getTicketSettings"];
+        /** Save ticket settings */
+        put: operations["updateTicketSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/ticket-panels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Ticket panels */
+        get: operations["listTicketPanels"];
+        put?: never;
+        /** Create a ticket panel and post it */
+        post: operations["createTicketPanel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/ticket-panels/{panelId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Save a ticket panel and update its message */
+        put: operations["updateTicketPanel"];
+        post?: never;
+        /** Delete a ticket panel and its message (open tickets stay) */
+        delete: operations["deleteTicketPanel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Tickets, newest first */
+        get: operations["listTickets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/guilds/{guildId}/tickets/{number}/transcript": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                number: number;
+            };
+            cookie?: never;
+        };
+        /** A closed ticket's transcript, as a standalone page (sandboxed, no scripts) */
+        get: operations["getTicketTranscript"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/guilds/{guildId}/guardian/events": {
         parameters: {
             query?: never;
@@ -477,6 +638,8 @@ export interface components {
                 position: number;
                 /** @description Bot or integration role (can't be assigned) */
                 managed: boolean;
+                /** @description Grants a dangerous permission, so Niro won't hand it out */
+                dangerous: boolean;
             }[];
         };
         ModerationSettings: {
@@ -583,6 +746,146 @@ export interface components {
             /** @description "0" when the verification gate is not set up */
             verifyRoleId: string;
             verifyMinAccountAgeHours: number;
+        };
+        /** @description A message designed in the dashboard (Components V2). Validated against Discord's limits on save. */
+        MessageDocument: {
+            version: number;
+            /** @description Colour bar as 0xRRGGBB; absent for none */
+            accentColor?: number;
+            blocks: components["schemas"]["MessageBlock"][];
+        };
+        MessageBlock: {
+            /** @enum {string} */
+            type: "text" | "section" | "gallery" | "separator" | "links";
+            /** @description Markdown; text and section blocks. Variables: {user}, {user.name}, {user.id}, {server}, {memberCount}, {channel} */
+            text?: string;
+            /** @description https image URL; section blocks */
+            thumbnail?: string;
+            images?: {
+                url: string;
+                description?: string;
+            }[];
+            divider?: boolean;
+            large?: boolean;
+            links?: {
+                label: string;
+                url: string;
+                emoji?: string;
+            }[];
+        };
+        RolePanelRole: {
+            roleId: components["schemas"]["Snowflake"];
+            label: string;
+            emoji?: string;
+            /** @description Select menus only */
+            description?: string;
+        };
+        RolePanel: {
+            /**
+             * Format: int64
+             * @description Ignored on input
+             */
+            id?: number;
+            name: string;
+            channelId: components["schemas"]["Snowflake"];
+            /** @description The posted message (ignored on input) */
+            messageId?: string;
+            message: components["schemas"]["MessageDocument"];
+            /** @enum {string} */
+            style: "buttons" | "select";
+            /** @enum {string} */
+            mode: "toggle" | "unique" | "verify";
+            roles: components["schemas"]["RolePanelRole"][];
+            /** @description Toggle mode: most roles a member may hold from the panel (0 = no limit) */
+            maxRoles: number;
+            /** @description "0" when anyone may use the panel */
+            requiredRoleId: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        RolePanelList: {
+            items: components["schemas"]["RolePanel"][];
+        };
+        WelcomeSettings: {
+            welcomeEnabled: boolean;
+            welcomeChannelId: string;
+            welcomeMessage: components["schemas"]["MessageDocument"];
+            /** @description Let the welcome message notify the new member (and only them) */
+            pingMember: boolean;
+            dmEnabled: boolean;
+            dmMessage: components["schemas"]["MessageDocument"];
+            goodbyeEnabled: boolean;
+            goodbyeChannelId: string;
+            goodbyeMessage: components["schemas"]["MessageDocument"];
+            autoRoleIds: components["schemas"]["Snowflake"][];
+        };
+        TicketSettings: {
+            /** @description How long transcripts are kept */
+            retentionDays: number;
+            /** @description "0" for none */
+            transcriptChannelId: string;
+        };
+        TicketQuestion: {
+            label: string;
+            placeholder?: string;
+            long: boolean;
+            required: boolean;
+        };
+        TicketCategory: {
+            /** @description Kept across edits; empty for a new category */
+            id?: string;
+            label: string;
+            emoji?: string;
+            /** @enum {string} */
+            mode: "thread" | "channel";
+            /** @description Channel mode: the category new channels go in; "0" for none */
+            parentId: string;
+            staffRoleIds: components["schemas"]["Snowflake"][];
+            questions: components["schemas"]["TicketQuestion"][];
+            opening: components["schemas"]["MessageDocument"];
+            maxOpen: number;
+        };
+        TicketPanel: {
+            /**
+             * Format: int64
+             * @description Ignored on input
+             */
+            id?: number;
+            name: string;
+            channelId: components["schemas"]["Snowflake"];
+            /** @description The posted message (ignored on input) */
+            messageId?: string;
+            message: components["schemas"]["MessageDocument"];
+            categories: components["schemas"]["TicketCategory"][];
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        TicketPanelList: {
+            items: components["schemas"]["TicketPanel"][];
+        };
+        Ticket: {
+            number: number;
+            categoryLabel: string;
+            /** @enum {string} */
+            mode: "thread" | "channel";
+            channelId?: components["schemas"]["Snowflake"];
+            openerId: components["schemas"]["Snowflake"];
+            openerName: string;
+            claimedByName?: string;
+            /** @enum {string} */
+            status: "open" | "claimed" | "closed";
+            closeReason?: string;
+            closedByName?: string;
+            /** Format: date-time */
+            closedAt?: string;
+            /** Format: date-time */
+            createdAt: string;
+            hasTranscript: boolean;
+        };
+        TicketList: {
+            items: components["schemas"]["Ticket"][];
+            /** @description Cursor for the next page, absent on the last page */
+            nextBefore?: number;
         };
         /** @description The log channel per category; "0" uses the default channel. */
         LoggingChannels: {
@@ -1297,6 +1600,398 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listRolePanels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The server's role panels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanelList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    createRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RolePanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    deleteRolePanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getWelcomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateWelcomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WelcomeSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WelcomeSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getTicketSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateTicketSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listTicketPanels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The server's ticket panels */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPanelList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    createTicketPanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketPanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateTicketPanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketPanel"];
+            };
+        };
+        responses: {
+            /** @description The panel, as posted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketPanel"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    deleteTicketPanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                panelId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    listTickets: {
+        parameters: {
+            query?: {
+                status?: "open" | "claimed" | "closed";
+                /** @description Ticket number cursor */
+                before?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of tickets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    getTicketTranscript: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+                number: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The transcript page */
+            200: {
+                headers: {
+                    "Content-Security-Policy"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             409: components["responses"]["BotNotInGuild"];
         };
     };
