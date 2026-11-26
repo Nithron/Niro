@@ -133,7 +133,8 @@ groups:
           summary: No successful database backup in the last 26 hours
           description: See docs/ops/backup-restore.md. Run the backup by hand and check its log.
       - alert: NiroOffsiteCopyMissing
-        # Hosted only: written by deploy/hosted/offsite.sh.
+        # Only where off-site copies are on (hosted, offsite profile): written by
+        # deploy/hosted/offsite.sh. Without them the metric is absent and this never fires.
         expr: time() - niro_offsite_last_success_timestamp_seconds > 26 * 3600
         labels: { severity: critical }
         annotations:

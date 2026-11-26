@@ -14,6 +14,24 @@ Run your own Niro on a Linux server with Docker. You get the same bot and dashbo
   - A domain name pointing at the server, with ports 80 and 443 open, for HTTPS.
 - **You are the data controller** for your instance. Niro stores moderation cases, settings and ticket transcripts about the people in your servers. See [Data and privacy](#data-and-privacy).
 
+### On nOS
+
+nOS ships Docker Engine and Compose v2 for its app catalog, so Niro runs on nOS with this guide like on any Debian or Ubuntu server. Niro is not in the nOS app catalog yet. One difference is HTTPS:
+
+- nOS's own Caddy holds ports 80 and 443, so leave out `--profile tls` in step 4.
+- nOS's app snippets (`/etc/caddy/Caddyfile.d/app-*.caddy`) serve apps under `/apps/<id>/` of the nOS site. Niro's dashboard needs the root of its own domain (Discord login and cookies), so it can't go there.
+- Instead, add a site for Niro's domain to `/etc/caddy/Caddyfile`, outside the `:443 { … }` block. nOS turns Caddy's automatic certificates off, so give it a certificate for that domain (for example from certbot with a DNS challenge):
+  ```caddy
+  niro.example.com {
+      tls /etc/ssl/niro/fullchain.pem /etc/ssl/niro/privkey.pem
+      reverse_proxy 127.0.0.1:8080
+  }
+  ```
+  Then `sudo caddy validate --config /etc/caddy/Caddyfile` and `sudo systemctl reload caddy`. Changing nOS's remote access settings rewrites that file, so check the site is still there afterwards.
+- **Firewall:** nOS allows 80 and 443 from the local network only. A dashboard used from the internet needs them open publicly (nOS: Remote access, Public HTTPS). The bot itself needs no open ports: it only connects out to Discord.
+
+Niro's compose network (`172.31.250.0/24`) doesn't overlap nOS's Docker address pool (`172.28.0.0/16`). Requests from the host's Caddy count as trusted, so rate limits see each visitor's own address.
+
 ## 1. Create a Discord application
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and click **New Application**.

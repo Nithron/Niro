@@ -1,8 +1,8 @@
 # Terms of Service
 
-Draft for review, version 0.1 (2026-11-26).
+Version 1.0, last updated 2026-11-26.
 
-These terms apply to the hosted Niro bot and dashboard at niro.nithron.com ("Niro"), run by Nithron [TO FILL: legal form], [TO FILL: registered address], Belgium, enterprise number [TO FILL: KBO/BCE number] ("Nithron", "we"). By adding Niro to a server or using the dashboard, you agree to them. Our [Privacy Policy](/privacy) explains what data Niro uses.
+These terms apply to the hosted Niro bot and dashboard at niro.nithron.com ("Niro"), run by Thiago Benkendorf, trading as Nithron, a sole trader (eenmanszaak) at Grote Markt 16 bus 0203, 8630 Veurne, Belgium, enterprise number 1044.572.115 ("Nithron", "we"). By adding Niro to a server or using the dashboard, you agree to them. Our [Privacy Policy](/privacy) explains what data Niro uses.
 
 ## Using Niro
 
@@ -42,7 +42,7 @@ We may update these terms. We'll announce changes in the support server at least
 
 ## Law and disputes
 
-Belgian law applies. Disputes go to the courts of [TO FILL: judicial district of Nithron's registered office], unless the law gives you, as a consumer, the right to go to the courts where you live.
+Belgian law applies. Disputes go to the courts of the judicial district of West Flanders (West-Vlaanderen), unless the law gives you, as a consumer, the right to go to the courts where you live.
 
 ## Contact
 

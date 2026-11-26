@@ -4,8 +4,8 @@ An unverified bot can join at most 100 servers. Discord accepts verification req
 
 ## Before the soft launch
 
-- [ ] The hosted deployment is up ([runbook](../ops/runbook.md)), alerts reach `#ops-alerts`, and the off-site copy ran once.
-- [ ] The Terms and Privacy Policy are reviewed, the `[TO FILL: …]` fields filled in, and the pages are live at `/terms` and `/privacy`.
+- [ ] The hosted deployment is up ([runbook](../ops/runbook.md)), and alerts reach `#ops-alerts`.
+- [ ] The Terms and Privacy Policy are live at `/terms` and `/privacy`.
 - [ ] The support server is set up ([support-server.md](support-server.md)) and its invite is filled in where the docs say `[TO FILL: invite link]`.
 - [ ] Developer Portal (Niro) → General Information has the Terms and Privacy URLs, the description, the icon and the banner.
 - [ ] Developer Portal (Niro) → OAuth2 has the redirect `https://niro.nithron.com/auth/callback`.

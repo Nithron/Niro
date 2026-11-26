@@ -8,9 +8,9 @@ describe('legal texts', () => {
     expect(terms).toContain('privacy@nithron.com')
   })
 
-  // The drafts carry [TO FILL: …] markers until the PM fills in the company
-  // details. The release build must not ship them: run with RELEASE=1.
-  it.runIf(process.env.RELEASE === '1')('have no fields left to fill in', () => {
+  // Placeholders must never ship: a [TO FILL: …] marker or a draft notice
+  // fails the build.
+  it('have no fields left to fill in', () => {
     expect(privacy).not.toContain('[TO FILL')
     expect(terms).not.toContain('[TO FILL')
     expect(privacy).not.toContain('Draft for review')

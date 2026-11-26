@@ -67,7 +67,7 @@ Do this before every upgrade.
 ## Test restores
 
 - **In CI:** `TestBackupRestore` (`internal/store/backup_integration_test.go`) runs on every change. It dumps a seeded database the way the backup service does, restores it into an empty one, checks the data and runs the migrations again.
-- **On the hosted service:** once a month, restore the latest off-site copy into a scratch database and compare the row counts of `guilds`, `mod_cases` and `config_audit` with production:
+- **On the hosted service:** once a month, restore the latest dump (or the latest off-site copy, if those are on) into a scratch database and compare the row counts of `guilds`, `mod_cases` and `config_audit` with production:
   ```sh
   docker compose -f deploy/compose.yml exec -T postgres createdb -U niro niro_drill
   docker compose -f deploy/compose.yml exec -T postgres pg_restore -U niro -d niro_drill --no-owner < niro.dump

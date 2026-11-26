@@ -205,14 +205,14 @@ Slices 1 to 5 don't depend on the questions below, except question 4 (retention)
 
 ## 4. PM answers (decision 28)
 
-1. **Hosting:** a Hoststronger VPS, the same provider as the Nithron website. Off-site backups go to storage outside that VPS (to be chosen in slice 6).
+1. **Hosting:** a HostStronger VPS, the same provider as the Nithron website. Off-site backups: optional, off at launch (decision 30).
 2. **Monitoring:** Prometheus, Alertmanager and Grafana on the VPS.
 3. **Data controller:** Nithron, Belgium, `privacy@nithron.com`. The supervisory authority is Belgium's Data Protection Authority.
 4. **Retention:** as proposed.
 5. **Self-host:** source only for `v0.1.0`.
 6. **Delete now:** yes.
 7. **Discord Team:** the production application already belongs to one.
-8. **nOS** (formerly NithronOS): if nOS runs Docker Compose like any Linux server, the clean-VM test covers it. A native nOS package would be separate work. Open.
+8. **nOS** (formerly NithronOS): nOS ships Docker Engine and Compose v2 (its docs), so the clean-VM test covers it. Only HTTPS differs: nOS's Caddy holds ports 80 and 443 (self-host guide, "On nOS"). A native nOS catalog app would be separate work.
 
 <details><summary>The questions as asked</summary>
 

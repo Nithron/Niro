@@ -1,10 +1,10 @@
 # Privacy Policy
 
-Draft for review, version 0.1 (2026-11-26). Applies to the hosted Niro bot and dashboard at niro.nithron.com.
+Version 1.0, last updated 2026-11-26. Applies to the hosted Niro bot and dashboard at niro.nithron.com.
 
 ## Who we are
 
-Niro is run by Nithron [TO FILL: legal form], [TO FILL: registered address], Belgium, enterprise number [TO FILL: KBO/BCE number] ("Nithron", "we"). Nithron is the data controller for the personal data described here.
+Niro is run by Thiago Benkendorf, trading as Nithron, a sole trader (eenmanszaak) at Grote Markt 16 bus 0203, 8630 Veurne, Belgium, enterprise number 1044.572.115 ("Nithron", "we"). Nithron is the data controller for the personal data described here.
 
 Contact for anything about your data: privacy@nithron.com.
 
@@ -46,12 +46,11 @@ A server's owner can also delete everything at once from the dashboard ("Delete 
 ## Who else processes data
 
 - **Discord** delivers the events Niro receives and stores the messages Niro posts. Discord is a separate controller under its own [Privacy Policy](https://discord.com/privacy).
-- **Our hosting provider,** [TO FILL: provider name and data-centre country], runs the server Niro runs on.
-- **Our backup storage provider,** [TO FILL: provider name and country], stores encrypted backup copies.
+- **Our hosting provider,** HostStronger (operated by Evaline Corp, Prague, Czech Republic), runs the server Niro runs on, in a data centre in Falkenstein, Germany. The encrypted database backups are kept on that server too.
 
 We don't sell personal data, use it for advertising, or train AI models on it.
 
-Data is stored in [TO FILL: country, ideally in the EU]. Discord is based in the United States. Transfers to Discord follow Discord's own safeguards.
+Data is stored in Germany, in the EU. Discord is based in the United States. Transfers to Discord follow Discord's own safeguards.
 
 ## Your rights
 

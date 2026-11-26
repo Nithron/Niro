@@ -3,7 +3,8 @@
 #   - migrations run as a release step ("migrate"), then the bot and the API run
 #     as separate processes, so the API can restart without dropping shards;
 #   - Prometheus, Alertmanager, node_exporter and Grafana run alongside;
-#   - restic copies the nightly dumps off the server.
+#   - optional: restic copies the nightly dumps off the server. Turn it on with
+#     COMPOSE_PROFILES=offsite in deploy/hosted/.env (runbook: "Off-site copies").
 #
 #   docker compose -f deploy/hosted/compose.yml up -d --build
 #
@@ -76,11 +77,13 @@ services:
     networks: [niro]
 
   offsite:
+    profiles: [offsite]
     logging: *logging
     image: restic/restic:0.18.1
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/offsite/offsite.sh"]
-    env_file: offsite.env
+    env_file:
+      - { path: offsite.env, required: false }
     volumes:
       - ./offsite.sh:/offsite/offsite.sh:ro
       - backups:/backups:ro

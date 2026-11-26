@@ -23,7 +23,7 @@ What to check before M5 is accepted. Part A is what's built and can be checked n
    2. The button stays disabled until you type the server's exact name.
    3. Confirm. Niro leaves the server, and the dashboard returns to your server list.
 6. **Not for managers:** on a server you manage but don't own, there is no **Delete data…** card.
-7. **Legal pages:** `/terms` and `/privacy` open without logging in, and are linked from the login screen and the dashboard footer. The `[TO FILL: …]` fields are for you (Part B).
+7. **Legal pages:** `/terms` and `/privacy` open without logging in, and are linked from the login screen and the dashboard footer. They name Nithron as the controller and HostStronger (Germany) as the host.
 
 ### Self-hosting and backups
 
@@ -45,11 +45,11 @@ What to check before M5 is accepted. Part A is what's built and can be checked n
 
 ## Part B: launch (needs you)
 
-12. **Hosting:** create the Hoststronger VPS (Debian or Ubuntu, 4 GB RAM or more) and the DNS records for `niro.nithron.com`. Send me the specs and SSH access if you want me to run [the runbook's first setup](../ops/runbook.md#first-setup).
-13. **Self-host on a fresh machine:** follow the guide on a clean VPS or on nOS. Tell me whether nOS runs Docker Compose like any Linux host.
-14. **Off-site backups:** choose where the restic copies go (a storage box or S3-compatible storage), preferably in the EU.
-15. **Legal:** review the Terms and Privacy Policy. Fill in the legal form, registered address, enterprise number, court district, hosting and storage providers. Then remove "Draft for review" (CI's `RELEASE=1` check fails until then).
-16. **Support server:** create it ([docs/listing/support-server.md](../listing/support-server.md)) and share the invite.
+12. **Hosting:** the HostStronger VPS (Ubuntu, 24 GB RAM, Falkenstein, Germany). Create the DNS records for `niro.nithron.com`, then send SSH access if you want me to run [the runbook's first setup](../ops/runbook.md#first-setup).
+13. **nOS:** answered from the nOS docs. nOS has Docker Engine and Compose v2, so the self-host guide works there; only the dashboard's HTTPS differs, because nOS's Caddy holds ports 80 and 443 ([On nOS](../self-host.md#on-nos)). Nothing to do before launch.
+14. **Off-site backups:** optional, off for now. The encrypted dumps stay on the VPS. The runbook's [Off-site copies](../ops/runbook.md#off-site-copies) turns them on later.
+15. **Legal:** filled in from the Nithron website's business details (controller, address, enterprise number, HostStronger in Germany, courts of West Flanders). The draft notices are gone, and CI now fails if a placeholder comes back.
+16. **Support server:** later. Its invite goes where the listing docs say `[TO FILL: invite link]`, before applying for verification.
 17. **Soft launch:** deploy the hosted bot and invite it to communities. Discord accepts verification from 75 servers; the limit for unverified bots is 100.
 18. **Verification:** apply with [docs/listing/privileged-intents.md](../listing/privileged-intents.md), following [docs/listing/verification.md](../listing/verification.md).
 19. **Release:** after approval, I tag `v0.1.0`, publish the release notes and the App Directory listing.

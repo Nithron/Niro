@@ -11,7 +11,8 @@ How the hosted Niro (`niro.nithron.com`) runs and what to do when something happ
 | `bot` | The Discord bot, every shard (`niro bot`). **One replica only** | not exposed |
 | `migrate` | Runs database migrations, then exits. `bot` and `api` wait for it | not exposed |
 | `postgres`, `valkey` | Data and caches | the compose network |
-| `backup`, `offsite` | Nightly dump at 03:00 UTC, copied off-site with restic at 04:00 | not exposed |
+| `backup` | Nightly encrypted dump at 03:00 UTC, kept on the server | not exposed |
+| `offsite` | Optional: copies the dumps off the server with restic at 04:00 ([Off-site copies](#off-site-copies)) | not exposed |
 | `prometheus`, `alertmanager`, `node-exporter` | Metrics and alerts to the ops channel in the support server | the compose network |
 | `grafana` | Dashboards | `127.0.0.1:3000` on the server (SSH tunnel) |
 
@@ -25,13 +26,12 @@ alias dc='docker compose -f deploy/hosted/compose.yml'
 
 **What you do:**
 
-- **The VPS:** Debian or Ubuntu, 4 GB RAM or more, with SSH key access.
+- **The VPS:** the HostStronger VPS (Ubuntu, 24 GB RAM, Falkenstein, Germany), with SSH key access. 4 GB would do; see [baselines](baselines.md).
 - **DNS:** `A` and `AAAA` records for `niro.nithron.com` pointing at the VPS.
 - **Production application (Developer Portal, Niro):**
   - Redirect `https://niro.nithron.com/auth/callback`.
   - Both privileged intents on (Server Members and Message Content; this needs verification past 100 servers).
 - **Alerts webhook:** a private `#ops-alerts` channel in the support server, with a webhook.
-- **Off-site storage:** a restic repository, for example a storage box (SFTP) or S3-compatible storage.
 - **Backup key:** an age key pair made **off** the server (`age-keygen`). Keep the private key in the team's password manager.
 
 **On the server:**
@@ -44,15 +44,13 @@ alias dc='docker compose -f deploy/hosted/compose.yml'
    ```
 4. Make the settings files, all `chmod 600`:
    - `deploy/hosted/.env`, from `.env.example`. Put the age **public** key in `BACKUP_AGE_RECIPIENT`.
-   - `deploy/hosted/offsite.env`, from `offsite.env.example`.
    - `deploy/hosted/secrets/discord_webhook_url`: the webhook URL, on one line.
 5. Start:
    ```sh
    dc up -d --build
    ```
    Check that `dc ps` shows `migrate` exited 0 and everything else running.
-6. Copy off-site once by hand (`dc exec offsite sh /offsite/offsite.sh now`) and check `dc exec offsite restic snapshots`.
-7. Set up an external uptime check on `https://niro.nithron.com/` (any uptime service, every minute) that alerts by email. It covers the case where the whole server is down and can't alert by itself.
+6. Set up an external uptime check on `https://niro.nithron.com/` (any uptime service, every minute) that alerts by email. It covers the case where the whole server is down and can't alert by itself.
 
 ## Deploy a release
 
@@ -92,7 +90,7 @@ alias dc='docker compose -f deploy/hosted/compose.yml'
 | Postgres password | `dc exec postgres psql -U niro -c "ALTER USER niro PASSWORD '…'"`. Update `.env`, then `dc up -d` |
 | Valkey password | Update `.env`, then `dc up -d valkey bot api`. Everyone is signed out of the dashboard |
 | Grafana admin | Update `.env`, then `dc exec grafana grafana cli admin reset-admin-password '…'` |
-| restic password | `dc exec offsite restic key add`, then `restic key remove <old id>`. Update `offsite.env` |
+| restic password (off-site copies only) | `dc exec offsite restic key add`, then `restic key remove <old id>`. Update `offsite.env` |
 | Backup age key | Make a new pair and put the new public key in `.env`. **Keep the old private key for 28 days**, until the last dump encrypted with it is gone |
 | Alerts webhook | Delete and recreate it in Discord, update `secrets/discord_webhook_url`, then `dc restart alertmanager` |
 
@@ -114,8 +112,20 @@ If a secret leaked, rotate it first, then read the logs for anything done with i
 | `NiroMemoryHigh` | More than 1.5 GB in one process | Compare with [baselines](baselines.md). Take a heap profile before restarting |
 | `NiroJobStale`, `NiroJobFailing` | A background job stopped succeeding | `dc logs bot | grep <job name>`. Scheduler: temp-bans aren't lifted. Retention: data isn't deleted on time (privacy) |
 | `NiroBackupMissing`, `NiroBackupNeverRan` | No good dump in 26 hours | `dc logs backup`, then `dc exec backup sh /backup/backup.sh now` |
-| `NiroOffsiteCopyMissing` | Dumps not copied off-site in 26 hours | `dc logs offsite`, `dc exec offsite restic snapshots` |
+| `NiroOffsiteCopyMissing` | Only with off-site copies on: dumps not copied off-site in 26 hours | `dc logs offsite`, `dc exec offsite restic snapshots` |
 | `HostDiskLow`, `HostMemoryLow` | The VPS is running out | `docker system df`, `docker image prune`, old logs. Then resize the VPS |
+
+## Off-site copies
+
+Optional. Without them the encrypted dumps live only on the VPS, so losing the VPS loses its data. For a Discord bot that is an acceptable risk: servers keep their Discord-side setup (AutoMod rules, roles, channels) and can configure Niro again.
+
+To turn them on:
+
+1. Create a restic repository somewhere other than the VPS, preferably in the EU (for example a storage box over SFTP, or S3-compatible storage).
+2. Make `deploy/hosted/offsite.env` from `offsite.env.example` (`chmod 600`).
+3. Uncomment `COMPOSE_PROFILES=offsite` in `deploy/hosted/.env`, then `dc up -d`.
+4. Copy once by hand (`dc exec offsite sh /offsite/offsite.sh now`) and check `dc exec offsite restic snapshots`.
+5. Add the storage provider to the Privacy Policy's "Who else processes data" (`web/src/legal/privacy.md`).
 
 ## Regular checks
 

@@ -17,14 +17,14 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
   - A server's data is deleted 30 days after Niro is removed, including when that happened while Niro was offline. Re-adding Niro within that time keeps it.
   - Server owners can delete everything at once from the dashboard (**Delete data…**).
   - Old records expire: finished timed actions after 30 days, ended raids after 90 days, the settings history after 1 year.
-- **Terms and privacy:** the Terms of Service and Privacy Policy are at `/terms` and `/privacy`, readable without logging in.
+- **Terms and privacy:** the Terms of Service and Privacy Policy are at `/terms` and `/privacy`, readable without logging in. The hosted Niro runs in Germany (HostStronger).
 - **Monitoring:**
   - New metrics: shards, gateway events, Discord API requests and rate limits, the database pool, and every background job.
   - Readiness now needs every shard connected.
   - Ready-to-use Prometheus alert rules (with tests), an Alertmanager config and a Grafana dashboard are in `deploy/monitoring/`.
 - **Self-hosting:**
   - `deploy/compose.yml` runs Niro with Postgres, Valkey, nightly encrypted-if-you-like backups and optional Caddy for HTTPS.
-  - The [self-host guide](docs/self-host.md) and [backup and restore](docs/ops/backup-restore.md) explain it.
+  - The [self-host guide](docs/self-host.md) and [backup and restore](docs/ops/backup-restore.md) explain it, including running on nOS.
   - Container logs rotate.
 - **Load-tested:** `make soak` runs the real handlers against 2,500 synthetic servers. See [baselines](docs/ops/baselines.md).
 
