@@ -27,6 +27,9 @@ type KV interface {
 	GetJSON(ctx context.Context, key string, v any) (bool, error)
 	SetJSON(ctx context.Context, key string, v any, ttl time.Duration) error
 	Delete(ctx context.Context, key string) error
+	// ReplaceJSON overwrites a key only if it still exists, keeping its TTL.
+	// It reports whether the key existed.
+	ReplaceJSON(ctx context.Context, key string, v any) (bool, error)
 }
 
 // Session is a logged-in dashboard user. The Discord access token is kept
@@ -79,6 +82,9 @@ func (s sessions) get(ctx context.Context, id string) (*Session, error) {
 		return nil, err
 	}
 	now := time.Now()
+	if sess.LastSeen.IsZero() { // a session from before idle timeouts existed
+		sess.LastSeen = now
+	}
 	if now.After(sess.ExpiresAt) || now.Sub(sess.LastSeen) > idleTimeout {
 		_ = s.kv.Delete(ctx, sessionKey(id))
 		return nil, nil
@@ -94,8 +100,12 @@ func (s sessions) get(ctx context.Context, id string) (*Session, error) {
 	}
 	if now.Sub(sess.LastSeen) > touchEvery {
 		sess.LastSeen = now
-		// Best effort: failing to record activity must not fail the request.
-		_ = s.kv.SetJSON(ctx, sessionKey(id), sess, max(time.Until(sess.ExpiresAt), time.Minute))
+		// Replace, never create: a request racing a logout must not bring the
+		// deleted session back. Best effort: failing to record activity must
+		// not fail the request.
+		if ok, err := s.kv.ReplaceJSON(ctx, sessionKey(id), sess); err == nil && !ok {
+			return nil, nil
+		}
 	}
 	return &sess, nil
 }

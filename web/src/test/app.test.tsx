@@ -253,6 +253,31 @@ describe('moderation pages', () => {
     )
   })
 
+  it('lets the owner delete the server data after typing its name', async () => {
+    let deleted = false
+    routes['GET /api/v1/guilds/200'] = () => json(guilds[1])
+    routes['DELETE /api/v1/guilds/200/data'] = () => {
+      deleted = true
+      return new Response(null, { status: 204 })
+    }
+    renderAt('/guilds/200')
+    await userEvent.click(await screen.findByRole('button', { name: 'Delete data…' }))
+    const confirm = screen.getByRole('button', { name: 'Remove Niro and delete everything' })
+    expect(confirm).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Type the server name (alpha) to confirm'), 'alph')
+    expect(confirm).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Type the server name (alpha) to confirm'), 'a')
+    await userEvent.click(confirm)
+    await waitFor(() => expect(deleted).toBe(true))
+    expect(await screen.findByText('Your servers')).toBeInTheDocument()
+  })
+
+  it('hides data deletion from managers who are not the owner', async () => {
+    renderAt('/guilds/100')
+    await screen.findByRole('switch', { name: 'Logging' })
+    expect(screen.queryByRole('button', { name: 'Delete data…' })).not.toBeInTheDocument()
+  })
+
   it('explains a rate limit in plain words', async () => {
     routes['GET /api/v1/automod/presets'] = () => json([])
     routes['GET /api/v1/guilds/100/automod/rules'] = () => json({ code: 'rate_limited', message: 'Too many requests.' }, 429)

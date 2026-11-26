@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/valkey-io/valkey-go"
 
 	"github.com/nithron/niro/internal/core"
@@ -94,6 +96,45 @@ func (c *Client) SetJSON(ctx context.Context, key string, v any, ttl time.Durati
 		return err
 	}
 	return c.c.Do(ctx, c.c.B().Set().Key(key).Value(string(b)).Ex(ttl).Build()).Error()
+}
+
+// ForgetGuild deletes the Valkey keys that belong to one server: Guardian's
+// counters and watch state and the invite snapshot. The message cache is keyed
+// by channel and expires on its own within 7 days.
+func (c *Client) ForgetGuild(ctx context.Context, g snowflake.ID) error {
+	keys := []string{sinceKey(g), joinsKey(g), invitesKey(g)}
+	for _, pattern := range []string{"niro:guardian:msgs:" + g.String() + ":*", "niro:guardian:seen:" + g.String() + ":*"} {
+		var cursor uint64
+		for {
+			e, err := c.c.Do(ctx, c.c.B().Scan().Cursor(cursor).Match(pattern).Count(500).Build()).AsScanEntry()
+			if err != nil {
+				return err
+			}
+			keys = append(keys, e.Elements...)
+			if cursor = e.Cursor; cursor == 0 {
+				break
+			}
+		}
+	}
+	for chunk := range slices.Chunk(keys, 500) {
+		if err := c.c.Do(ctx, c.c.B().Del().Key(chunk...).Build()).Error(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReplaceJSON overwrites an existing key, keeping its TTL; it never creates one.
+func (c *Client) ReplaceJSON(ctx context.Context, key string, v any) (bool, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+	err = c.c.Do(ctx, c.c.B().Set().Key(key).Value(string(b)).Xx().Keepttl().Build()).Error()
+	if valkey.IsValkeyNil(err) {
+		return false, nil
+	}
+	return err == nil, err
 }
 
 func (c *Client) Delete(ctx context.Context, key string) error {

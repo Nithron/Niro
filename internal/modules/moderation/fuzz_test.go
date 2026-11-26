@@ -8,7 +8,7 @@ func FuzzParseDuration(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, s string) {
 		d, err := ParseDuration(s)
-		if err == nil && (d < 0 || d > maxParsedDuration) {
+		if err == nil && (d <= 0 || d > maxParsedDuration) {
 			t.Fatalf("ParseDuration(%q) = %s without an error", s, d)
 		}
 	})

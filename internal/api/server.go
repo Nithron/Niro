@@ -79,6 +79,8 @@ type Server struct {
 	requests   *prometheus.CounterVec
 	// rateLimited counts requests refused with 429, by rule.
 	rateLimited *prometheus.CounterVec
+	// rateLimiterErrors counts requests let through because the limiter failed.
+	rateLimiterErrors prometheus.Counter
 }
 
 // New builds the HTTP handler.
@@ -93,9 +95,12 @@ func New(d Deps) (http.Handler, error) {
 		rateLimited: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_api_rate_limited_total", Help: "Requests refused by a rate limit, by rule.",
 		}, []string{"rule"}),
+		rateLimiterErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "niro_api_rate_limiter_errors_total", Help: "Requests let through unlimited because the rate limiter failed.",
+		}),
 	}
 	if d.Metrics != nil {
-		for _, c := range []prometheus.Collector{s.requests, s.rateLimited} {
+		for _, c := range []prometheus.Collector{s.requests, s.rateLimited, s.rateLimiterErrors} {
 			if err := d.Metrics.Register(c); err != nil {
 				return nil, err
 			}
@@ -106,7 +111,7 @@ func New(d Deps) (http.Handler, error) {
 	// No RealIP middleware: it trusts client-supplied headers. clientIP reads
 	// X-Forwarded-For only from configured trusted proxies.
 	r.Use(middleware.RequestID, s.logRequests, middleware.Recoverer)
-	r.Use(s.securityHeaders, s.checkOrigin)
+	r.Use(s.securityHeaders, s.limitIP, s.checkOrigin)
 	r.Use(middleware.RequestSize(64 << 10))
 
 	r.Route("/auth", func(r chi.Router) {

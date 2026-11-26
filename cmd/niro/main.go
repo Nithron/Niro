@@ -153,6 +153,10 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 
 	metrics := observability.NewRegistry()
 	checks := observability.NewChecks()
+	jobs, err := observability.NewJobs(metrics)
+	if err != nil {
+		return err
+	}
 	checks.Add("postgres", db.Ping)
 	checks.Add("valkey", kv.Ping)
 
@@ -174,6 +178,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
 			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
 			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(), RolePanels: db, Tickets: db,
+			Lifecycle: db, GuildCache: kv, Jobs: jobs,
 		})
 		if err != nil {
 			return err
@@ -188,6 +193,9 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	}
 
 	if role.API {
+		if cfg.IsProduction() && len(cfg.TrustedProxies) == 0 {
+			log.Warn("NIRO_TRUSTED_PROXIES is empty: if Niro runs behind a reverse proxy, every visitor shares the proxy's IP and its rate limits")
+		}
 		handler, err := api.New(api.Deps{
 			Config: api.Config{
 				PublicURL: cfg.PublicURL, DashboardURL: cfg.DashboardURL,

@@ -441,6 +441,10 @@ const purgeGuardianEvents = `-- name: PurgeGuardianEvents :execrows
 DELETE FROM guardian_events WHERE created_at < $1 AND status NOT IN ('open', 'kept', 'active')
 `
 
+// Evidence older than the cutoff (decision 28), except events a moderator
+// chose to keep and ones still in effect: an open event holds a quarantine
+// waiting for a decision, an active one a raid or lockdown. They go at the
+// first purge after they are resolved.
 func (q *Queries) PurgeGuardianEvents(ctx context.Context, createdAt time.Time) (int64, error) {
 	result, err := q.db.Exec(ctx, purgeGuardianEvents, createdAt)
 	if err != nil {

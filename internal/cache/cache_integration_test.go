@@ -121,3 +121,28 @@ func TestRateLimitHit(t *testing.T) {
 		t.Fatalf("after the window = (%d, %v), want 1", n, err)
 	}
 }
+
+func TestReplaceJSONNeverCreates(t *testing.T) {
+	c := newClient(t)
+	ctx := t.Context()
+	if ok, err := c.ReplaceJSON(ctx, "niro:test:missing", map[string]int{"a": 1}); err != nil || ok {
+		t.Fatalf("replace of a missing key = (%v, %v), want (false, nil)", ok, err)
+	}
+	if found, _ := c.GetJSON(ctx, "niro:test:missing", &map[string]int{}); found {
+		t.Fatal("ReplaceJSON created a key")
+	}
+	if err := c.SetJSON(ctx, "niro:test:k", 1, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+	if ok, err := c.ReplaceJSON(ctx, "niro:test:k", 2); err != nil || !ok {
+		t.Fatalf("replace = (%v, %v)", ok, err)
+	}
+	var v int
+	if _, err := c.GetJSON(ctx, "niro:test:k", &v); err != nil || v != 2 {
+		t.Fatalf("value = %d (%v)", v, err)
+	}
+	ttl, err := c.Raw().Do(ctx, c.Raw().B().Pttl().Key("niro:test:k").Build()).AsInt64()
+	if err != nil || ttl <= 0 {
+		t.Fatalf("TTL lost on replace: %d (%v)", ttl, err)
+	}
+}

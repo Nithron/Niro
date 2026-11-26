@@ -286,6 +286,18 @@ export function useDeleteRolePanel(guildId: string) {
   })
 }
 
+/** Owner only: Niro leaves the server and all of its data is deleted now. */
+export function useDeleteGuildData(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { error, response } = await api.DELETE('/guilds/{guildId}/data', { params: { path: { guildId } } })
+      if (error) throw new ApiError(response.status, error.code, error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.guilds }),
+  })
+}
+
 export function useWelcomeSettings(guildId: string) {
   return useQuery({
     queryKey: ['guilds', guildId, 'settings', 'welcome'] as const,

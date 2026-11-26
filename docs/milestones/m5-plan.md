@@ -80,7 +80,7 @@
 
 ### 2.2 Data lifecycle
 - **When Niro leaves a server:**
-  - Pending scheduled actions for that server are cancelled at once, and its Valkey keys are deleted.
+  - The scheduler skips that server's pending timed actions (they run late if Niro comes back), and its Valkey keys are deleted at once. The message cache is keyed by channel and expires within its 7 days.
   - A daily job runs `DELETE FROM guilds WHERE left_at < now() - interval '30 days'`, and the cascade removes everything else. Migration 6 adds an index on `left_at`.
   - Rejoining within the 30 days restores everything, as today.
   - A `GuildLeave` caused by an outage (the server shows as unavailable) is not treated as a leave.
@@ -89,8 +89,9 @@
   - done `scheduled_actions` after 30 days;
   - ended raids and lockdowns after 90 days;
   - `config_audit` after 1 year;
-  - Guardian events after 90 days whatever their status, except ones a moderator marked **kept**, which stay while Niro is in the server;
-  - `guardian:since` gets a TTL.
+  - Guardian events after 90 days, except ones a moderator marked **kept**, which stay while Niro is in the server, and ones still in effect: an **open** event holds a quarantine waiting for a moderator, an **active** one a raid. They go at the first purge after they are resolved;
+  - `guardian:since` is deleted when Niro leaves (a TTL would restart Guardian's warm-up).
+  - Lockdown rows are already removed when a channel is unlocked; a channel still locked keeps the overwrites it needs to be restored.
 - **Every job** (maintenance, scheduler, scam feed, transcript purge, leave purge) records a last-success time and a failure counter, so a job that stops running raises an alert.
 
 ### 2.3 Observability

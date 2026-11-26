@@ -64,6 +64,8 @@ UPDATE scheduled_actions SET run_at = now() + interval '5 minutes', attempts = a
 WHERE id IN (
     SELECT id FROM scheduled_actions
     WHERE done_at IS NULL AND run_at <= now()
+      -- Skip servers Niro has left; the actions run if it comes back.
+      AND guild_id IN (SELECT id FROM guilds WHERE left_at IS NULL)
     ORDER BY run_at
     LIMIT $1
     FOR UPDATE SKIP LOCKED

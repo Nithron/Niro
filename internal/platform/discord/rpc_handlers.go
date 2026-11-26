@@ -64,6 +64,7 @@ type AutoModIDParams struct {
 
 // RegisterRPC adds the bot's RPC handlers to srv.
 func (b *Bot) RegisterRPC(srv *rpc.Server) {
+	b.registerLifecycleRPC(srv)
 	srv.Handle(RPCGuildMeta, b.rpcGuildMeta)
 	srv.Handle(RPCCaseReason, func(ctx context.Context, r rpc.Request) (any, error) {
 		var p CaseReasonParams

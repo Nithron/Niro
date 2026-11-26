@@ -33,6 +33,10 @@ WHERE guild_id = $1 AND id = $2
 RETURNING *;
 
 -- name: PurgeGuardianEvents :execrows
+-- Evidence older than the cutoff (decision 28), except events a moderator
+-- chose to keep and ones still in effect: an open event holds a quarantine
+-- waiting for a decision, an active one a raid or lockdown. They go at the
+-- first purge after they are resolved.
 DELETE FROM guardian_events WHERE created_at < $1 AND status NOT IN ('open', 'kept', 'active');
 
 -- name: UpsertQuarantine :exec

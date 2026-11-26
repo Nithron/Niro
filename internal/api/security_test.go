@@ -83,6 +83,22 @@ func TestEveryGuildEndpointChecksAccess(t *testing.T) {
 	if len(h.rpc.calls) != 0 {
 		t.Fatalf("refused requests reached the bot: %v", h.rpc.calls)
 	}
+
+	// As a manager of server 100, every call that reaches the bot is scoped
+	// to server 100: no handler takes its guild from anywhere but the URL.
+	for _, op := range guildOperations(t) {
+		method, p := op[0], op[1]
+		body := ""
+		if method != "GET" && method != "DELETE" {
+			body = `{"guildId":"200","guild_id":"200"}`
+		}
+		h.do(method, "/api/v1"+fill(p, "100"), body, sid, sameOrigin)
+	}
+	for _, c := range h.rpc.calls {
+		if c.Guild != managedGuild {
+			t.Errorf("RPC %s went to guild %s, want %s", c.Method, c.Guild, managedGuild)
+		}
+	}
 }
 
 func TestRateLimits(t *testing.T) {
@@ -148,6 +164,8 @@ func TestClientIP(t *testing.T) {
 		{"10.0.0.2:4000", "6.6.6.6, 198.51.100.7", "198.51.100.7"}, // right-most untrusted entry, not a spoofed left one
 		{"10.0.0.2:4000", "198.51.100.7, 10.0.0.3", "198.51.100.7"},
 		{"10.0.0.2:4000", "garbage", "10.0.0.2"},
+		{"10.0.0.2:4000", "fe80::1%eth0", "fe80::1"}, // zones are dropped
+		{"[2001:db8::1]:4000", "", "2001:db8::1"},
 	}
 	for _, c := range cases {
 		r, _ := http.NewRequest("GET", "/", nil)
@@ -157,6 +175,33 @@ func TestClientIP(t *testing.T) {
 		}
 		if got := s.clientIP(r).String(); got != c.want {
 			t.Errorf("clientIP(%s, %q) = %s, want %s", c.remote, c.xff, got, c.want)
+		}
+	}
+}
+
+func TestClientKeyGroupsIPv6By64(t *testing.T) {
+	s := &Server{}
+	key := func(remote string) string {
+		r, _ := http.NewRequest("GET", "/", nil)
+		r.RemoteAddr = remote
+		return s.clientKey(r)
+	}
+	if a, b := key("[2001:db8:1:2:aaaa::1]:1"), key("[2001:db8:1:2:bbbb::9]:1"); a != b || a != "2001:db8:1:2::/64" {
+		t.Fatalf("same /64 gave %q and %q", a, b)
+	}
+	if a, b := key("[2001:db8:1:2::1]:1"), key("[2001:db8:1:3::1]:1"); a == b {
+		t.Fatal("different /64s share a bucket")
+	}
+	if k := key("192.0.2.7:1"); k != "192.0.2.7" {
+		t.Fatalf("IPv4 key = %q", k)
+	}
+}
+
+func TestIPBudgetRunsBeforeTheSession(t *testing.T) {
+	h := newHarnessWith(t, func(d *Deps) { d.Config.RateLimits = RateLimits{IP: 3} })
+	for i, want := range []int{401, 401, 401, 429} {
+		if rec := h.do("GET", "/api/v1/me", "", "bogus", nil); rec.Code != want {
+			t.Fatalf("request %d with a bogus cookie = %d, want %d", i+1, rec.Code, want)
 		}
 	}
 }

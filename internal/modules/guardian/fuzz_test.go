@@ -27,7 +27,7 @@ func FuzzExtractLinks(f *testing.F) {
 }
 
 func FuzzNormalizeHost(f *testing.F) {
-	for _, s := range []string{"WWW.Example.com.", "xn--80ak6aa92e.com", "a..b", "", ".", "localhost:80"} {
+	for _, s := range []string{"WWW.Example.com.", "xn--80ak6aa92e.com", "a..b", "", ".", "localhost:80", "evil.com／x", "a＠b.com", "www.co.uk", "www.www.example.com"} {
 		f.Add(s)
 	}
 	f.Fuzz(func(t *testing.T, s string) {

@@ -72,7 +72,8 @@ FUZZ_TARGETS := ./internal/core/message:FuzzDocument \
 	./internal/modules/guardian:FuzzNormalizeDomains \
 	./internal/modules/guardian:FuzzParseFeed \
 	./internal/modules/tickets:FuzzTranscript \
-	./internal/config:FuzzParseBaseURL
+	./internal/config:FuzzParseBaseURL \
+	./internal/api:FuzzClientIP
 
 fuzz: ## Run every fuzz target for FUZZTIME (default 30s each)
 	@n=$$(grep -rh '^func Fuzz' --include='*_test.go' internal | wc -l); \

@@ -58,6 +58,9 @@ func ParseDuration(s string) (time.Duration, error) {
 		total += time.Duration(n) * d
 		s = s[i+1:]
 	}
+	if total == 0 {
+		return 0, errDurationSyntax // "0s" is not a duration a moderator means
+	}
 	return total, nil
 }
 

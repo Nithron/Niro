@@ -58,6 +58,17 @@ func (k *memKV) Delete(_ context.Context, key string) error {
 	return nil
 }
 
+func (k *memKV) ReplaceJSON(_ context.Context, key string, v any) (bool, error) {
+	b, err := json.Marshal(v)
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if _, ok := k.m[key]; !ok {
+		return false, err
+	}
+	k.m[key] = b
+	return true, err
+}
+
 // Hit counts without expiry: a test's requests all fall in one window.
 func (k *memKV) Hit(_ context.Context, key string, window time.Duration) (int64, time.Duration, error) {
 	k.mu.Lock()

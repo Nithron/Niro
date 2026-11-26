@@ -97,8 +97,19 @@ func NormalizeHost(h string) (string, bool) {
 	} else if strings.Contains(h, "xn--") {
 		return "", false
 	}
-	// Strip "www." (repeatedly) as long as a real domain is left behind.
-	for strings.HasPrefix(h, "www.") && strings.Contains(h[4:], ".") {
+	// IDNA mapping turns fullwidth "／", "＠", "：" and "。" into their ASCII
+	// forms, so check again after it.
+	h = strings.TrimSuffix(h, ".")
+	if strings.ContainsAny(h, ":[]/ @") ||
+		strings.ContainsFunc(h, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
+		return "", false
+	}
+	// Strip "www." (repeatedly) while a registrable domain is left behind,
+	// so "www.co.uk" stays as it is instead of becoming a bare suffix.
+	for strings.HasPrefix(h, "www.") {
+		if _, err := publicsuffix.EffectiveTLDPlusOne(h[4:]); err != nil {
+			break
+		}
 		h = h[4:]
 	}
 	if len(h) > 253 || isIPv4(h) || !strings.Contains(h, ".") {

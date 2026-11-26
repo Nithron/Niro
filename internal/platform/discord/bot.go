@@ -30,6 +30,8 @@ import (
 	"github.com/nithron/niro/internal/modules/roles"
 	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/modules/welcome"
+	"github.com/nithron/niro/internal/observability"
+	"github.com/nithron/niro/internal/retention"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -93,6 +95,23 @@ type Deps struct {
 	}
 	// ScamFeedURLs are the scam-domain lists to download (https only).
 	ScamFeedURLs []string
+	// Lifecycle deletes old data (retention) and a server's data on request.
+	Lifecycle Lifecycle
+	// GuildCache forgets a server's Valkey keys when Niro leaves it.
+	GuildCache GuildCache
+	// Jobs records background job runs for alerts; may be nil.
+	Jobs *observability.Jobs
+}
+
+// Lifecycle is the store side of data retention.
+type Lifecycle interface {
+	retention.Store
+	DeleteGuild(ctx context.Context, id snowflake.ID) (bool, error)
+}
+
+// GuildCache holds per-server keys outside Postgres.
+type GuildCache interface {
+	ForgetGuild(ctx context.Context, id snowflake.ID) error
 }
 
 // Bot is a running Niro Discord client.
@@ -326,6 +345,10 @@ func (b *Bot) Run(ctx context.Context) error {
 	go b.runScheduler(ctx)
 	go b.guard.RunMaintenance(ctx, 15*time.Second)
 	go b.tickets.RunMaintenance(ctx, time.Hour)
+	if b.deps.Lifecycle != nil {
+		r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention")}
+		go r.Run(ctx, time.Hour)
+	}
 	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
 	go feed.Run(ctx)
 
@@ -380,8 +403,16 @@ func (b *Bot) recordGuild(g discord.CacheGuild) {
 func (b *Bot) forgetGuild(id snowflake.ID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	// Only a real removal arrives here: disgo reports an outage as
+	// GuildUnavailable instead. The data stays for the 30-day grace period
+	// (retention.LeftGuildGrace); the cached keys go now.
 	if err := b.deps.Guilds.MarkGuildLeft(ctx, id); err != nil {
 		b.log.Error("marking guild as left failed", "guild_id", id, "err", err)
+	}
+	if b.deps.GuildCache != nil {
+		if err := b.deps.GuildCache.ForgetGuild(ctx, id); err != nil {
+			b.log.Warn("clearing the server's cached keys failed", "guild_id", id, "err", err)
+		}
 	}
 	b.metrics.guilds.Set(float64(b.client.Caches.GuildsLen()))
 	b.log.Info("left guild", "guild_id", id)

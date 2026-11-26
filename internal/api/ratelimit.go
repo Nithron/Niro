@@ -23,6 +23,7 @@ type RateLimits struct {
 	Write  int64 // non-GET /api/v1 requests, per user (these change settings or reach the bot)
 	Auth   int64 // /auth/login and /auth/callback, per client IP
 	Public int64 // /api/v1 requests without a session (the invite link), per client IP
+	IP     int64 // every /api and /auth request, per client IP, before the session is read
 }
 
 const rateWindow = time.Minute
@@ -37,14 +38,29 @@ func (l RateLimits) withDefaults() RateLimits {
 	def(&l.Write, 30)
 	def(&l.Auth, 10)
 	def(&l.Public, 60)
+	def(&l.IP, 300)
 	return l
+}
+
+// limitIP is a coarse per-IP budget for every API and auth request. It runs
+// before the session lookup, so a flood of bogus cookies is cut off cheaply.
+func (s *Server) limitIP(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := r.URL.Path
+		if strings.HasPrefix(p, "/api/") || strings.HasPrefix(p, "/auth/") {
+			if !s.allow(w, r, "ip", "ip:"+s.clientKey(r), s.limits.IP) {
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // limitAuth throttles the login flow per client IP.
 func (s *Server) limitAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/auth/login" || r.URL.Path == "/auth/callback" {
-			if !s.allow(w, r, "auth", "ip:"+s.clientIP(r).String(), s.limits.Auth) {
+			if !s.allow(w, r, "auth", "ip:"+s.clientKey(r), s.limits.Auth) {
 				return
 			}
 		}
@@ -58,7 +74,7 @@ func (s *Server) limitAPI(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sess := sessionFrom(r.Context())
 		if sess == nil {
-			if !s.allow(w, r, "public", "ip:"+s.clientIP(r).String(), s.limits.Public) {
+			if !s.allow(w, r, "public", "ip:"+s.clientKey(r), s.limits.Public) {
 				return
 			}
 			next.ServeHTTP(w, r)
@@ -84,6 +100,7 @@ func (s *Server) allow(w http.ResponseWriter, r *http.Request, rule, who string,
 	}
 	n, reset, err := s.limiter.Hit(r.Context(), "niro:ratelimit:"+rule+":"+who, rateWindow)
 	if err != nil {
+		s.rateLimiterErrors.Inc()
 		s.log.WarnContext(r.Context(), "rate limiter unavailable", "rule", rule, "err", err)
 		return true
 	}
@@ -95,6 +112,16 @@ func (s *Server) allow(w http.ResponseWriter, r *http.Request, rule, who string,
 	w.Header().Set("Retry-After", strconv.Itoa(secs))
 	writeError(w, http.StatusTooManyRequests, "rate_limited", "Too many requests. Please wait a moment and try again.")
 	return false
+}
+
+// clientKey is the rate-limit identity of a client: its IPv4 address, or the
+// /64 an IPv6 address belongs to (one host usually controls a whole /64).
+func (s *Server) clientKey(r *http.Request) string {
+	a := s.clientIP(r)
+	if a.Is6() {
+		return netip.PrefixFrom(a, 64).Masked().String()
+	}
+	return a.String()
 }
 
 // clientIP is the connecting address, or, when that is a trusted reverse
@@ -111,7 +138,7 @@ func (s *Server) clientIP(r *http.Request) netip.Addr {
 		if err != nil {
 			return remote
 		}
-		a = a.Unmap()
+		a = a.WithZone("").Unmap()
 		if !s.trusted(a) {
 			return a
 		}
@@ -137,5 +164,5 @@ func parseAddr(hostport string) netip.Addr {
 	if err != nil {
 		return netip.IPv4Unspecified()
 	}
-	return a.Unmap()
+	return a.WithZone("").Unmap()
 }
