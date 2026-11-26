@@ -206,6 +206,7 @@ const (
 	ErrorCodeInternal       ErrorCode = "internal"
 	ErrorCodeModuleAlwaysOn ErrorCode = "module_always_on"
 	ErrorCodeNotFound       ErrorCode = "not_found"
+	ErrorCodeRateLimited    ErrorCode = "rate_limited"
 	ErrorCodeUnauthorized   ErrorCode = "unauthorized"
 )
 
@@ -227,6 +228,8 @@ func (e ErrorCode) Valid() bool {
 	case ErrorCodeModuleAlwaysOn:
 		return true
 	case ErrorCodeNotFound:
+		return true
+	case ErrorCodeRateLimited:
 		return true
 	case ErrorCodeUnauthorized:
 		return true

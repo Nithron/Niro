@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"path"
 	"strings"
@@ -29,6 +30,11 @@ type Config struct {
 	DashboardURL  *url.URL
 	SecureCookies bool
 	ClientID      snowflake.ID
+	// TrustedProxies are the reverse proxies whose X-Forwarded-For header is
+	// believed when working out a client's IP (for rate limits).
+	TrustedProxies []netip.Prefix
+	// RateLimits override the default request budgets.
+	RateLimits RateLimits
 }
 
 // Deps are the server's collaborators.
@@ -47,6 +53,8 @@ type Deps struct {
 	// Tickets reads ticket panels, tickets and transcripts.
 	Tickets TicketReader
 	RPC     RPCCaller
+	// Limiter counts requests for rate limits; nil turns them off.
+	Limiter Limiter
 	// Dashboard is the built SPA (index.html + assets); may be empty.
 	Dashboard fs.FS
 	Metrics   prometheus.Registerer
@@ -66,7 +74,11 @@ type Server struct {
 	tickets    TicketReader
 	rpc        RPCCaller
 	spa        fs.FS
+	limiter    Limiter
+	limits     RateLimits
 	requests   *prometheus.CounterVec
+	// rateLimited counts requests refused with 429, by rule.
+	rateLimited *prometheus.CounterVec
 }
 
 // New builds the HTTP handler.
@@ -74,33 +86,39 @@ func New(d Deps) (http.Handler, error) {
 	s := &Server{
 		cfg: d.Config, log: d.Log.With("component", "api"), oauth: d.OAuth, kv: d.KV,
 		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, cases: d.Cases, guardian: d.Guardian, rolePanels: d.RolePanels, tickets: d.Tickets, rpc: d.RPC, spa: d.Dashboard,
+		limiter: d.Limiter, limits: d.Config.RateLimits.withDefaults(),
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_api_requests_total", Help: "API requests by route and status class.",
 		}, []string{"route", "status"}),
+		rateLimited: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "niro_api_rate_limited_total", Help: "Requests refused by a rate limit, by rule.",
+		}, []string{"rule"}),
 	}
 	if d.Metrics != nil {
-		if err := d.Metrics.Register(s.requests); err != nil {
-			return nil, err
+		for _, c := range []prometheus.Collector{s.requests, s.rateLimited} {
+			if err := d.Metrics.Register(c); err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	r := chi.NewRouter()
-	// No RealIP middleware: it trusts client-supplied headers. Add a trusted-proxy
-	// aware variant if client IPs are ever needed (e.g. rate limiting in M5).
+	// No RealIP middleware: it trusts client-supplied headers. clientIP reads
+	// X-Forwarded-For only from configured trusted proxies.
 	r.Use(middleware.RequestID, s.logRequests, middleware.Recoverer)
 	r.Use(s.securityHeaders, s.checkOrigin)
 	r.Use(middleware.RequestSize(64 << 10))
 
 	r.Route("/auth", func(r chi.Router) {
+		r.Use(s.limitAuth)
 		r.Get("/login", s.handleLogin)
 		r.Get("/callback", s.handleCallback)
 		r.Post("/logout", s.handleLogout)
+		r.Post("/logout-everywhere", s.handleLogoutEverywhere)
 	})
 
 	strict := apigen.NewStrictHandlerWithOptions(handlers{s}, nil, apigen.StrictHTTPServerOptions{
-		RequestErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
-			writeError(w, http.StatusBadRequest, "bad_request", err.Error())
-		},
+		RequestErrorHandlerFunc: s.badRequest,
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			var ae *apiError
 			if errors.As(err, &ae) {
@@ -112,12 +130,10 @@ func New(d Deps) (http.Handler, error) {
 		},
 	})
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(s.requireSession)
+		r.Use(s.requireSession, s.limitAPI)
 		apigen.HandlerWithOptions(strict, apigen.ChiServerOptions{
-			BaseRouter: r,
-			ErrorHandlerFunc: func(w http.ResponseWriter, _ *http.Request, err error) {
-				writeError(w, http.StatusBadRequest, "bad_request", err.Error())
-			},
+			BaseRouter:       r,
+			ErrorHandlerFunc: s.badRequest,
 		})
 	})
 	r.NotFound(s.serveSPA)
@@ -144,6 +160,13 @@ func (s *Server) checkOrigin(next http.Handler) http.Handler {
 	})
 }
 
+// badRequest answers a request the generated layer couldn't parse. The parser's
+// message names internal types, so it is logged, not returned.
+func (s *Server) badRequest(w http.ResponseWriter, r *http.Request, err error) {
+	s.log.DebugContext(r.Context(), "bad request", "path", r.URL.Path, "err", err)
+	writeError(w, http.StatusBadRequest, "bad_request", "The request was not valid.")
+}
+
 func origin(u *url.URL) string { return u.Scheme + "://" + u.Host }
 
 func (s *Server) securityHeaders(next http.Handler) http.Handler {
@@ -155,8 +178,15 @@ func (s *Server) securityHeaders(next http.Handler) http.Handler {
 		h.Set("Content-Security-Policy", "default-src 'self'; img-src 'self' https://cdn.discordapp.com data:; "+
 			"style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; "+
 			"frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()")
+		h.Set("Cross-Origin-Opener-Policy", "same-origin")
+		h.Set("Cross-Origin-Resource-Policy", "same-origin")
 		if s.cfg.SecureCookies {
 			h.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
+		// API answers carry personal data (cases, transcripts): never cache them.
+		if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/auth/") {
+			h.Set("Cache-Control", "no-store")
 		}
 		next.ServeHTTP(w, r)
 	})

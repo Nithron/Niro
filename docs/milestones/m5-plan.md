@@ -43,10 +43,11 @@
 ## 2. Design
 
 ### 2.1 Security hardening
-- **Rate limits** (Valkey, sliding window). Defaults:
-  - 120 requests a minute per session on `/api/v1`.
-  - 20 a minute per session on actions that reach the bot over RPC (posting panels, raid mode, resolving events).
-  - 10 a minute per IP on `/auth/login` and `/auth/callback`.
+- **Rate limits** (Valkey, fixed one-minute windows). Defaults:
+  - 120 requests a minute per user on `/api/v1`.
+  - 30 a minute per user on requests that change something (anything but GET). These are the ones that write settings or reach the bot.
+  - 10 a minute per IP on `/auth/login` and `/auth/callback`, and 60 a minute per IP on the public invite route.
+  - If Valkey is down, requests are let through and a warning is logged.
   - The client IP is read from `X-Forwarded-For` only when the request comes from a configured trusted proxy (`NIRO_TRUSTED_PROXIES`).
   - Over the limit, the API returns 429 with `Retry-After`, and the dashboard shows a message.
 - **Dependencies:**
@@ -65,14 +66,16 @@
   - `Permissions-Policy` and `Cross-Origin-Opener-Policy`.
   - `MaxHeaderBytes` lowered to 16 KB.
   - A bad request returns a generic message instead of the validator's text.
-  - The public `/api/v1/invite` route moves out of the authenticated group.
+  - The public `/api/v1/invite` route stays an exact-match exception in the session check, covered by a test.
 - **Fuzz tests** (Go native fuzzing; each target runs for 30 s in CI, and the seed corpus runs on every `go test`):
   - message documents (`Validate`, `Render`, `IsEmoji`);
   - `ParseDuration`;
   - Guardian link extraction and `NormalizeHost`, `normalizeText` and `normalizeDomains`;
   - the scam-feed parser;
   - the transcript renderer (it must never emit an unescaped tag);
-  - the custom-ID parsers for role panels, tickets and verify buttons.
+  - the public URL setting.
+
+  Custom IDs are parsed by disgo's router, not by Niro code, so they have no target of their own.
 - **At the end:** an ECC security review of the whole M5 diff, with the same bar as M2 to M4.
 
 ### 2.2 Data lifecycle
@@ -179,7 +182,7 @@
 
 | # | Slice | Tests | Done check |
 |---|---|---|---|
-| 1 | **Security hardening:** rate limits, the vulnerability fix and audit jobs in CI, the spec-wide authorization test, bot-side scoping, sessions, headers, fuzz targets | Unit and integration tests for the limiter and sessions; the spec-walking authorization test; fuzz seeds; Playwright for 429 and sign-out everywhere | CI green, including govulncheck, the audit and fuzzing |
+| 1 | **Security hardening:** rate limits, the vulnerability fix and audit jobs in CI, the spec-wide authorization test, bot-side scoping, sessions, headers, fuzz targets | Unit and integration tests for the limiter and sessions; the spec-walking authorization test; fuzz seeds; Vitest for 429 and sign-out everywhere | CI green, including govulncheck, the audit and fuzzing |
 | 2 | **Data lifecycle:** leave handling and the 30-day purge, delete now, retention jobs, job metrics, migration 6 | Store integration tests (cascade purge, grace period, rejoin restores), domain tests, API tests | A server that Niro left is gone after the grace period (time-shifted test); delete now works in the test server |
 | 3 | **Observability:** metrics, per-shard readiness, alert rules, Grafana dashboard | Metric tests; `promtool check rules` in CI | Alerts fire in a local Prometheus when the bot is stopped |
 | 4 | **Load and soak:** `niro-soak`, the fake REST server, baselines; shard resume on Niro Dev | The harness itself; a short version in CI | Baselines recorded; resume confirmed live |
@@ -192,7 +195,19 @@ Slices 1 to 5 don't depend on the questions below, except question 4 (retention)
 
 **Timing:** Discord's verification and intent review is outside our control and can take days or weeks. Until it is approved, the hosted bot works in up to 100 servers, which is enough for a soft launch. The `v0.1.0` tag waits for the approval, as the done-when line says.
 
-## 4. Questions for the PM
+## 4. PM answers (decision 28)
+
+1. **Hosting:** a Hoststronger VPS, the same provider as the Nithron website. Off-site backups go to storage outside that VPS (to be chosen in slice 6).
+2. **Monitoring:** Prometheus, Alertmanager and Grafana on the VPS.
+3. **Data controller:** Nithron, Belgium, `privacy@nithron.com`. The supervisory authority is Belgium's Data Protection Authority.
+4. **Retention:** as proposed.
+5. **Self-host:** source only for `v0.1.0`.
+6. **Delete now:** yes.
+7. **Discord Team:** the production application already belongs to one.
+8. **nOS** (formerly NithronOS): if nOS runs Docker Compose like any Linux server, the clean-VM test covers it. A native nOS package would be separate work. Open.
+
+<details><summary>The questions as asked</summary>
+
 
 1. **Hosting provider** (open since plan §11):
    - Recommended: Hetzner Cloud, one 4 vCPU / 8 GB server in Germany or Finland (about €15–20 a month), with Docker Compose, Caddy and off-site backups to a Hetzner Storage Box.
@@ -222,3 +237,5 @@ Slices 1 to 5 don't depend on the questions below, except question 4 (retention)
 8. **Load target and NithronOS:**
    - Is the load target OK: 2,500 servers, 100 messages a second, raid bursts and a 2-hour soak?
    - Will you run the self-host guide on NithronOS, or give me access to a NithronOS machine?
+
+</details>

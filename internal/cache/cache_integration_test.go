@@ -99,3 +99,25 @@ func TestJSONRoundTripAndTTL(t *testing.T) {
 		t.Fatal("deleted key still present")
 	}
 }
+
+func TestRateLimitHit(t *testing.T) {
+	c := newClient(t)
+	ctx := t.Context()
+	for want := int64(1); want <= 3; want++ {
+		n, reset, err := c.Hit(ctx, "niro:ratelimit:test", time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != want || reset <= 0 || reset > time.Minute {
+			t.Fatalf("hit %d = (%d, %s)", want, n, reset)
+		}
+	}
+	// A new window starts once the old one expires.
+	if _, _, err := c.Hit(ctx, "niro:ratelimit:short", 50*time.Millisecond); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(120 * time.Millisecond)
+	if n, _, err := c.Hit(ctx, "niro:ratelimit:short", 50*time.Millisecond); err != nil || n != 1 {
+		t.Fatalf("after the window = (%d, %v), want 1", n, err)
+	}
+}

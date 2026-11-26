@@ -190,7 +190,9 @@ export function RequestError({ error }: { error: unknown }) {
   if (!error) return null
   let message = t('app.genericError')
   if (error instanceof ApiError) {
-    message = error.code === 'bot_unavailable' ? t('errors.botUnavailable') : error.message || message
+    if (error.code === 'bot_unavailable') message = t('errors.botUnavailable')
+    else if (error.code === 'rate_limited') message = t('errors.rateLimited')
+    else message = error.message || message
   }
   return (
     <p role="alert" className="text-sm text-danger">

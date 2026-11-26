@@ -28,8 +28,9 @@ import (
 // ---- fakes ----------------------------------------------------------------
 
 type memKV struct {
-	mu sync.Mutex
-	m  map[string][]byte
+	mu   sync.Mutex
+	m    map[string][]byte
+	hits map[string]int64
 }
 
 func (k *memKV) GetJSON(_ context.Context, key string, v any) (bool, error) {
@@ -57,9 +58,26 @@ func (k *memKV) Delete(_ context.Context, key string) error {
 	return nil
 }
 
+// Hit counts without expiry: a test's requests all fall in one window.
+func (k *memKV) Hit(_ context.Context, key string, window time.Duration) (int64, time.Duration, error) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if k.hits == nil {
+		k.hits = map[string]int64{}
+	}
+	k.hits[key]++
+	return k.hits[key], window, nil
+}
+
 type fakeOAuth struct {
 	guilds     []UserGuild
 	guildCalls int
+	revoked    []string
+}
+
+func (f *fakeOAuth) Revoke(_ context.Context, tok string) error {
+	f.revoked = append(f.revoked, tok)
+	return nil
 }
 
 func (f *fakeOAuth) AuthorizeURL(state string) string {
@@ -160,7 +178,10 @@ type harness struct {
 	tix    *fakeTickets
 }
 
-func newHarness(t *testing.T) *harness {
+func newHarness(t *testing.T) *harness { return newHarnessWith(t, nil) }
+
+// newHarnessWith lets a test adjust the server's dependencies before it is built.
+func newHarnessWith(t *testing.T, adjust func(*Deps)) *harness {
 	t.Helper()
 	pub, _ := url.Parse("http://localhost:8080")
 	kv := &memKV{m: map[string][]byte{}}
@@ -182,9 +203,9 @@ func newHarness(t *testing.T) *harness {
 	fcases := &fakeCases{}
 	cfgs, _ := core.NewConfigService(reg, &fakeConfigStore{rows: map[core.ModuleID]core.StoredModuleState{}}, nopBus{}, log)
 
-	h, err := New(Deps{
+	deps := Deps{
 		Config: Config{PublicURL: pub, DashboardURL: pub, ClientID: 999},
-		Log:    log, OAuth: oauth, KV: kv,
+		Log:    log, OAuth: oauth, KV: kv, Limiter: kv,
 		Guilds:     fakeDir{active: map[snowflake.ID]bool{managedGuild: true}},
 		Configs:    cfgs,
 		Cases:      fcases,
@@ -193,7 +214,11 @@ func newHarness(t *testing.T) *harness {
 		Tickets:    ftix,
 		RPC:        frpc,
 		Dashboard:  fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
-	})
+	}
+	if adjust != nil {
+		adjust(&deps)
+	}
+	h, err := New(deps)
 	if err != nil {
 		t.Fatal(err)
 	}

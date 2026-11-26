@@ -68,9 +68,26 @@ describe('dashboard', () => {
     }
     renderAt('/')
     await screen.findByText('Beta')
+    await userEvent.click(screen.getByLabelText('Account'))
     await userEvent.click(screen.getByRole('button', { name: 'Log out' }))
     expect(await screen.findByRole('link', { name: 'Log in with Discord' })).toBeInTheDocument()
     expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+  })
+
+  it('logs out on all devices', async () => {
+    let called = false
+    routes['POST /auth/logout-everywhere'] = () => {
+      called = true
+      routes['GET /api/v1/me'] = unauthorized
+      routes['GET /api/v1/guilds'] = unauthorized
+      return new Response(null, { status: 204 })
+    }
+    renderAt('/')
+    await screen.findByText('Beta')
+    await userEvent.click(screen.getByLabelText('Account'))
+    await userEvent.click(screen.getByRole('button', { name: 'Log out on all devices' }))
+    expect(await screen.findByRole('link', { name: 'Log in with Discord' })).toBeInTheDocument()
+    expect(called).toBe(true)
   })
 
   it('returns to the login screen when the session expires mid-use', async () => {
@@ -234,6 +251,13 @@ describe('moderation pages', () => {
     await waitFor(() =>
       expect(calls).toContainEqual(expect.objectContaining({ method: 'PUT', path: '/api/v1/guilds/100/automod/rules/1', body: expect.objectContaining({ enabled: false }) })),
     )
+  })
+
+  it('explains a rate limit in plain words', async () => {
+    routes['GET /api/v1/automod/presets'] = () => json([])
+    routes['GET /api/v1/guilds/100/automod/rules'] = () => json({ code: 'rate_limited', message: 'Too many requests.' }, 429)
+    renderAt('/guilds/100/automod')
+    expect(await screen.findByText("You're going a bit fast. Wait a moment and try again.")).toBeInTheDocument()
   })
 
   it('explains when the bot is offline', async () => {

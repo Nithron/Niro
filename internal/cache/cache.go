@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/valkey-io/valkey-go"
@@ -97,6 +98,35 @@ func (c *Client) SetJSON(ctx context.Context, key string, v any, ttl time.Durati
 
 func (c *Client) Delete(ctx context.Context, key string) error {
 	return c.c.Do(ctx, c.c.B().Del().Key(key).Build()).Error()
+}
+
+// hitScript increments a fixed-window counter, starting the window on the
+// first hit, and returns the count and the milliseconds left in the window.
+var hitScript = valkey.NewLuaScript(`
+local n = redis.call('INCR', KEYS[1])
+if n == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+local ttl = redis.call('PTTL', KEYS[1])
+if ttl < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[1]); ttl = tonumber(ARGV[1]) end
+return {n, ttl}`)
+
+// Hit counts one request against a rate-limit window (api.Limiter).
+func (c *Client) Hit(ctx context.Context, key string, window time.Duration) (int64, time.Duration, error) {
+	vals, err := hitScript.Exec(ctx, c.c, []string{key}, []string{strconv.FormatInt(window.Milliseconds(), 10)}).ToArray()
+	if err != nil {
+		return 0, 0, err
+	}
+	if len(vals) != 2 {
+		return 0, 0, fmt.Errorf("rate limit script returned %d values", len(vals))
+	}
+	n, err := vals[0].AsInt64()
+	if err != nil {
+		return 0, 0, err
+	}
+	ms, err := vals[1].AsInt64()
+	if err != nil {
+		return 0, 0, err
+	}
+	return n, time.Duration(ms) * time.Millisecond, nil
 }
 
 // Raw returns the underlying Valkey client (for the RPC bridge).

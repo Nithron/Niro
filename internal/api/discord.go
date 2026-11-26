@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
@@ -18,6 +20,8 @@ type OAuthClient interface {
 	Exchange(ctx context.Context, code string) (Token, error)
 	CurrentUser(ctx context.Context, accessToken string) (Profile, error)
 	CurrentUserGuilds(ctx context.Context, accessToken string) ([]UserGuild, error)
+	// Revoke invalidates an access token at Discord (on logout).
+	Revoke(ctx context.Context, accessToken string) error
 }
 
 type Token struct {
@@ -45,6 +49,7 @@ var scopes = []discord.OAuth2Scope{discord.OAuth2ScopeIdentify, discord.OAuth2Sc
 
 type discordOAuth struct {
 	rest         rest.OAuth2
+	http         *http.Client
 	clientID     snowflake.ID
 	clientSecret string
 	redirectURI  string
@@ -53,6 +58,7 @@ type discordOAuth struct {
 func NewDiscordOAuth(clientID snowflake.ID, clientSecret, redirectURI string) OAuthClient {
 	return &discordOAuth{
 		rest:         rest.NewOAuth2(rest.NewClient("")),
+		http:         &http.Client{Timeout: 10 * time.Second},
 		clientID:     clientID,
 		clientSecret: clientSecret,
 		redirectURI:  redirectURI,
@@ -76,6 +82,30 @@ func (d *discordOAuth) Exchange(ctx context.Context, code string) (Token, error)
 		return Token{}, fmt.Errorf("exchanging OAuth2 code: %w", err)
 	}
 	return Token{AccessToken: resp.AccessToken, ExpiresIn: resp.ExpiresIn}, nil
+}
+
+const revokeURL = "https://discord.com/api/v10/oauth2/token/revoke"
+
+func (d *discordOAuth) Revoke(ctx context.Context, accessToken string) error {
+	if accessToken == "" {
+		return nil
+	}
+	form := url.Values{"token": {accessToken}, "token_type_hint": {"access_token"}}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, revokeURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.SetBasicAuth(d.clientID.String(), d.clientSecret)
+	resp, err := d.http.Do(req)
+	if err != nil {
+		return fmt.Errorf("revoking token: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("revoking token: Discord answered %s", resp.Status)
+	}
+	return nil
 }
 
 func (d *discordOAuth) CurrentUser(ctx context.Context, accessToken string) (Profile, error) {

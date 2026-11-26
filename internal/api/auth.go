@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"net/http"
@@ -57,21 +58,80 @@ func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name: sessionCookie, Value: id, Path: "/", Expires: expires,
+		Name: s.sessionCookieName(), Value: id, Path: "/", Expires: expires,
 		HttpOnly: true, Secure: s.cfg.SecureCookies, SameSite: http.SameSiteLaxMode,
 	})
 	s.log.InfoContext(ctx, "user logged in", "user_id", profile.ID)
 	s.redirectToDashboard(w, r, "")
 }
 
+// handleLogout ends this browser's session and revokes its Discord token.
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
-	if c, err := r.Cookie(sessionCookie); err == nil {
-		if err := s.sessions.delete(r.Context(), c.Value); err != nil {
-			s.log.WarnContext(r.Context(), "deleting session failed", "err", err)
-		}
+	ctx := r.Context()
+	id := s.sessionID(r)
+	if sess, err := s.sessions.get(ctx, id); err == nil && sess != nil {
+		s.revoke(ctx, sess)
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Path: "/", MaxAge: -1, HttpOnly: true, Secure: s.cfg.SecureCookies, SameSite: http.SameSiteLaxMode})
+	if err := s.sessions.delete(ctx, id); err != nil {
+		s.log.WarnContext(ctx, "deleting session failed", "err", err)
+	}
+	s.clearSessionCookie(w)
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleLogoutEverywhere ends every session of the signed-in user, on every
+// device, for example after a lost laptop or a shared computer.
+func (s *Server) handleLogoutEverywhere(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := s.sessionID(r)
+	sess, err := s.sessions.get(ctx, id)
+	if err != nil {
+		s.log.ErrorContext(ctx, "loading session failed", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal", "Could not load your session.")
+		return
+	}
+	if sess == nil {
+		writeError(w, http.StatusUnauthorized, "unauthorized", "Please log in with Discord.")
+		return
+	}
+	if err := s.sessions.endAll(ctx, sess.User.ID.String()); err != nil {
+		s.log.ErrorContext(ctx, "ending all sessions failed", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal", "Could not sign you out everywhere. Please try again.")
+		return
+	}
+	s.revoke(ctx, sess)
+	_ = s.sessions.delete(ctx, id)
+	s.clearSessionCookie(w)
+	s.log.InfoContext(ctx, "user signed out everywhere", "user_id", sess.User.ID)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// revoke tells Discord to invalidate the session's access token. It is best
+// effort: the session is gone either way, and the token expires on its own.
+func (s *Server) revoke(ctx context.Context, sess *Session) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	if err := s.oauth.Revoke(ctx, sess.AccessToken); err != nil {
+		s.log.WarnContext(ctx, "revoking Discord token failed", "err", err)
+	}
+}
+
+func (s *Server) sessionCookieName() string {
+	if s.cfg.SecureCookies {
+		return "__Host-" + sessionCookie
+	}
+	return sessionCookie
+}
+
+func (s *Server) sessionID(r *http.Request) string {
+	if c, err := r.Cookie(s.sessionCookieName()); err == nil {
+		return c.Value
+	}
+	return ""
+}
+
+func (s *Server) clearSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{Name: s.sessionCookieName(), Path: "/", MaxAge: -1, HttpOnly: true, Secure: s.cfg.SecureCookies, SameSite: http.SameSiteLaxMode})
 }
 
 func (s *Server) redirectToDashboard(w http.ResponseWriter, r *http.Request, query string) {
@@ -88,11 +148,7 @@ func (s *Server) requireSession(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		var id string
-		if c, err := r.Cookie(sessionCookie); err == nil {
-			id = c.Value
-		}
-		sess, err := s.sessions.get(r.Context(), id)
+		sess, err := s.sessions.get(r.Context(), s.sessionID(r))
 		if err != nil {
 			s.log.ErrorContext(r.Context(), "loading session failed", "err", err)
 			writeError(w, http.StatusInternalServerError, "internal", "Could not load your session.")

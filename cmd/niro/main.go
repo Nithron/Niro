@@ -192,10 +192,12 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 			Config: api.Config{
 				PublicURL: cfg.PublicURL, DashboardURL: cfg.DashboardURL,
 				SecureCookies: cfg.SecureCookies(), ClientID: cfg.Discord.ClientID,
+				TrustedProxies: cfg.TrustedProxies,
 			},
 			Log:        log,
 			OAuth:      api.NewDiscordOAuth(cfg.Discord.ClientID, cfg.Discord.ClientSecret, cfg.OAuthRedirectURI()),
 			KV:         kv,
+			Limiter:    kv,
 			Guilds:     db,
 			Configs:    configs,
 			Cases:      db,
@@ -230,6 +232,7 @@ func serveHTTP(ctx context.Context, log *slog.Logger, name, addr string, h http.
 		Addr: addr, Handler: h,
 		ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second,
 		WriteTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute,
+		MaxHeaderBytes: 16 << 10,
 	}
 	errc := make(chan error, 1)
 	go func() {

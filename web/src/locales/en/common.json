@@ -16,7 +16,9 @@
   },
   "nav": {
     "servers": "Servers",
-    "logout": "Log out"
+    "logout": "Log out",
+    "logoutEverywhere": "Log out on all devices",
+    "account": "Account"
   },
   "servers": {
     "title": "Your servers",
@@ -247,7 +249,8 @@
     }
   },
   "errors": {
-    "botUnavailable": "The bot isn't responding right now. Make sure it's online and try again."
+    "botUnavailable": "The bot isn't responding right now. Make sure it's online and try again.",
+    "rateLimited": "You're going a bit fast. Wait a moment and try again."
   },
   "guardianSettings": {
     "title": "Guardian settings",

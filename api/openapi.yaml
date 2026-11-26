@@ -820,7 +820,7 @@ components:
         code:
           type: string
           description: Stable machine-readable code
-          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, bot_unavailable, discord_error, internal]
+          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, bot_unavailable, discord_error, rate_limited, internal]
         message: { type: string }
     User:
       type: object

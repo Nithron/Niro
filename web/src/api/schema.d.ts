@@ -584,7 +584,7 @@ export interface components {
              * @description Stable machine-readable code
              * @enum {string}
              */
-            code: "bad_request" | "unauthorized" | "forbidden" | "not_found" | "bot_not_in_guild" | "module_always_on" | "bot_unavailable" | "discord_error" | "internal";
+            code: "bad_request" | "unauthorized" | "forbidden" | "not_found" | "bot_not_in_guild" | "module_always_on" | "bot_unavailable" | "discord_error" | "rate_limited" | "internal";
             message: string;
         };
         User: {

@@ -7,7 +7,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 OAPI := go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
-.PHONY: help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
+.PHONY: fuzz audit help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
         generate generate-check test test-short lint build docker clean
 
 help: ## Show this help
@@ -61,6 +61,29 @@ test: ## Run all Go tests (integration tests need Docker)
 
 test-short: ## Run Go unit tests only
 	go test -race -short ./...
+
+FUZZTIME ?= 30s
+FUZZ_TARGETS := ./internal/core/message:FuzzDocument \
+	./internal/core/message:FuzzIsEmoji \
+	./internal/modules/moderation:FuzzParseDuration \
+	./internal/modules/guardian:FuzzExtractLinks \
+	./internal/modules/guardian:FuzzNormalizeHost \
+	./internal/modules/guardian:FuzzNormalizeText \
+	./internal/modules/guardian:FuzzNormalizeDomains \
+	./internal/modules/guardian:FuzzParseFeed \
+	./internal/modules/tickets:FuzzTranscript \
+	./internal/config:FuzzParseBaseURL
+
+fuzz: ## Run every fuzz target for FUZZTIME (default 30s each)
+	@n=$$(grep -rh '^func Fuzz' --include='*_test.go' internal | wc -l); \
+	  [ $$n -eq $(words $(FUZZ_TARGETS)) ] || { echo "FUZZ_TARGETS lists $(words $(FUZZ_TARGETS)) of $$n fuzz targets"; exit 1; }
+	@set -e; for t in $(FUZZ_TARGETS); do \
+	  echo "== $${t##*:}"; go test -run='^$$' -fuzz="^$${t##*:}$$" -fuzztime=$(FUZZTIME) $${t%%:*}; \
+	done
+
+audit: ## Check Go and dashboard dependencies for known vulnerabilities
+	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+	cd web && pnpm audit --prod
 
 lint: ## Run golangci-lint and the dashboard linters
 	$(GOLANGCI) run ./...

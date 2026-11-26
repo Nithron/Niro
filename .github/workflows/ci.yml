@@ -72,6 +72,40 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "26"
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: make audit
+
+  fuzz:
+    name: Fuzz parsers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: make fuzz FUZZTIME=30s
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: internal/**/testdata/fuzz/
+          retention-days: 7
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest

@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 
 	"golang.org/x/net/idna"
 	"golang.org/x/net/publicsuffix"
@@ -87,7 +88,8 @@ var idnaProfile = idna.New(idna.MapForLookup(), idna.Transitional(false))
 // decodes punycode. It rejects IP literals and malformed names.
 func NormalizeHost(h string) (string, bool) {
 	h = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(h)), ".")
-	if h == "" || strings.ContainsAny(h, ":[]/ @") || !strings.Contains(h, ".") {
+	if h == "" || strings.ContainsAny(h, ":[]/ @") || !strings.Contains(h, ".") ||
+		strings.ContainsFunc(h, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) {
 		return "", false
 	}
 	if uh, err := idnaProfile.ToUnicode(h); err == nil {
@@ -95,8 +97,11 @@ func NormalizeHost(h string) (string, bool) {
 	} else if strings.Contains(h, "xn--") {
 		return "", false
 	}
-	h = strings.TrimPrefix(h, "www.")
-	if len(h) > 253 || isIPv4(h) {
+	// Strip "www." (repeatedly) as long as a real domain is left behind.
+	for strings.HasPrefix(h, "www.") && strings.Contains(h[4:], ".") {
+		h = h[4:]
+	}
+	if len(h) > 253 || isIPv4(h) || !strings.Contains(h, ".") {
 		return "", false
 	}
 	for _, label := range strings.Split(h, ".") {
