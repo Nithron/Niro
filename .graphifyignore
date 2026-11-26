@@ -1,0 +1,4 @@
+# Never index secrets.
+.env
+.env.*
+!.env.example

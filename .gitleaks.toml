@@ -1,0 +1,9 @@
+# gitleaks configuration (CI: the "Secret scan" job).
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Translation-key variables (key = i18n.Xxx) are not secrets"
+condition = "AND"
+regexTarget = "match"
+regexes = ['''key\s*=\s*i18n\.''']

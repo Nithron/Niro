@@ -72,6 +72,18 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go run github.com/zricethezav/gitleaks/v8@v8.30.0 git --log-opts="--all" --redact --no-banner .
+
   e2e:
     name: Dashboard end-to-end (Playwright)
     runs-on: ubuntu-latest
