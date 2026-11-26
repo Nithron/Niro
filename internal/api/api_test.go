@@ -21,6 +21,7 @@ import (
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/modules/welcome"
 )
 
@@ -156,6 +157,7 @@ type harness struct {
 	cases  *fakeCases
 	guard  *fakeGuardian
 	panels *fakePanels
+	tix    *fakeTickets
 }
 
 func newHarness(t *testing.T) *harness {
@@ -171,8 +173,10 @@ func newHarness(t *testing.T) *harness {
 	mods := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
 	mods = core.WithSettings(mods, core.ModuleGuardian, guardian.SettingsSpec{})
 	mods = core.WithSettings(mods, core.ModuleLogging, logging.SettingsSpec{})
-	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleWelcome, welcome.SettingsSpec{})...)
+	mods = core.WithSettings(mods, core.ModuleWelcome, welcome.SettingsSpec{})
+	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleTickets, tickets.SettingsSpec{})...)
 	fpanels := &fakePanels{}
+	ftix := &fakeTickets{}
 	fguard := &fakeGuardian{}
 	frpc := &fakeRPC{handlers: map[string]func(params any, out any) error{}}
 	fcases := &fakeCases{}
@@ -186,13 +190,14 @@ func newHarness(t *testing.T) *harness {
 		Cases:      fcases,
 		Guardian:   fguard,
 		RolePanels: fpanels,
+		Tickets:    ftix,
 		RPC:        frpc,
 		Dashboard:  fstest.MapFS{"index.html": {Data: []byte("<html>spa</html>")}, "assets/app.js": {Data: []byte("js")}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases, guard: fguard, panels: fpanels}
+	return &harness{t: t, h: h, kv: kv, oauth: oauth, rpc: frpc, cases: fcases, guard: fguard, panels: fpanels, tix: ftix}
 }
 
 func (h *harness) do(method, target, body, cookie string, hdr map[string]string) *httptest.ResponseRecorder {

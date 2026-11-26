@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -534,6 +535,84 @@ func (e RolePanelStyle) Valid() bool {
 	}
 }
 
+// Defines values for TicketMode.
+const (
+	TicketModeChannel TicketMode = "channel"
+	TicketModeThread  TicketMode = "thread"
+)
+
+// Valid indicates whether the value is a known member of the TicketMode enum.
+func (e TicketMode) Valid() bool {
+	switch e {
+	case TicketModeChannel:
+		return true
+	case TicketModeThread:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TicketStatus.
+const (
+	TicketStatusClaimed TicketStatus = "claimed"
+	TicketStatusClosed  TicketStatus = "closed"
+	TicketStatusOpen    TicketStatus = "open"
+)
+
+// Valid indicates whether the value is a known member of the TicketStatus enum.
+func (e TicketStatus) Valid() bool {
+	switch e {
+	case TicketStatusClaimed:
+		return true
+	case TicketStatusClosed:
+		return true
+	case TicketStatusOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TicketCategoryMode.
+const (
+	TicketCategoryModeChannel TicketCategoryMode = "channel"
+	TicketCategoryModeThread  TicketCategoryMode = "thread"
+)
+
+// Valid indicates whether the value is a known member of the TicketCategoryMode enum.
+func (e TicketCategoryMode) Valid() bool {
+	switch e {
+	case TicketCategoryModeChannel:
+		return true
+	case TicketCategoryModeThread:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListTicketsParamsStatus.
+const (
+	ListTicketsParamsStatusClaimed ListTicketsParamsStatus = "claimed"
+	ListTicketsParamsStatusClosed  ListTicketsParamsStatus = "closed"
+	ListTicketsParamsStatusOpen    ListTicketsParamsStatus = "open"
+)
+
+// Valid indicates whether the value is a known member of the ListTicketsParamsStatus enum.
+func (e ListTicketsParamsStatus) Valid() bool {
+	switch e {
+	case ListTicketsParamsStatusClaimed:
+		return true
+	case ListTicketsParamsStatusClosed:
+		return true
+	case ListTicketsParamsStatusOpen:
+		return true
+	default:
+		return false
+	}
+}
+
 // AuditFinding defines model for AuditFinding.
 type AuditFinding struct {
 	ChannelIds *[]Snowflake     `json:"channelIds,omitempty"`
@@ -990,6 +1069,104 @@ type RolePanelRole struct {
 // Snowflake Example: 1234567890123456789
 type Snowflake = string
 
+// Ticket defines model for Ticket.
+type Ticket struct {
+	CategoryLabel string `json:"categoryLabel"`
+
+	// ChannelId Example: 1234567890123456789
+	ChannelId     *Snowflake `json:"channelId,omitempty"`
+	ClaimedByName *string    `json:"claimedByName,omitempty"`
+	CloseReason   *string    `json:"closeReason,omitempty"`
+	ClosedAt      *time.Time `json:"closedAt,omitempty"`
+	ClosedByName  *string    `json:"closedByName,omitempty"`
+	CreatedAt     time.Time  `json:"createdAt"`
+	HasTranscript bool       `json:"hasTranscript"`
+	Mode          TicketMode `json:"mode"`
+	Number        int        `json:"number"`
+
+	// OpenerId Example: 1234567890123456789
+	OpenerId   Snowflake    `json:"openerId"`
+	OpenerName string       `json:"openerName"`
+	Status     TicketStatus `json:"status"`
+}
+
+// TicketMode defines model for Ticket.Mode.
+type TicketMode string
+
+// TicketStatus defines model for Ticket.Status.
+type TicketStatus string
+
+// TicketCategory defines model for TicketCategory.
+type TicketCategory struct {
+	Emoji *string `json:"emoji,omitempty"`
+
+	// Id Kept across edits; empty for a new category
+	Id      *string            `json:"id,omitempty"`
+	Label   string             `json:"label"`
+	MaxOpen int                `json:"maxOpen"`
+	Mode    TicketCategoryMode `json:"mode"`
+
+	// Opening A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	Opening MessageDocument `json:"opening"`
+
+	// ParentId Channel mode: the category new channels go in; "0" for none
+	ParentId     string           `json:"parentId"`
+	Questions    []TicketQuestion `json:"questions"`
+	StaffRoleIds []Snowflake      `json:"staffRoleIds"`
+}
+
+// TicketCategoryMode defines model for TicketCategory.Mode.
+type TicketCategoryMode string
+
+// TicketList defines model for TicketList.
+type TicketList struct {
+	Items []Ticket `json:"items"`
+
+	// NextBefore Cursor for the next page, absent on the last page
+	NextBefore *int `json:"nextBefore,omitempty"`
+}
+
+// TicketPanel defines model for TicketPanel.
+type TicketPanel struct {
+	Categories []TicketCategory `json:"categories"`
+
+	// ChannelId Example: 1234567890123456789
+	ChannelId Snowflake `json:"channelId"`
+
+	// Id Ignored on input
+	Id *int64 `json:"id,omitempty"`
+
+	// Message A message designed in the dashboard (Components V2). Validated against Discord's limits on save.
+	Message MessageDocument `json:"message"`
+
+	// MessageId The posted message (ignored on input)
+	MessageId *string    `json:"messageId,omitempty"`
+	Name      string     `json:"name"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
+// TicketPanelList defines model for TicketPanelList.
+type TicketPanelList struct {
+	Items []TicketPanel `json:"items"`
+}
+
+// TicketQuestion defines model for TicketQuestion.
+type TicketQuestion struct {
+	Label       string  `json:"label"`
+	Long        bool    `json:"long"`
+	Placeholder *string `json:"placeholder,omitempty"`
+	Required    bool    `json:"required"`
+}
+
+// TicketSettings defines model for TicketSettings.
+type TicketSettings struct {
+	// RetentionDays How long transcripts are kept
+	RetentionDays int `json:"retentionDays"`
+
+	// TranscriptChannelId "0" for none
+	TranscriptChannelId string `json:"transcriptChannelId"`
+}
+
 // User defines model for User.
 type User struct {
 	AvatarUrl string `json:"avatarUrl"`
@@ -1066,6 +1243,18 @@ type ListGuardianEventsParams struct {
 	Limit  *int   `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListTicketsParams defines parameters for ListTickets.
+type ListTicketsParams struct {
+	Status *ListTicketsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+
+	// Before Ticket number cursor
+	Before *int `form:"before,omitempty" json:"before,omitempty"`
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListTicketsParamsStatus defines parameters for ListTickets.
+type ListTicketsParamsStatus string
+
 // GetInviteParams defines parameters for GetInvite.
 type GetInviteParams struct {
 	// GuildId Preselect this server in Discord's install screen
@@ -1102,8 +1291,17 @@ type UpdateLoggingSettingsJSONRequestBody = LoggingSettings
 // UpdateModerationSettingsJSONRequestBody defines body for UpdateModerationSettings for application/json ContentType.
 type UpdateModerationSettingsJSONRequestBody = ModerationSettings
 
+// UpdateTicketSettingsJSONRequestBody defines body for UpdateTicketSettings for application/json ContentType.
+type UpdateTicketSettingsJSONRequestBody = TicketSettings
+
 // UpdateWelcomeSettingsJSONRequestBody defines body for UpdateWelcomeSettings for application/json ContentType.
 type UpdateWelcomeSettingsJSONRequestBody = WelcomeSettings
+
+// CreateTicketPanelJSONRequestBody defines body for CreateTicketPanel for application/json ContentType.
+type CreateTicketPanelJSONRequestBody = TicketPanel
+
+// UpdateTicketPanelJSONRequestBody defines body for UpdateTicketPanel for application/json ContentType.
+type UpdateTicketPanelJSONRequestBody = TicketPanel
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1200,12 +1398,36 @@ type ServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// GetTicketSettings Ticket settings
+	// (GET /guilds/{guildId}/settings/tickets)
+	GetTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// UpdateTicketSettings Save ticket settings
+	// (PUT /guilds/{guildId}/settings/tickets)
+	UpdateTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetWelcomeSettings Welcome and goodbye settings
 	// (GET /guilds/{guildId}/settings/welcome)
 	GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// UpdateWelcomeSettings Save welcome and goodbye settings
 	// (PUT /guilds/{guildId}/settings/welcome)
 	UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// ListTicketPanels Ticket panels
+	// (GET /guilds/{guildId}/ticket-panels)
+	ListTicketPanels(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// CreateTicketPanel Create a ticket panel and post it
+	// (POST /guilds/{guildId}/ticket-panels)
+	CreateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// DeleteTicketPanel Delete a ticket panel and its message (open tickets stay)
+	// (DELETE /guilds/{guildId}/ticket-panels/{panelId})
+	DeleteTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64)
+	// UpdateTicketPanel Save a ticket panel and update its message
+	// (PUT /guilds/{guildId}/ticket-panels/{panelId})
+	UpdateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64)
+	// ListTickets Tickets, newest first
+	// (GET /guilds/{guildId}/tickets)
+	ListTickets(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListTicketsParams)
+	// GetTicketTranscript A closed ticket's transcript, as a standalone page (sandboxed, no scripts)
+	// (GET /guilds/{guildId}/tickets/{number}/transcript)
+	GetTicketTranscript(w http.ResponseWriter, r *http.Request, guildId GuildId, number int)
 	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(w http.ResponseWriter, r *http.Request, params GetInviteParams)
@@ -1403,6 +1625,18 @@ func (_ Unimplemented) UpdateModerationSettings(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// GetTicketSettings Ticket settings
+// (GET /guilds/{guildId}/settings/tickets)
+func (_ Unimplemented) GetTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTicketSettings Save ticket settings
+// (PUT /guilds/{guildId}/settings/tickets)
+func (_ Unimplemented) UpdateTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // GetWelcomeSettings Welcome and goodbye settings
 // (GET /guilds/{guildId}/settings/welcome)
 func (_ Unimplemented) GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
@@ -1412,6 +1646,42 @@ func (_ Unimplemented) GetWelcomeSettings(w http.ResponseWriter, r *http.Request
 // UpdateWelcomeSettings Save welcome and goodbye settings
 // (PUT /guilds/{guildId}/settings/welcome)
 func (_ Unimplemented) UpdateWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTicketPanels Ticket panels
+// (GET /guilds/{guildId}/ticket-panels)
+func (_ Unimplemented) ListTicketPanels(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// CreateTicketPanel Create a ticket panel and post it
+// (POST /guilds/{guildId}/ticket-panels)
+func (_ Unimplemented) CreateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteTicketPanel Delete a ticket panel and its message (open tickets stay)
+// (DELETE /guilds/{guildId}/ticket-panels/{panelId})
+func (_ Unimplemented) DeleteTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateTicketPanel Save a ticket panel and update its message
+// (PUT /guilds/{guildId}/ticket-panels/{panelId})
+func (_ Unimplemented) UpdateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ListTickets Tickets, newest first
+// (GET /guilds/{guildId}/tickets)
+func (_ Unimplemented) ListTickets(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListTicketsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetTicketTranscript A closed ticket's transcript, as a standalone page (sandboxed, no scripts)
+// (GET /guilds/{guildId}/tickets/{number}/transcript)
+func (_ Unimplemented) GetTicketTranscript(w http.ResponseWriter, r *http.Request, guildId GuildId, number int) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2431,6 +2701,58 @@ func (siw *ServerInterfaceWrapper) UpdateModerationSettings(w http.ResponseWrite
 	handler.ServeHTTP(w, r)
 }
 
+// GetTicketSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetTicketSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTicketSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTicketSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTicketSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTicketSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetWelcomeSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetWelcomeSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -2474,6 +2796,231 @@ func (siw *ServerInterfaceWrapper) UpdateWelcomeSettings(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateWelcomeSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTicketPanels operation middleware
+func (siw *ServerInterfaceWrapper) ListTicketPanels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTicketPanels(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTicketPanel operation middleware
+func (siw *ServerInterfaceWrapper) CreateTicketPanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTicketPanel(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTicketPanel operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTicketPanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "panelId" -------------
+	var panelId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "panelId", chi.URLParam(r, "panelId"), &panelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "panelId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTicketPanel(w, r, guildId, panelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTicketPanel operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTicketPanel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "panelId" -------------
+	var panelId int64
+
+	err = runtime.BindStyledParameterWithOptions("simple", "panelId", chi.URLParam(r, "panelId"), &panelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "panelId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTicketPanel(w, r, guildId, panelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTickets operation middleware
+func (siw *ServerInterfaceWrapper) ListTickets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTicketsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "before" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "before", r.URL.Query(), &params.Before, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "before"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "before", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTickets(w, r, guildId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTicketTranscript operation middleware
+func (siw *ServerInterfaceWrapper) GetTicketTranscript(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "number" -------------
+	var number int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "number", chi.URLParam(r, "number"), &number, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "number", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTicketTranscript(w, r, guildId, number)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2721,6 +3268,30 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/guilds/{guildId}/settings/welcome", wrapper.UpdateWelcomeSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/settings/tickets", wrapper.GetTicketSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/settings/tickets", wrapper.UpdateTicketSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/ticket-panels", wrapper.ListTicketPanels)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/guilds/{guildId}/ticket-panels", wrapper.CreateTicketPanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/ticket-panels/{panelId}", wrapper.DeleteTicketPanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/ticket-panels/{panelId}", wrapper.UpdateTicketPanel)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/tickets", wrapper.ListTickets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/tickets/{number}/transcript", wrapper.GetTicketTranscript)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events", wrapper.ListGuardianEvents)
@@ -5143,6 +5714,149 @@ func (response UpdateModerationSettings409JSONResponse) VisitUpdateModerationSet
 	return err
 }
 
+type GetTicketSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetTicketSettingsResponseObject interface {
+	VisitGetTicketSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetTicketSettings200JSONResponse TicketSettings
+
+func (response GetTicketSettings200JSONResponse) VisitGetTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetTicketSettings401JSONResponse) VisitGetTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetTicketSettings403JSONResponse) VisitGetTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetTicketSettings409JSONResponse) VisitGetTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *UpdateTicketSettingsJSONRequestBody
+}
+
+type UpdateTicketSettingsResponseObject interface {
+	VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateTicketSettings200JSONResponse TicketSettings
+
+func (response UpdateTicketSettings200JSONResponse) VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketSettings400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateTicketSettings400JSONResponse) VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateTicketSettings401JSONResponse) VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateTicketSettings403JSONResponse) VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateTicketSettings409JSONResponse) VisitUpdateTicketSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetWelcomeSettingsRequestObject struct {
 	GuildId GuildId `json:"guildId"`
 }
@@ -5275,6 +5989,480 @@ func (response UpdateWelcomeSettings403JSONResponse) VisitUpdateWelcomeSettingsR
 type UpdateWelcomeSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
 
 func (response UpdateWelcomeSettings409JSONResponse) VisitUpdateWelcomeSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTicketPanelsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type ListTicketPanelsResponseObject interface {
+	VisitListTicketPanelsResponse(w http.ResponseWriter) error
+}
+
+type ListTicketPanels200JSONResponse TicketPanelList
+
+func (response ListTicketPanels200JSONResponse) VisitListTicketPanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTicketPanels401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListTicketPanels401JSONResponse) VisitListTicketPanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTicketPanels403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListTicketPanels403JSONResponse) VisitListTicketPanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTicketPanels409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListTicketPanels409JSONResponse) VisitListTicketPanelsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTicketPanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *CreateTicketPanelJSONRequestBody
+}
+
+type CreateTicketPanelResponseObject interface {
+	VisitCreateTicketPanelResponse(w http.ResponseWriter) error
+}
+
+type CreateTicketPanel201JSONResponse TicketPanel
+
+func (response CreateTicketPanel201JSONResponse) VisitCreateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTicketPanel400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response CreateTicketPanel400JSONResponse) VisitCreateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTicketPanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response CreateTicketPanel401JSONResponse) VisitCreateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTicketPanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response CreateTicketPanel403JSONResponse) VisitCreateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTicketPanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response CreateTicketPanel409JSONResponse) VisitCreateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTicketPanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	PanelId int64   `json:"panelId"`
+}
+
+type DeleteTicketPanelResponseObject interface {
+	VisitDeleteTicketPanelResponse(w http.ResponseWriter) error
+}
+
+type DeleteTicketPanel204Response struct {
+}
+
+func (response DeleteTicketPanel204Response) VisitDeleteTicketPanelResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteTicketPanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteTicketPanel401JSONResponse) VisitDeleteTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTicketPanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteTicketPanel403JSONResponse) VisitDeleteTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTicketPanel404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeleteTicketPanel404JSONResponse) VisitDeleteTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTicketPanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response DeleteTicketPanel409JSONResponse) VisitDeleteTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanelRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	PanelId int64   `json:"panelId"`
+	Body    *UpdateTicketPanelJSONRequestBody
+}
+
+type UpdateTicketPanelResponseObject interface {
+	VisitUpdateTicketPanelResponse(w http.ResponseWriter) error
+}
+
+type UpdateTicketPanel200JSONResponse TicketPanel
+
+func (response UpdateTicketPanel200JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanel400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateTicketPanel400JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanel401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateTicketPanel401JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanel403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateTicketPanel403JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanel404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UpdateTicketPanel404JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTicketPanel409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateTicketPanel409JSONResponse) VisitUpdateTicketPanelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTicketsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Params  ListTicketsParams
+}
+
+type ListTicketsResponseObject interface {
+	VisitListTicketsResponse(w http.ResponseWriter) error
+}
+
+type ListTickets200JSONResponse TicketList
+
+func (response ListTickets200JSONResponse) VisitListTicketsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTickets401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response ListTickets401JSONResponse) VisitListTicketsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTickets403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response ListTickets403JSONResponse) VisitListTicketsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTickets409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response ListTickets409JSONResponse) VisitListTicketsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketTranscriptRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Number  int     `json:"number"`
+}
+
+type GetTicketTranscriptResponseObject interface {
+	VisitGetTicketTranscriptResponse(w http.ResponseWriter) error
+}
+
+type GetTicketTranscript200ResponseHeaders struct {
+	ContentSecurityPolicy *string
+}
+
+type GetTicketTranscript200TexthtmlResponse struct {
+	Body          io.Reader
+	Headers       GetTicketTranscript200ResponseHeaders
+	ContentLength int64
+}
+
+func (response GetTicketTranscript200TexthtmlResponse) VisitGetTicketTranscriptResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/html")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	if response.Headers.ContentSecurityPolicy != nil {
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "Content-Security-Policy", *response.Headers.ContentSecurityPolicy, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header Content-Security-Policy: %w", err)
+			}
+			w.Header().Set("Content-Security-Policy", v)
+		}
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetTicketTranscript401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetTicketTranscript401JSONResponse) VisitGetTicketTranscriptResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketTranscript403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetTicketTranscript403JSONResponse) VisitGetTicketTranscriptResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketTranscript404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetTicketTranscript404JSONResponse) VisitGetTicketTranscriptResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTicketTranscript409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetTicketTranscript409JSONResponse) VisitGetTicketTranscriptResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
@@ -5452,12 +6640,36 @@ type StrictServerInterface interface {
 	// UpdateModerationSettings Save moderation settings
 	// (PUT /guilds/{guildId}/settings/moderation)
 	UpdateModerationSettings(ctx context.Context, request UpdateModerationSettingsRequestObject) (UpdateModerationSettingsResponseObject, error)
+	// GetTicketSettings Ticket settings
+	// (GET /guilds/{guildId}/settings/tickets)
+	GetTicketSettings(ctx context.Context, request GetTicketSettingsRequestObject) (GetTicketSettingsResponseObject, error)
+	// UpdateTicketSettings Save ticket settings
+	// (PUT /guilds/{guildId}/settings/tickets)
+	UpdateTicketSettings(ctx context.Context, request UpdateTicketSettingsRequestObject) (UpdateTicketSettingsResponseObject, error)
 	// GetWelcomeSettings Welcome and goodbye settings
 	// (GET /guilds/{guildId}/settings/welcome)
 	GetWelcomeSettings(ctx context.Context, request GetWelcomeSettingsRequestObject) (GetWelcomeSettingsResponseObject, error)
 	// UpdateWelcomeSettings Save welcome and goodbye settings
 	// (PUT /guilds/{guildId}/settings/welcome)
 	UpdateWelcomeSettings(ctx context.Context, request UpdateWelcomeSettingsRequestObject) (UpdateWelcomeSettingsResponseObject, error)
+	// ListTicketPanels Ticket panels
+	// (GET /guilds/{guildId}/ticket-panels)
+	ListTicketPanels(ctx context.Context, request ListTicketPanelsRequestObject) (ListTicketPanelsResponseObject, error)
+	// CreateTicketPanel Create a ticket panel and post it
+	// (POST /guilds/{guildId}/ticket-panels)
+	CreateTicketPanel(ctx context.Context, request CreateTicketPanelRequestObject) (CreateTicketPanelResponseObject, error)
+	// DeleteTicketPanel Delete a ticket panel and its message (open tickets stay)
+	// (DELETE /guilds/{guildId}/ticket-panels/{panelId})
+	DeleteTicketPanel(ctx context.Context, request DeleteTicketPanelRequestObject) (DeleteTicketPanelResponseObject, error)
+	// UpdateTicketPanel Save a ticket panel and update its message
+	// (PUT /guilds/{guildId}/ticket-panels/{panelId})
+	UpdateTicketPanel(ctx context.Context, request UpdateTicketPanelRequestObject) (UpdateTicketPanelResponseObject, error)
+	// ListTickets Tickets, newest first
+	// (GET /guilds/{guildId}/tickets)
+	ListTickets(ctx context.Context, request ListTicketsRequestObject) (ListTicketsResponseObject, error)
+	// GetTicketTranscript A closed ticket's transcript, as a standalone page (sandboxed, no scripts)
+	// (GET /guilds/{guildId}/tickets/{number}/transcript)
+	GetTicketTranscript(ctx context.Context, request GetTicketTranscriptRequestObject) (GetTicketTranscriptResponseObject, error)
 	// GetInvite Link to add Niro to a server
 	// (GET /invite)
 	GetInvite(ctx context.Context, request GetInviteRequestObject) (GetInviteResponseObject, error)
@@ -6392,6 +7604,65 @@ func (sh *strictHandler) UpdateModerationSettings(w http.ResponseWriter, r *http
 	}
 }
 
+// GetTicketSettings operation middleware
+func (sh *strictHandler) GetTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetTicketSettingsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetTicketSettings(ctx, request.(GetTicketSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTicketSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTicketSettingsResponseObject); ok {
+		if err := validResponse.VisitGetTicketSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateTicketSettings operation middleware
+func (sh *strictHandler) UpdateTicketSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request UpdateTicketSettingsRequestObject
+
+	request.GuildId = guildId
+
+	var body UpdateTicketSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateTicketSettings(ctx, request.(UpdateTicketSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateTicketSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateTicketSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateTicketSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetWelcomeSettings operation middleware
 func (sh *strictHandler) GetWelcomeSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	var request GetWelcomeSettingsRequestObject
@@ -6444,6 +7715,180 @@ func (sh *strictHandler) UpdateWelcomeSettings(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateWelcomeSettingsResponseObject); ok {
 		if err := validResponse.VisitUpdateWelcomeSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTicketPanels operation middleware
+func (sh *strictHandler) ListTicketPanels(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request ListTicketPanelsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListTicketPanels(ctx, request.(ListTicketPanelsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTicketPanels")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTicketPanelsResponseObject); ok {
+		if err := validResponse.VisitListTicketPanelsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateTicketPanel operation middleware
+func (sh *strictHandler) CreateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request CreateTicketPanelRequestObject
+
+	request.GuildId = guildId
+
+	var body CreateTicketPanelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.CreateTicketPanel(ctx, request.(CreateTicketPanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateTicketPanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateTicketPanelResponseObject); ok {
+		if err := validResponse.VisitCreateTicketPanelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteTicketPanel operation middleware
+func (sh *strictHandler) DeleteTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	var request DeleteTicketPanelRequestObject
+
+	request.GuildId = guildId
+	request.PanelId = panelId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.DeleteTicketPanel(ctx, request.(DeleteTicketPanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteTicketPanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteTicketPanelResponseObject); ok {
+		if err := validResponse.VisitDeleteTicketPanelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateTicketPanel operation middleware
+func (sh *strictHandler) UpdateTicketPanel(w http.ResponseWriter, r *http.Request, guildId GuildId, panelId int64) {
+	var request UpdateTicketPanelRequestObject
+
+	request.GuildId = guildId
+	request.PanelId = panelId
+
+	var body UpdateTicketPanelJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateTicketPanel(ctx, request.(UpdateTicketPanelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateTicketPanel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateTicketPanelResponseObject); ok {
+		if err := validResponse.VisitUpdateTicketPanelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTickets operation middleware
+func (sh *strictHandler) ListTickets(w http.ResponseWriter, r *http.Request, guildId GuildId, params ListTicketsParams) {
+	var request ListTicketsRequestObject
+
+	request.GuildId = guildId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ListTickets(ctx, request.(ListTicketsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTickets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTicketsResponseObject); ok {
+		if err := validResponse.VisitListTicketsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTicketTranscript operation middleware
+func (sh *strictHandler) GetTicketTranscript(w http.ResponseWriter, r *http.Request, guildId GuildId, number int) {
+	var request GetTicketTranscriptRequestObject
+
+	request.GuildId = guildId
+	request.Number = number
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetTicketTranscript(ctx, request.(GetTicketTranscriptRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTicketTranscript")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTicketTranscriptResponseObject); ok {
+		if err := validResponse.VisitGetTicketTranscriptResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

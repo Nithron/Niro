@@ -44,7 +44,9 @@ type Deps struct {
 	Guardian GuardianReader
 	// RolePanels reads role panels.
 	RolePanels RolePanelReader
-	RPC        RPCCaller
+	// Tickets reads ticket panels, tickets and transcripts.
+	Tickets TicketReader
+	RPC     RPCCaller
 	// Dashboard is the built SPA (index.html + assets); may be empty.
 	Dashboard fs.FS
 	Metrics   prometheus.Registerer
@@ -61,6 +63,7 @@ type Server struct {
 	cases      moderation.CaseStore
 	guardian   GuardianReader
 	rolePanels RolePanelReader
+	tickets    TicketReader
 	rpc        RPCCaller
 	spa        fs.FS
 	requests   *prometheus.CounterVec
@@ -70,7 +73,7 @@ type Server struct {
 func New(d Deps) (http.Handler, error) {
 	s := &Server{
 		cfg: d.Config, log: d.Log.With("component", "api"), oauth: d.OAuth, kv: d.KV,
-		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, cases: d.Cases, guardian: d.Guardian, rolePanels: d.RolePanels, rpc: d.RPC, spa: d.Dashboard,
+		sessions: sessions{kv: d.KV}, guilds: d.Guilds, config: d.Configs, cases: d.Cases, guardian: d.Guardian, rolePanels: d.RolePanels, tickets: d.Tickets, rpc: d.RPC, spa: d.Dashboard,
 		requests: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_api_requests_total", Help: "API requests by route and status class.",
 		}, []string{"route", "status"}),
