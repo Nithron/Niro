@@ -7,7 +7,7 @@ In the [Discord Developer Portal](https://discord.com/developers/applications), 
 | Page | Setting |
 |---|---|
 | **General Information** | App icon: `assets/brand/png/discord/dev-app-icon-1024.png`. Copy the **Application ID**. |
-| **Installation** | Installation contexts: **Guild Install** only (untick User Install). Install link: *Discord Provided Link*. Guild install scopes: `bot`, `applications.commands`. Permissions: View Channels, Send Messages, Embed Links, Attach Files, Read Message History, Manage Messages, Moderate Members, Kick Members, Ban Members, Manage Roles, Manage Channels, Manage Threads, Create Private Threads, View Audit Log, Manage Server. |
+| **Installation** | Installation contexts: **Guild Install** only (untick User Install). Install link: *Discord Provided Link*. Guild install scopes: `bot`, `applications.commands`. Permissions: View Channels, Send Messages, Embed Links, Attach Files, Read Message History, Manage Messages, Moderate Members, Kick Members, Ban Members, Manage Roles, Manage Channels, Manage Threads, Create Private Threads, Send Messages in Threads, View Audit Log, Manage Server. |
 | **OAuth2** | **Reset Secret** and copy the Client Secret. Redirects: add `http://localhost:8080/auth/callback`. |
 | **Bot** | Banner: `assets/brand/png/discord/dev-profile-banner-1360x480.png`. **Public Bot: off** (only you can add it). Requires OAuth2 Code Grant: off. Privileged Gateway Intents: **Server Members on**, **Message Content on**, Presence off. **Reset Token** and copy it. |
 

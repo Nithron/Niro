@@ -120,7 +120,7 @@ v0.1 ships in **English only**, but it's built so another language can be added 
   - **Server Members** (privileged): joins, for anti-raid and welcome.
   - **Message Content** (privileged): scam links, cross-channel spam, edit/delete logs.
   - **No Presence intent.**
-- **Invite permissions:** View Channels, Send Messages, Embed Links, Attach Files, Read Message History, Manage Messages, Moderate Members, Kick, Ban, Manage Roles, Manage Channels, Manage Threads, Create Private Threads, View Audit Log, Manage Server (needed to manage AutoMod rules). **No Administrator.**
+- **Invite permissions:** View Channels, Send Messages, Embed Links, Attach Files, Read Message History, Manage Messages, Moderate Members, Kick, Ban, Manage Roles, Manage Channels, Manage Threads, Create Private Threads, Send Messages in Threads (added in M4 for ticket threads, decision 25), View Audit Log, Manage Server (needed to manage AutoMod rules). **No Administrator.**
 - **Verification:** an unverified bot can't join more than 100 servers. M5 prepares owner verification, the written justification for the privileged intents, ToS and Privacy URLs, and a support server.
 
 ## 7. v0.1 milestones

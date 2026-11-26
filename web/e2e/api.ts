@@ -34,6 +34,15 @@ export function fakeState() {
       events: Object.fromEntries(kinds.map((k) => [k, !k.startsWith('voice_')])),
       ignoreChannelIds: [] as string[], ignoreRoleIds: [] as string[], ignoreBots: true, noMessageContent: false,
     } as Record<string, unknown>,
+    welcome: {
+      welcomeEnabled: false, welcomeChannelId: '0', pingMember: true, dmEnabled: false, goodbyeEnabled: false, goodbyeChannelId: '0',
+      welcomeMessage: { version: 1, blocks: [{ type: 'text', text: 'Welcome to **{server}**, {user}!' }] },
+      dmMessage: { version: 1, blocks: [{ type: 'text', text: 'Hi' }] },
+      goodbyeMessage: { version: 1, blocks: [{ type: 'text', text: 'Bye {user.name}' }] },
+      autoRoleIds: [] as string[],
+    } as Record<string, unknown>,
+    rolePanels: [] as Record<string, unknown>[],
+    ticketPanels: [] as Record<string, unknown>[],
     calls: [] as Call[],
   }
 }
@@ -46,7 +55,10 @@ const meta = {
     { id: '500', name: 'logs', type: 'text', position: 0 },
     { id: '501', name: 'general', type: 'text', position: 1 },
   ],
-  roles: [{ id: '600', name: 'Staff', color: 0, position: 2, managed: false }],
+  roles: [
+    { id: '600', name: 'Staff', color: 0, position: 2, managed: false, dangerous: false },
+    { id: '601', name: 'Admins', color: 0, position: 3, managed: false, dangerous: true },
+  ],
 }
 
 export async function mockApi(page: Page, state: FakeState) {
@@ -84,6 +96,29 @@ export async function mockApi(page: Page, state: FakeState) {
       case 'PUT /guilds/100/settings/logging':
         state.logging = body
         return reply(route, body)
+      case 'GET /guilds/100/settings/welcome':
+        return reply(route, state.welcome)
+      case 'PUT /guilds/100/settings/welcome':
+        state.welcome = body
+        return reply(route, body)
+      case 'GET /guilds/100/role-panels':
+        return reply(route, { items: state.rolePanels })
+      case 'POST /guilds/100/role-panels': {
+        const p = { ...(body as object), id: state.rolePanels.length + 1, messageId: '900' }
+        state.rolePanels.push(p)
+        return reply(route, p, 201)
+      }
+      case 'GET /guilds/100/settings/tickets':
+        return reply(route, { retentionDays: 90, transcriptChannelId: '0' })
+      case 'GET /guilds/100/ticket-panels':
+        return reply(route, { items: state.ticketPanels })
+      case 'POST /guilds/100/ticket-panels': {
+        const p = { ...(body as object), id: state.ticketPanels.length + 1, messageId: '901' }
+        state.ticketPanels.push(p)
+        return reply(route, p, 201)
+      }
+      case 'GET /guilds/100/tickets':
+        return reply(route, { items: [] })
     }
     const mod = key.match(/^PUT \/guilds\/100\/modules\/(\w+)$/)
     if (mod) {

@@ -50,3 +50,41 @@ test('routes the server log and saves it', async ({ page }) => {
   await page.reload()
   await expect(page.getByLabel('Default log channel')).toHaveValue('500')
 })
+
+test('builds and posts a role panel', async ({ page }) => {
+  await page.goto('/guilds/100/roles')
+  await page.getByRole('button', { name: 'New panel' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Colours')
+  await page.getByLabel('Post in').selectOption('500')
+  await page.getByRole('button', { name: 'Add a role' }).click()
+  // Roles with dangerous permissions are never offered.
+  await expect(page.getByLabel('Role 1', { exact: true }).locator('option', { hasText: '@Admins' })).toHaveCount(0)
+  await page.getByLabel('Role 1', { exact: true }).selectOption('600')
+  await page.getByLabel('Role 1 label').fill('Staff team')
+  await expect(page.getByRole('figure', { name: 'Preview' })).toContainText('Staff team')
+  await page.getByRole('button', { name: 'Save and post' }).click()
+  await expect(page.getByText('Colours')).toBeVisible()
+  expect(state.rolePanels[0]).toMatchObject({ name: 'Colours', channelId: '500', roles: [{ roleId: '600', label: 'Staff team' }] })
+})
+
+test('sets up a welcome message', async ({ page }) => {
+  await page.goto('/guilds/100/welcome')
+  await page.getByRole('switch', { name: 'Post a welcome message' }).click()
+  await page.getByLabel('Channel').selectOption('500')
+  await expect(page.getByRole('figure', { name: 'Preview' })).toContainText('Welcome to Test server, @ana!')
+  await page.getByRole('button', { name: 'Save' }).click()
+  await expect(page.getByText('Saved')).toBeVisible()
+  expect(state.welcome).toMatchObject({ welcomeEnabled: true, welcomeChannelId: '500', dmEnabled: false })
+})
+
+test('creates a ticket panel', async ({ page }) => {
+  await page.goto('/guilds/100/tickets')
+  await page.getByRole('button', { name: 'New panel' }).click()
+  await page.getByLabel('Name', { exact: true }).fill('Help desk')
+  await page.getByLabel('Post in').selectOption('500')
+  await page.getByLabel('Button label').fill('Support')
+  await page.getByRole('checkbox', { name: '@Staff' }).check()
+  await page.getByRole('button', { name: 'Save and post' }).click()
+  await expect(page.getByText('Help desk')).toBeVisible()
+  expect(state.ticketPanels[0]).toMatchObject({ name: 'Help desk', categories: [{ label: 'Support', mode: 'thread', staffRoleIds: ['600'] }] })
+})

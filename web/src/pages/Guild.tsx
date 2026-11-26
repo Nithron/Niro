@@ -18,6 +18,7 @@ const tabs = [
   { to: '/guilds/$guildId/logging', key: 'tabs.logging', exact: false },
   { to: '/guilds/$guildId/roles', key: 'tabs.roles', exact: false },
   { to: '/guilds/$guildId/welcome', key: 'tabs.welcome', exact: false },
+  { to: '/guilds/$guildId/tickets', key: 'tabs.tickets', exact: false },
 ] as const
 
 /** Server header, tabs, and the active tab (or an invite if Niro isn't there). */

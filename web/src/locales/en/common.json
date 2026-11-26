@@ -81,7 +81,8 @@
     "audit": "Security audit",
     "logging": "Logging",
     "roles": "Role panels",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "tickets": "Tickets"
   },
   "common": {
     "save": "Save",
@@ -603,5 +604,61 @@
     "autoRoles": "Roles on join",
     "autoRolesHelp": "Up to 10 roles. Roles managed by integrations or with dangerous permissions are never given.",
     "notAllowed": "not allowed"
+  },
+  "tickets": {
+    "title": "Tickets",
+    "subtitle": "Private support conversations between a member and your staff, opened from a panel.",
+    "moduleOff": "The Tickets module is turned off. Panels stay posted, but new tickets can only be opened after you turn it on in Modules.",
+    "transcripts": "Transcripts",
+    "transcriptsHelp": "When a ticket closes, Niro saves a transcript of its messages. It's the only place Niro stores message text, and it's deleted after the period below.",
+    "retention": "Keep transcripts for (days)",
+    "retentionHelp": "1 to 365 days; 90 by default.",
+    "transcriptChannel": "Also post transcripts in",
+    "noTranscriptChannel": "Don't post them",
+    "panels": "Panels",
+    "newPanel": "New panel",
+    "noPanels": "No ticket panels yet.",
+    "confirmDelete": "Delete \"{{name}}\" and its message? Open tickets stay.",
+    "list": "Tickets",
+    "filterStatus": "Status",
+    "allStatuses": "All",
+    "noTickets": "No tickets yet.",
+    "status": {
+      "open": "Open",
+      "claimed": "Claimed",
+      "closed": "Closed"
+    },
+    "statusLabel": "Status",
+    "category": "Category",
+    "opener": "Opened by",
+    "opened": "Opened",
+    "transcript": "Transcript",
+    "newPanelTitle": "New ticket panel",
+    "editPanel": "Edit ticket panel",
+    "panel": "Panel",
+    "channelHelp": "Where the panel is posted. Thread-mode tickets are private threads in this channel.",
+    "categoryN": "Category {{n}}",
+    "buttonLabel": "Button label",
+    "emoji": "Emoji",
+    "mode": "Ticket type",
+    "modes": {
+      "thread": "Private thread",
+      "channel": "Private channel"
+    },
+    "parent": "Create channels in",
+    "noParent": "No category",
+    "maxOpen": "Open tickets per member",
+    "staff": "Staff roles (they see and handle these tickets)",
+    "questions": "Form (optional, up to 5 questions)",
+    "questionN": "Question {{n}}",
+    "hintN": "Question {{n}} hint",
+    "question": "Question",
+    "hint": "Hint (optional)",
+    "long": "Long answer",
+    "required": "Required",
+    "addQuestion": "Add a question",
+    "opening": "First message in the ticket",
+    "removeCategory": "Remove category",
+    "addCategory": "Add a category"
   }
 }

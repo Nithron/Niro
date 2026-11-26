@@ -17,6 +17,7 @@ import { DetectionsPage } from './pages/Detections'
 import { GuardianSettingsPage } from './pages/GuardianSettings'
 import { LoggingSettingsPage } from './pages/LoggingSettings'
 import { RolePanelsPage } from './pages/RolePanels'
+import { TicketsPage } from './pages/Tickets'
 import { WelcomeSettingsPage } from './pages/WelcomeSettings'
 import { GuildLayout, ModulesPage } from './pages/Guild'
 import { LoginPage } from './pages/Login'
@@ -161,9 +162,18 @@ const welcomeRoute = createRoute({
   },
 })
 
+const ticketsRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/tickets',
+  component: function TicketsRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <TicketsPage guildId={guildId} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute, rolePanelsRoute, welcomeRoute]),
+  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute, rolePanelsRoute, welcomeRoute, ticketsRoute]),
 ])
 
 export function makeRouter(queryClient: QueryClient, history?: RouterHistory) {
