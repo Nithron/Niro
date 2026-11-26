@@ -11,3 +11,5 @@ web/dist
 !.env.example
 assets/brand/concepts
 docs
+web/test-results
+web/playwright-report

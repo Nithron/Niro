@@ -30,8 +30,10 @@ type Deps struct {
 	// FallbackAlertChannel is used when Guardian has no alert channel of its
 	// own (normally the moderation log channel).
 	FallbackAlertChannel func(ctx context.Context, guildID snowflake.ID) snowflake.ID
-	Log                  *slog.Logger
-	Now                  func() time.Time
+	// OnEvent, if set, is told about every new event (the server log).
+	OnEvent func(ctx context.Context, ev Event)
+	Log     *slog.Logger
+	Now     func() time.Time
 }
 
 // Service runs Guardian.
@@ -318,7 +320,19 @@ func (s *Service) alertChannel(ctx context.Context, settings Settings, guildID s
 	return 0
 }
 
+// AlertChannel is where a server's Guardian alerts go (0 if nowhere).
+func (s *Service) AlertChannel(ctx context.Context, guildID snowflake.ID) snowflake.ID {
+	settings, on, err := s.d.Settings(ctx, guildID)
+	if err != nil || !on {
+		return 0
+	}
+	return s.alertChannel(ctx, settings, guildID)
+}
+
 func (s *Service) alert(ctx context.Context, settings Settings, ev Event) {
+	if s.d.OnEvent != nil {
+		s.d.OnEvent(ctx, ev)
+	}
 	ch := s.alertChannel(ctx, settings, ev.GuildID)
 	if ch == 0 {
 		return

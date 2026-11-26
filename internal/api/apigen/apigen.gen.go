@@ -571,7 +571,7 @@ type CaseAction string
 type CaseList struct {
 	Items []Case `json:"items"`
 
-	// NextBefore Cursor for the next page
+	// NextBefore Cursor for the next page, absent on the last page
 	NextBefore *int `json:"nextBefore,omitempty"`
 
 	// Total Matching cases in total
@@ -630,7 +630,7 @@ type GuardianEventResponse string
 type GuardianEventList struct {
 	Items []GuardianEvent `json:"items"`
 
-	// NextBefore Cursor for the next page
+	// NextBefore Cursor for the next page, absent on the last page
 	NextBefore *int64 `json:"nextBefore,omitempty"`
 }
 
@@ -754,9 +754,53 @@ type Invite struct {
 	Url string `json:"url"`
 }
 
+// LoggingChannels The log channel per category; "0" uses the default channel.
+type LoggingChannels struct {
+	// Automod Example: 1234567890123456789
+	Automod Snowflake `json:"automod"`
+
+	// Guardian Example: 1234567890123456789
+	Guardian Snowflake `json:"guardian"`
+
+	// Members Example: 1234567890123456789
+	Members Snowflake `json:"members"`
+
+	// Messages Example: 1234567890123456789
+	Messages Snowflake `json:"messages"`
+
+	// Moderation Example: 1234567890123456789
+	Moderation Snowflake `json:"moderation"`
+
+	// Server Example: 1234567890123456789
+	Server Snowflake `json:"server"`
+
+	// Voice Example: 1234567890123456789
+	Voice Snowflake `json:"voice"`
+}
+
+// LoggingSettings defines model for LoggingSettings.
+type LoggingSettings struct {
+	// Channels The log channel per category; "0" uses the default channel.
+	Channels LoggingChannels `json:"channels"`
+
+	// DefaultChannelId Example: 1234567890123456789
+	DefaultChannelId Snowflake `json:"defaultChannelId"`
+
+	// Events Event kind (message_edit, member_join…) to on/off. Kinds left out keep their default.
+	Events map[string]bool `json:"events"`
+
+	// IgnoreBots Skip messages and voice activity of bots (bot joins and leaves are always logged)
+	IgnoreBots       bool        `json:"ignoreBots"`
+	IgnoreChannelIds []Snowflake `json:"ignoreChannelIds"`
+	IgnoreRoleIds    []Snowflake `json:"ignoreRoleIds"`
+
+	// NoMessageContent Never cache or show message text
+	NoMessageContent bool `json:"noMessageContent"`
+}
+
 // ModerationSettings defines model for ModerationSettings.
 type ModerationSettings struct {
-	// DmUsers DM users about warnings
+	// DmUsers DM users about warnings, timeouts, kicks and bans
 	DmUsers bool `json:"dmUsers"`
 
 	// LogChannelId Channel for case logs; "0" disables the log
@@ -800,7 +844,7 @@ type Snowflake = string
 type User struct {
 	AvatarUrl string `json:"avatarUrl"`
 
-	// GlobalName Display name
+	// GlobalName Display name, if set
 	GlobalName *string `json:"globalName,omitempty"`
 
 	// Id Example: 1234567890123456789
@@ -873,6 +917,9 @@ type UpdateGuildModuleJSONRequestBody = ModuleUpdate
 
 // UpdateGuardianSettingsJSONRequestBody defines body for UpdateGuardianSettings for application/json ContentType.
 type UpdateGuardianSettingsJSONRequestBody = GuardianSettings
+
+// UpdateLoggingSettingsJSONRequestBody defines body for UpdateLoggingSettings for application/json ContentType.
+type UpdateLoggingSettingsJSONRequestBody = LoggingSettings
 
 // UpdateModerationSettingsJSONRequestBody defines body for UpdateModerationSettings for application/json ContentType.
 type UpdateModerationSettingsJSONRequestBody = ModerationSettings
@@ -948,6 +995,12 @@ type ServerInterface interface {
 	// UpdateGuardianSettings Save Guardian settings
 	// (PUT /guilds/{guildId}/settings/guardian)
 	UpdateGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// GetLoggingSettings Server-log settings
+	// (GET /guilds/{guildId}/settings/logging)
+	GetLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
+	// UpdateLoggingSettings Save server-log settings
+	// (PUT /guilds/{guildId}/settings/logging)
+	UpdateLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetModerationSettings Moderation settings
 	// (GET /guilds/{guildId}/settings/moderation)
 	GetModerationSettings(w http.ResponseWriter, r *http.Request, guildId GuildId)
@@ -1100,6 +1153,18 @@ func (_ Unimplemented) GetGuardianSettings(w http.ResponseWriter, r *http.Reques
 // UpdateGuardianSettings Save Guardian settings
 // (PUT /guilds/{guildId}/settings/guardian)
 func (_ Unimplemented) UpdateGuardianSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// GetLoggingSettings Server-log settings
+// (GET /guilds/{guildId}/settings/logging)
+func (_ Unimplemented) GetLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// UpdateLoggingSettings Save server-log settings
+// (PUT /guilds/{guildId}/settings/logging)
+func (_ Unimplemented) UpdateLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -1905,6 +1970,58 @@ func (siw *ServerInterfaceWrapper) UpdateGuardianSettings(w http.ResponseWriter,
 	handler.ServeHTTP(w, r)
 }
 
+// GetLoggingSettings operation middleware
+func (siw *ServerInterfaceWrapper) GetLoggingSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLoggingSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLoggingSettings operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLoggingSettings(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLoggingSettings(w, r, guildId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetModerationSettings operation middleware
 func (siw *ServerInterfaceWrapper) GetModerationSettings(w http.ResponseWriter, r *http.Request) {
 
@@ -2171,6 +2288,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/guilds/{guildId}/settings/guardian", wrapper.UpdateGuardianSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/guilds/{guildId}/settings/logging", wrapper.GetLoggingSettings)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/guilds/{guildId}/settings/logging", wrapper.UpdateLoggingSettings)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/guilds/{guildId}/guardian/events", wrapper.ListGuardianEvents)
@@ -3997,6 +4120,149 @@ func (response UpdateGuardianSettings409JSONResponse) VisitUpdateGuardianSetting
 	return err
 }
 
+type GetLoggingSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type GetLoggingSettingsResponseObject interface {
+	VisitGetLoggingSettingsResponse(w http.ResponseWriter) error
+}
+
+type GetLoggingSettings200JSONResponse LoggingSettings
+
+func (response GetLoggingSettings200JSONResponse) VisitGetLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLoggingSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response GetLoggingSettings401JSONResponse) VisitGetLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLoggingSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetLoggingSettings403JSONResponse) VisitGetLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetLoggingSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response GetLoggingSettings409JSONResponse) VisitGetLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLoggingSettingsRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+	Body    *UpdateLoggingSettingsJSONRequestBody
+}
+
+type UpdateLoggingSettingsResponseObject interface {
+	VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error
+}
+
+type UpdateLoggingSettings200JSONResponse LoggingSettings
+
+func (response UpdateLoggingSettings200JSONResponse) VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLoggingSettings400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response UpdateLoggingSettings400JSONResponse) VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLoggingSettings401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response UpdateLoggingSettings401JSONResponse) VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLoggingSettings403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UpdateLoggingSettings403JSONResponse) VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateLoggingSettings409JSONResponse struct{ BotNotInGuildJSONResponse }
+
+func (response UpdateLoggingSettings409JSONResponse) VisitUpdateLoggingSettingsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotNotInGuildJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetModerationSettingsRequestObject struct {
 	GuildId GuildId `json:"guildId"`
 }
@@ -4162,6 +4428,20 @@ func (response GetInvite200JSONResponse) VisitGetInviteResponse(w http.ResponseW
 	return err
 }
 
+type GetInvite400JSONResponse struct{ BadRequestJSONResponse }
+
+func (response GetInvite400JSONResponse) VisitGetInviteResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetMeRequestObject struct {
 }
 
@@ -4268,6 +4548,12 @@ type StrictServerInterface interface {
 	// UpdateGuardianSettings Save Guardian settings
 	// (PUT /guilds/{guildId}/settings/guardian)
 	UpdateGuardianSettings(ctx context.Context, request UpdateGuardianSettingsRequestObject) (UpdateGuardianSettingsResponseObject, error)
+	// GetLoggingSettings Server-log settings
+	// (GET /guilds/{guildId}/settings/logging)
+	GetLoggingSettings(ctx context.Context, request GetLoggingSettingsRequestObject) (GetLoggingSettingsResponseObject, error)
+	// UpdateLoggingSettings Save server-log settings
+	// (PUT /guilds/{guildId}/settings/logging)
+	UpdateLoggingSettings(ctx context.Context, request UpdateLoggingSettingsRequestObject) (UpdateLoggingSettingsResponseObject, error)
 	// GetModerationSettings Moderation settings
 	// (GET /guilds/{guildId}/settings/moderation)
 	GetModerationSettings(ctx context.Context, request GetModerationSettingsRequestObject) (GetModerationSettingsResponseObject, error)
@@ -4963,6 +5249,65 @@ func (sh *strictHandler) UpdateGuardianSettings(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateGuardianSettingsResponseObject); ok {
 		if err := validResponse.VisitUpdateGuardianSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetLoggingSettings operation middleware
+func (sh *strictHandler) GetLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request GetLoggingSettingsRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetLoggingSettings(ctx, request.(GetLoggingSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetLoggingSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetLoggingSettingsResponseObject); ok {
+		if err := validResponse.VisitGetLoggingSettingsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateLoggingSettings operation middleware
+func (sh *strictHandler) UpdateLoggingSettings(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request UpdateLoggingSettingsRequestObject
+
+	request.GuildId = guildId
+
+	var body UpdateLoggingSettingsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.UpdateLoggingSettings(ctx, request.(UpdateLoggingSettingsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateLoggingSettings")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateLoggingSettingsResponseObject); ok {
+		if err := validResponse.VisitUpdateLoggingSettingsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

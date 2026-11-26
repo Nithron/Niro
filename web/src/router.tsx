@@ -15,6 +15,7 @@ import { AutoModPage } from './pages/AutoMod'
 import { CaseDetailPage, CasesPage, caseActions } from './pages/Cases'
 import { DetectionsPage } from './pages/Detections'
 import { GuardianSettingsPage } from './pages/GuardianSettings'
+import { LoggingSettingsPage } from './pages/LoggingSettings'
 import { GuildLayout, ModulesPage } from './pages/Guild'
 import { LoginPage } from './pages/Login'
 import { ModerationSettingsPage } from './pages/ModerationSettings'
@@ -131,9 +132,18 @@ const auditRoute = createRoute({
   },
 })
 
+const loggingRoute = createRoute({
+  getParentRoute: () => guildRoute,
+  path: '/logging',
+  component: function LoggingRoute() {
+    const { guildId } = guildRoute.useParams()
+    return <LoggingSettingsPage guildId={guildId} />
+  },
+})
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute]),
+  guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute]),
 ])
 
 export function makeRouter(queryClient: QueryClient, history?: RouterHistory) {

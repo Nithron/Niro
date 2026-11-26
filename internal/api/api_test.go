@@ -19,6 +19,7 @@ import (
 
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/modules/guardian"
+	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
 )
 
@@ -166,7 +167,8 @@ func newHarness(t *testing.T) *harness {
 	}}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 	mods := core.WithSettings(core.DefaultModules(), core.ModuleModeration, moderation.SettingsSpec{})
-	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleGuardian, guardian.SettingsSpec{})...)
+	mods = core.WithSettings(mods, core.ModuleGuardian, guardian.SettingsSpec{})
+	reg, _ := core.NewRegistry(core.WithSettings(mods, core.ModuleLogging, logging.SettingsSpec{})...)
 	fguard := &fakeGuardian{}
 	frpc := &fakeRPC{handlers: map[string]func(params any, out any) error{}}
 	fcases := &fakeCases{}

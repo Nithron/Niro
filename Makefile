@@ -49,6 +49,13 @@ generate-check: generate ## Fail if generated code is out of date
 	@git diff --exit-code -- internal/store/dbq internal/api/apigen web/src/api/schema.d.ts \
 		|| (echo "Generated code is stale: run 'make generate' and commit." && exit 1)
 
+contract-lint: ## Lint the OpenAPI spec and vet the SQL queries
+	cd web && pnpm --package=@redocly/cli@2.83.0 dlx redocly lint ../api/openapi.yaml
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 vet
+
+e2e: web-build ## Run the dashboard's Playwright suite (needs: cd web && pnpm exec playwright install chromium)
+	cd web && pnpm e2e
+
 test: ## Run all Go tests (integration tests need Docker)
 	go test -race ./...
 

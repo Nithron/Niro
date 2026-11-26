@@ -14,6 +14,8 @@ type metrics struct {
 	duration     *prometheus.HistogramVec
 	// guardianActions counts Guardian responses (alert, delete, quarantine…).
 	guardianActions *prometheus.CounterVec
+	// logEntries counts server-log entries by kind and result.
+	logEntries *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) (*metrics, error) {
@@ -31,8 +33,11 @@ func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 		guardianActions: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_guardian_actions_total", Help: "Guardian detections, by response.",
 		}, []string{"response"}),
+		logEntries: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "niro_log_entries_total", Help: "Server-log entries, by kind and result (queued, dropped, failed).",
+		}, []string{"kind", "result"}),
 	}
-	for _, c := range []prometheus.Collector{m.guilds, m.interactions, m.duration, m.guardianActions} {
+	for _, c := range []prometheus.Collector{m.guilds, m.interactions, m.duration, m.guardianActions, m.logEntries} {
 		if err := reg.Register(c); err != nil {
 			return nil, err
 		}

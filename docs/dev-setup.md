@@ -38,6 +38,6 @@ make run          # build the dashboard, migrate, start bot + API on http://loca
 
 For dashboard work with hot reload, set `NIRO_DASHBOARD_URL=http://localhost:5173` in `.env`, then run `make run-api` and `make web-dev` (Vite on http://localhost:5173, which proxies API calls to :8080).
 
-Other useful targets: `make test` (Go tests, including Postgres/Valkey integration tests via Docker), `make lint`, `make generate` (after editing SQL queries or `api/openapi.yaml`), `make docker`, `make help`.
+Other useful targets: `make test` (Go tests, including Postgres/Valkey integration tests via Docker), `make lint`, `make generate` (after editing SQL queries or `api/openapi.yaml`), `make contract-lint` (OpenAPI lint and `sqlc vet`), `make e2e` (the dashboard's Playwright suite; run `cd web && pnpm exec playwright install chromium` once first), `make docker`, `make help`.
 
 To check the milestone, follow [the M0 demo checklist](milestones/m0-demo.md).

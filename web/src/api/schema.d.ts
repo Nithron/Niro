@@ -253,6 +253,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/guilds/{guildId}/settings/logging": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        /** Server-log settings */
+        get: operations["getLoggingSettings"];
+        /** Save server-log settings */
+        put: operations["updateLoggingSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/guilds/{guildId}/guardian/events": {
         parameters: {
             query?: never;
@@ -409,7 +429,7 @@ export interface components {
         User: {
             id: components["schemas"]["Snowflake"];
             username: string;
-            /** @description Display name */
+            /** @description Display name, if set */
             globalName?: string;
             /** Format: uri */
             avatarUrl: string;
@@ -462,7 +482,7 @@ export interface components {
         ModerationSettings: {
             /** @description Channel for case logs; "0" disables the log */
             logChannelId: string;
-            /** @description DM users about warnings */
+            /** @description DM users about warnings, timeouts, kicks and bans */
             dmUsers: boolean;
             requireReason: boolean;
         };
@@ -495,7 +515,7 @@ export interface components {
             items: components["schemas"]["Case"][];
             /** @description Matching cases in total */
             total: number;
-            /** @description Cursor for the next page */
+            /** @description Cursor for the next page, absent on the last page */
             nextBefore?: number;
         };
         CaseUpdate: {
@@ -564,6 +584,30 @@ export interface components {
             verifyRoleId: string;
             verifyMinAccountAgeHours: number;
         };
+        /** @description The log channel per category; "0" uses the default channel. */
+        LoggingChannels: {
+            messages: components["schemas"]["Snowflake"];
+            members: components["schemas"]["Snowflake"];
+            moderation: components["schemas"]["Snowflake"];
+            server: components["schemas"]["Snowflake"];
+            voice: components["schemas"]["Snowflake"];
+            automod: components["schemas"]["Snowflake"];
+            guardian: components["schemas"]["Snowflake"];
+        };
+        LoggingSettings: {
+            defaultChannelId: components["schemas"]["Snowflake"];
+            channels: components["schemas"]["LoggingChannels"];
+            /** @description Event kind (message_edit, member_join…) to on/off. Kinds left out keep their default. */
+            events: {
+                [key: string]: boolean;
+            };
+            ignoreChannelIds: components["schemas"]["Snowflake"][];
+            ignoreRoleIds: components["schemas"]["Snowflake"][];
+            /** @description Skip messages and voice activity of bots (bot joins and leaves are always logged) */
+            ignoreBots: boolean;
+            /** @description Never cache or show message text */
+            noMessageContent: boolean;
+        };
         /** @enum {string} */
         GuardianStatus: "open" | "kept" | "restored" | "banned" | "info" | "active" | "ended";
         GuardianSignal: {
@@ -603,7 +647,7 @@ export interface components {
             items: components["schemas"]["GuardianEvent"][];
             /**
              * Format: int64
-             * @description Cursor for the next page
+             * @description Cursor for the next page, absent on the last page
              */
             nextBefore?: number;
         };
@@ -1201,6 +1245,61 @@ export interface operations {
             409: components["responses"]["BotNotInGuild"];
         };
     };
+    getLoggingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The settings (defaults if never saved) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoggingSettings"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
+    updateLoggingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guildId: components["parameters"]["GuildId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoggingSettings"];
+            };
+        };
+        responses: {
+            /** @description The saved settings (every event kind filled in) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoggingSettings"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["BotNotInGuild"];
+        };
+    };
     listGuardianEvents: {
         parameters: {
             query?: {
@@ -1439,6 +1538,7 @@ export interface operations {
                     "application/json": components["schemas"]["Invite"];
                 };
             };
+            400: components["responses"]["BadRequest"];
         };
     };
 }

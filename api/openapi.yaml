@@ -2,6 +2,9 @@ openapi: 3.0.3
 info:
   title: Niro API
   version: 0.1.0
+  license:
+    name: Nithron Community License (NCL) v1.0
+    url: https://github.com/Nithron/Niro/blob/main/LICENSE
   description: |
     API behind the Niro dashboard. Authentication is a session cookie set by
     the Discord OAuth2 login flow (`/auth/login` → `/auth/callback`), which is
@@ -328,6 +331,39 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/settings/logging:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getLoggingSettings
+      summary: Server-log settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoggingSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateLoggingSettings
+      summary: Save server-log settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoggingSettings" }
+      responses:
+        "200":
+          description: The saved settings (every event kind filled in)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoggingSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
   /guilds/{guildId}/guardian/events:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -484,6 +520,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Invite" }
+        "400": { $ref: "#/components/responses/BadRequest" }
 components:
   securitySchemes:
     sessionCookie:
@@ -547,7 +584,7 @@ components:
       properties:
         id: { $ref: "#/components/schemas/Snowflake" }
         username: { type: string }
-        globalName: { type: string, description: Display name, if set }
+        globalName: { type: string, description: "Display name, if set" }
         avatarUrl: { type: string, format: uri }
     GuildSummary:
       type: object
@@ -608,7 +645,7 @@ components:
           type: string
           pattern: "^[0-9]{1,20}$"
           description: Channel for case logs; "0" disables the log
-        dmUsers: { type: boolean, description: DM users about warnings, timeouts, kicks and bans }
+        dmUsers: { type: boolean, description: "DM users about warnings, timeouts, kicks and bans" }
         requireReason: { type: boolean }
     CaseAction:
       type: string
@@ -641,7 +678,7 @@ components:
           type: array
           items: { $ref: "#/components/schemas/Case" }
         total: { type: integer, description: Matching cases in total }
-        nextBefore: { type: integer, description: Cursor for the next page, absent on the last page }
+        nextBefore: { type: integer, description: "Cursor for the next page, absent on the last page" }
     CaseUpdate:
       type: object
       required: [reason]
@@ -708,6 +745,34 @@ components:
         accountAgeAction: { type: string, enum: [alert, kick, quarantine] }
         verifyRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when the verification gate is not set up' }
         verifyMinAccountAgeHours: { type: integer, minimum: 0, maximum: 8760 }
+    LoggingChannels:
+      type: object
+      additionalProperties: false
+      description: The log channel per category; "0" uses the default channel.
+      required: [messages, members, moderation, server, voice, automod, guardian]
+      properties:
+        messages: { $ref: "#/components/schemas/Snowflake" }
+        members: { $ref: "#/components/schemas/Snowflake" }
+        moderation: { $ref: "#/components/schemas/Snowflake" }
+        server: { $ref: "#/components/schemas/Snowflake" }
+        voice: { $ref: "#/components/schemas/Snowflake" }
+        automod: { $ref: "#/components/schemas/Snowflake" }
+        guardian: { $ref: "#/components/schemas/Snowflake" }
+    LoggingSettings:
+      type: object
+      additionalProperties: false
+      required: [defaultChannelId, channels, events, ignoreChannelIds, ignoreRoleIds, ignoreBots, noMessageContent]
+      properties:
+        defaultChannelId: { $ref: "#/components/schemas/Snowflake" }
+        channels: { $ref: "#/components/schemas/LoggingChannels" }
+        events:
+          type: object
+          description: Event kind (message_edit, member_join…) to on/off. Kinds left out keep their default.
+          additionalProperties: { type: boolean }
+        ignoreChannelIds: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/Snowflake" } }
+        ignoreRoleIds: { type: array, maxItems: 25, items: { $ref: "#/components/schemas/Snowflake" } }
+        ignoreBots: { type: boolean, description: Skip messages and voice activity of bots (bot joins and leaves are always logged) }
+        noMessageContent: { type: boolean, description: Never cache or show message text }
     GuardianStatus:
       type: string
       enum: [open, kept, restored, banned, info, active, ended]
@@ -748,7 +813,7 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/GuardianEvent" }
-        nextBefore: { type: integer, format: int64, description: Cursor for the next page, absent on the last page }
+        nextBefore: { type: integer, format: int64, description: "Cursor for the next page, absent on the last page" }
     GuardianResolve:
       type: object
       required: [action]
