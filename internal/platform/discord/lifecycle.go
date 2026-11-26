@@ -43,10 +43,14 @@ func (b *Bot) registerLifecycleRPC(srv *rpc.Server) {
 		b.log.InfoContext(ctx, "server data deleted at the owner's request", "guild_id", r.GuildID, "user_id", r.ActorID)
 		// A second pass catches anything a handler still running for this
 		// server wrote in the meantime. Rows can't come back after it: every
-		// server table references guilds, and only a new join recreates that row.
+		// server table references guilds, and only a new join recreates that
+		// row. On shutdown the pass runs at once instead of being lost.
 		go func() {
-			time.Sleep(eraseSweepDelay)
-			sweepCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			select {
+			case <-time.After(eraseSweepDelay):
+			case <-b.stopped:
+			}
+			sweepCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			if err := b.eraseGuild(sweepCtx, r.GuildID, channels); err != nil {
 				b.log.Warn("second erasure pass failed", "guild_id", r.GuildID, "err", err)
@@ -56,14 +60,16 @@ func (b *Bot) registerLifecycleRPC(srv *rpc.Server) {
 	})
 }
 
-// eraseGuild deletes a server's rows (the cascade takes every table) and
-// its Valkey keys, including cached message text.
+// eraseGuild deletes a server's cached message text and Valkey keys, then
+// its rows (the cascade takes every table). The message text goes first: it
+// needs the channel list, which a retry after the leave can no longer get.
 func (b *Bot) eraseGuild(ctx context.Context, id snowflake.ID, channels []snowflake.ID) error {
-	if _, err := b.deps.Lifecycle.DeleteGuild(ctx, id); err != nil {
+	if err := b.deps.GuildCache.ForgetMessages(ctx, channels); err != nil {
 		return err
 	}
 	if err := b.deps.GuildCache.ForgetGuild(ctx, id); err != nil {
 		return err
 	}
-	return b.deps.GuildCache.ForgetMessages(ctx, channels)
+	_, err := b.deps.Lifecycle.DeleteGuild(ctx, id)
+	return err
 }

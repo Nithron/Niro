@@ -106,6 +106,30 @@ jobs:
           path: internal/**/testdata/fuzz/
           retention-days: 7
 
+  soak:
+    name: Load test (one minute)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: niro_soak
+          POSTGRES_USER: niro
+          POSTGRES_PASSWORD: niro
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U niro -d niro_soak"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: make soak-short
+
   monitoring:
     name: Alert rules and monitoring config
     runs-on: ubuntu-latest

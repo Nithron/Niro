@@ -606,7 +606,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "expr": "time() - niro_job_last_success_timestamp_seconds",
-          "legendFormat": "{{job}}"
+          "legendFormat": "{{name}}"
         }
       ]
     },

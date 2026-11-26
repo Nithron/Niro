@@ -21,4 +21,5 @@ receivers:
 inhibit_rules:
   # While Niro is down, don't also report every shard and job.
   - source_matchers: [alertname="NiroDown"]
-    target_matchers: [severity="warning"]
+    target_matchers: [severity=~"warning|critical", alertname!="NiroDown"]
+    equal: [instance]

@@ -16,7 +16,8 @@ func RegisterBuildInfo(reg prometheus.Registerer, version string) error {
 
 // Jobs records how background jobs went, so an alert can fire when one keeps
 // failing or stops running: niro_job_last_success_timestamp_seconds and
-// niro_job_failures_total, both by job name.
+// niro_job_failures_total, both by job name. The label is "name", not "job",
+// which Prometheus reserves for the scrape job.
 type Jobs struct {
 	lastSuccess *prometheus.GaugeVec
 	failures    *prometheus.CounterVec
@@ -28,13 +29,13 @@ func NewJobs(reg prometheus.Registerer) (*Jobs, error) {
 	j := &Jobs{
 		lastSuccess: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "niro_job_last_success_timestamp_seconds", Help: "When each background job last finished without error.",
-		}, []string{"job"}),
+		}, []string{"name"}),
 		failures: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_job_failures_total", Help: "Background job runs that failed, by job.",
-		}, []string{"job"}),
+		}, []string{"name"}),
 		runs: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "niro_job_runs_total", Help: "Background job runs, by job.",
-		}, []string{"job"}),
+		}, []string{"name"}),
 	}
 	if reg != nil {
 		for _, c := range []prometheus.Collector{j.lastSuccess, j.failures, j.runs} {
@@ -57,6 +58,21 @@ func (j *Jobs) Done(job string, err error) {
 		return
 	}
 	j.lastSuccess.WithLabelValues(job).Set(float64(time.Now().Unix()))
+}
+
+// Expect starts the staleness clock for jobs that will run: their last
+// success is set to now, so a job that never succeeds still raises the stale
+// alert instead of having no series at all.
+func (j *Jobs) Expect(jobs ...string) {
+	if j == nil {
+		return
+	}
+	now := float64(time.Now().Unix())
+	for _, job := range jobs {
+		j.lastSuccess.WithLabelValues(job).Set(now)
+		j.runs.WithLabelValues(job).Add(0)
+		j.failures.WithLabelValues(job).Add(0)
+	}
 }
 
 // Reporter returns a callback for one job, for code that takes func(error).

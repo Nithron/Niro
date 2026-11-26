@@ -7,7 +7,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 OAPI := go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
-.PHONY: fuzz audit monitoring-check help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
+.PHONY: fuzz audit monitoring-check soak soak-short help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
         generate generate-check test test-short lint build docker clean
 
 help: ## Show this help
@@ -82,8 +82,17 @@ fuzz: ## Run every fuzz target for FUZZTIME (default 30s each)
 	  echo "== $${t##*:}"; go test -run='^$$' -fuzz="^$${t##*:}$$" -fuzztime=$(FUZZTIME) $${t%%:*}; \
 	done
 
+SOAK_DB ?= postgres://niro:niro@localhost:5432/niro_soak?sslmode=disable
+SOAK_VALKEY ?= localhost:6379
+
+soak: ## Load test: 2,500 servers, 100 msg/s for 2 hours (SOAK_DB must be a throwaway database)
+	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 2500 -rate 100 -duration 2h -warmup 5m
+
+soak-short: ## A one-minute load test (CI)
+	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 200 -rate 50 -duration 60s -warmup 20s -raid-every 20s -report 20s
+
 monitoring-check: ## Validate the alert rules (with their unit tests) and the Alertmanager config
-	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.16.0 check rules alerts.yml
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/etc/prometheus:ro" -w /etc/prometheus --entrypoint promtool prom/prometheus:v3.16.0 check config prometheus.yml
 	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.16.0 test rules alerts_test.yml
 	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint amtool prom/alertmanager:v0.35.1 check-config alertmanager.yml
 	python3 -c "import json,sys; json.load(open('deploy/monitoring/grafana-dashboard.json'))"

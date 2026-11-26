@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -106,9 +108,18 @@ func interactionName(i discord.Interaction) string {
 	}
 }
 
+// eventNames caches each event type's label, so the hot path doesn't format
+// a type name per message.
+var eventNames sync.Map // reflect.Type -> prometheus.Counter
+
 // countEvent counts every gateway event by its type name.
 func (m *metrics) countEvent(e bot.Event) {
-	m.events.WithLabelValues(strings.TrimPrefix(fmt.Sprintf("%T", e), "*events.")).Inc()
+	t := reflect.TypeOf(e)
+	c, ok := eventNames.Load(t)
+	if !ok {
+		c, _ = eventNames.LoadOrStore(t, m.events.WithLabelValues(strings.TrimPrefix(fmt.Sprintf("%T", e), "*events.")))
+	}
+	c.(prometheus.Counter).Inc()
 }
 
 // watchShards publishes each shard's status and latency until ctx ends.
@@ -116,6 +127,10 @@ func (b *Bot) watchShards(ctx context.Context, every time.Duration) {
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
+		// Reset first, so shards that no longer exist (after resharding)
+		// don't keep their last value forever.
+		b.metrics.shardUp.Reset()
+		b.metrics.shardLatency.Reset()
 		for s := range b.client.ShardManager.Shards() {
 			id := strconv.Itoa(s.ShardID())
 			up := 0.0
@@ -137,16 +152,30 @@ func (b *Bot) watchShards(ctx context.Context, every time.Duration) {
 // fixed set of labels ("/channels/:id/messages/:id").
 var snowflakeSegment = regexp.MustCompile(`/[0-9]{15,21}`)
 
-// restRoute reduces a Discord API path to its route template. Interaction
-// tokens and webhook tokens are dropped, so they never reach a label.
+// routeWord is a fixed path segment such as "messages" or "@me".
+var routeWord = regexp.MustCompile(`^@?[a-z][a-z-]{0,31}$`)
+
+// restRoute reduces a Discord API path to its route template, so labels stay
+// a small fixed set. IDs become :id; interaction and webhook tokens become
+// :token; reaction emoji and invite codes become :x; anything else that isn't
+// a plain lower-case word becomes :x too. No user value reaches a label.
 func restRoute(path string) string {
 	path = strings.TrimPrefix(path, "/api/v10")
 	path = snowflakeSegment.ReplaceAllString(path, "/:id")
 	parts := strings.Split(path, "/")
 	for i := 1; i < len(parts); i++ {
-		// /interactions/:id/<token>/callback and /webhooks/:id/<token>
-		if (parts[i-1] == ":id" && i >= 2 && (parts[i-2] == "interactions" || parts[i-2] == "webhooks")) && parts[i] != "" {
+		prev, prev2 := parts[i-1], ""
+		if i >= 2 {
+			prev2 = parts[i-2]
+		}
+		switch {
+		case parts[i] == "" || parts[i] == ":id":
+		case prev == ":id" && (prev2 == "interactions" || prev2 == "webhooks"):
 			parts[i] = ":token"
+		case prev == "reactions" || prev == "invites":
+			parts[i] = ":x"
+		case !routeWord.MatchString(parts[i]):
+			parts[i] = ":x"
 		}
 	}
 	return strings.Join(parts, "/")

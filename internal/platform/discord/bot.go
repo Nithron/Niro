@@ -53,9 +53,9 @@ const Intents = gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.Int
 // privilegedIntents drops privileged intents the application is not allowed
 // to use, so the bot still connects (with Guardian degraded) instead of
 // being refused by Discord with "disallowed intents".
-func privilegedIntents(token string, log *slog.Logger) gateway.Intents {
+func privilegedIntents(token string, opts []rest.ClientConfigOpt, log *slog.Logger) gateway.Intents {
 	intents := Intents
-	app, err := rest.New(rest.NewClient(token)).GetCurrentApplication()
+	app, err := rest.New(rest.NewClient(token, opts...)).GetCurrentApplication()
 	if err != nil {
 		log.Warn("could not check privileged intents; requesting all", "err", err)
 		return intents
@@ -102,6 +102,9 @@ type Deps struct {
 	GuildCache GuildCache
 	// Jobs records background job runs for alerts; may be nil.
 	Jobs *observability.Jobs
+	// RestURL replaces Discord's API base URL. Only the load test sets it,
+	// to point the bot at a fake Discord (cmd/niro-soak).
+	RestURL string
 }
 
 // Lifecycle is the store side of data retention.
@@ -134,11 +137,14 @@ type Bot struct {
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
 	pending   pendingBans
+	// stopped is closed when Run returns; background work started by
+	// handlers (the second erasure pass) watches it.
+	stopped chan struct{}
 }
 
 // New builds the client. Nothing connects until Run.
 func New(deps Deps) (*Bot, error) {
-	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute)}
+	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute), stopped: make(chan struct{})}
 	var err error
 	if b.metrics, err = newMetrics(deps.Metrics); err != nil {
 		return nil, err
@@ -159,15 +165,19 @@ func New(deps Deps) (*Bot, error) {
 		return nil
 	})
 
+	restOpts := []rest.ClientConfigOpt{rest.WithHTTPClient(&http.Client{Timeout: 20 * time.Second, Transport: b.metrics.restTransport(http.DefaultTransport)})}
+	if deps.RestURL != "" {
+		restOpts = append(restOpts, rest.WithURL(deps.RestURL))
+	}
 	b.client, err = disgo.New(deps.Token,
 		bot.WithLogger(deps.Log.With("component", "disgo")),
 		bot.WithShardManagerConfigOpts(
 			sharding.WithAutoScaling(true), // reshard automatically when Discord asks
-			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, b.log))),
+			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, restOpts[1:], b.log))),
 		),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers, cache.FlagVoiceStates)),
 		bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(b.gatewayHandlers())),
-		bot.WithRestClientConfigOpts(rest.WithHTTPClient(&http.Client{Timeout: 20 * time.Second, Transport: b.metrics.restTransport(http.DefaultTransport)})),
+		bot.WithRestClientConfigOpts(restOpts...),
 		bot.WithEventListeners(router, bot.NewListenerFunc(b.metrics.countEvent), &events.ListenerAdapter{
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild); b.refreshInvites(e.GuildID) },
 			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
@@ -345,14 +355,16 @@ func (b *Bot) Run(ctx context.Context) error {
 	if err := b.client.OpenShardManager(ctx); err != nil {
 		return fmt.Errorf("connecting to the gateway: %w", err)
 	}
+	defer close(b.stopped)
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
+	b.deps.Jobs.Expect("scheduler", "guardian_purge", "transcript_purge", "scam_feed")
 	go b.runScheduler(ctx)
 	go b.guard.RunMaintenance(ctx, 15*time.Second, b.deps.Jobs.Reporter("guardian_purge"))
 	go b.tickets.RunMaintenance(ctx, time.Hour, b.deps.Jobs.Reporter("transcript_purge"))
 	go b.watchShards(ctx, 15*time.Second)
 	if b.deps.Lifecycle != nil {
-		r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention"), Delay: 15 * time.Minute}
-		go r.Run(ctx, time.Hour)
+		b.deps.Jobs.Expect("retention")
+		go b.runRetention(ctx)
 	}
 	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian"), Done: b.deps.Jobs.Reporter("scam_feed")}
 	go feed.Run(ctx)
@@ -383,6 +395,22 @@ func (b *Bot) Ready(context.Context) error {
 		return fmt.Errorf("%d of %d shards are not connected", down, total)
 	}
 	return nil
+}
+
+// runRetention starts the retention job once every shard is connected and
+// the servers have had time to arrive: a server that re-added Niro while it
+// was down is only marked present again when the gateway delivers it, and the
+// purge must not run before that.
+func (b *Bot) runRetention(ctx context.Context) {
+	for b.Ready(ctx) != nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(10 * time.Second):
+		}
+	}
+	r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention"), Delay: 5 * time.Minute}
+	r.Run(ctx, time.Hour)
 }
 
 func (b *Bot) syncCommands() error {

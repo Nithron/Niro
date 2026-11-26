@@ -19,7 +19,8 @@ groups:
           summary: "Shard {{ $labels.shard }} is not connected to the gateway"
           description: Servers on this shard get no moderation, protection or logging until it reconnects.
       - alert: NiroGatewayReconnecting
-        expr: sum(increase(niro_bot_gateway_events_total{type="Ready"}[15m])) > 5
+        # Every shard sends one Ready when it starts, so a restart is allowed one per shard.
+        expr: sum(increase(niro_bot_gateway_events_total{type="Ready"}[15m])) > 5 + count(niro_bot_shard_up)
         labels: { severity: warning }
         annotations:
           summary: The bot keeps re-identifying with the gateway
@@ -106,20 +107,20 @@ groups:
     rules:
       - alert: NiroJobStale
         expr: |
-          (time() - niro_job_last_success_timestamp_seconds{job="scheduler"}) > 600
-          or (time() - niro_job_last_success_timestamp_seconds{job="retention"}) > 3 * 3600
-          or (time() - niro_job_last_success_timestamp_seconds{job="transcript_purge"}) > 3 * 3600
-          or (time() - niro_job_last_success_timestamp_seconds{job="guardian_purge"}) > 13 * 3600
-          or (time() - niro_job_last_success_timestamp_seconds{job="scam_feed"}) > 3 * 3600
+          (time() - niro_job_last_success_timestamp_seconds{name="scheduler"}) > 600
+          or (time() - niro_job_last_success_timestamp_seconds{name="retention"}) > 3 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="transcript_purge"}) > 3 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="guardian_purge"}) > 13 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="scam_feed"}) > 3 * 3600
         labels: { severity: warning }
         annotations:
-          summary: "Background job {{ $labels.job }} has not succeeded recently"
+          summary: "Background job {{ $labels.name }} has not succeeded recently"
           description: "Check the logs for the job's errors. Scheduler: temp-bans are not lifted. Retention: data is not deleted on time."
       - alert: NiroJobFailing
         expr: increase(niro_job_failures_total[1h]) > 3
         labels: { severity: warning }
         annotations:
-          summary: "Background job {{ $labels.job }} keeps failing"
+          summary: "Background job {{ $labels.name }} keeps failing"
 
   - name: niro-backups
     # Written by the backup service (deploy/compose.yml) through
@@ -131,3 +132,10 @@ groups:
         annotations:
           summary: No successful database backup in the last 26 hours
           description: See docs/ops/backup-restore.md. Run the backup by hand and check its log.
+      - alert: NiroBackupNeverRan
+        expr: absent(niro_backup_last_success_timestamp_seconds)
+        for: 26h
+        labels: { severity: critical }
+        annotations:
+          summary: No database backup has been recorded at all
+          description: The backup service is not running or cannot write its status file. See docs/ops/backup-restore.md.
