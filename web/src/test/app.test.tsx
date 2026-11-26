@@ -331,3 +331,59 @@ describe('guardian pages', () => {
     expect(screen.getByText(/Manage Webhooks permission/)).toBeInTheDocument()
   })
 })
+
+describe('logging page', () => {
+  const kinds = [
+    'message_edit', 'message_delete', 'message_bulk_delete', 'member_join', 'member_leave', 'member_nick', 'member_roles',
+    'member_ban', 'member_unban', 'member_kick', 'member_timeout', 'channel_create', 'channel_update', 'channel_delete',
+    'role_create', 'role_update', 'role_delete', 'guild_update', 'voice_join', 'voice_leave', 'voice_move', 'automod_action',
+    'guardian_action',
+  ]
+  const settings = {
+    defaultChannelId: '0',
+    channels: { messages: '0', members: '0', moderation: '0', server: '0', voice: '0', automod: '0', guardian: '0' },
+    events: Object.fromEntries(kinds.map((k) => [k, !k.startsWith('voice_')])),
+    ignoreChannelIds: [], ignoreRoleIds: [], ignoreBots: true, noMessageContent: false,
+  }
+
+  beforeEach(() => {
+    routes['GET /api/v1/guilds/100/meta'] = () =>
+      json({
+        channels: [
+          { id: '500', name: 'logs', type: 'text', position: 0 },
+          { id: '501', name: 'staff', type: 'text', position: 1 },
+        ],
+        roles: [{ id: '600', name: 'Staff', color: 0, position: 2, managed: false }],
+      })
+  })
+
+  it('routes categories, toggles events and saves', async () => {
+    routes['GET /api/v1/guilds/100/settings/logging'] = () => json(settings)
+    routes['PUT /api/v1/guilds/100/settings/logging'] = async (req) => json(await req.json())
+    renderAt('/guilds/100/logging')
+
+    expect(await screen.findByText('No log channel is set, so nothing is logged yet.')).toBeInTheDocument()
+    await userEvent.selectOptions(await screen.findByLabelText('Default log channel'), '500')
+    await userEvent.selectOptions(screen.getByLabelText('Moderation'), '501')
+    await userEvent.click(screen.getByRole('switch', { name: 'Voice joins' }))
+    await userEvent.click(screen.getByRole('switch', { name: "Don't log message text" }))
+    await userEvent.click(screen.getByRole('checkbox', { name: '@Staff' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() =>
+      expect(calls).toContainEqual(
+        expect.objectContaining({
+          method: 'PUT',
+          body: expect.objectContaining({
+            defaultChannelId: '500',
+            channels: expect.objectContaining({ moderation: '501', messages: '0' }),
+            events: expect.objectContaining({ voice_join: true, message_delete: true }),
+            noMessageContent: true,
+            ignoreRoleIds: ['600'],
+          }),
+        }),
+      ),
+    )
+    expect(await screen.findByText('Saved')).toBeInTheDocument()
+  })
+})

@@ -78,7 +78,8 @@
     "automod": "AutoMod",
     "guardian": "Guardian",
     "detections": "Detections",
-    "audit": "Security audit"
+    "audit": "Security audit",
+    "logging": "Logging"
   },
   "common": {
     "save": "Save",
@@ -430,5 +431,65 @@
       "mention_everyone": "Mention @everyone",
       "manage_expressions": "Manage Expressions"
     }
+  },
+  "loggingSettings": {
+    "title": "Logging",
+    "subtitle": "Post edits, deletions, member, moderation and server changes to the channels you choose. Changes apply immediately.",
+    "moduleOff": "The Logging module is turned off. Settings are kept, but nothing is logged until you turn it on in Modules.",
+    "sections": {
+      "channels": "Log channels",
+      "events": "What to log",
+      "privacy": "Privacy",
+      "ignore": "Ignore"
+    },
+    "channelsHelp": "Pick a default channel, and optionally a separate channel for some categories.",
+    "defaultChannel": "Default log channel",
+    "defaultChannelHelp": "Every category without its own channel goes here.",
+    "off": "None (off)",
+    "useDefault": "Use the default channel",
+    "nothingRouted": "No log channel is set, so nothing is logged yet.",
+    "categories": {
+      "messages": "Messages",
+      "members": "Members",
+      "moderation": "Moderation",
+      "server": "Server changes",
+      "voice": "Voice",
+      "automod": "AutoMod",
+      "guardian": "Guardian"
+    },
+    "eventsHelp": "Voice activity is off by default because it is noisy.",
+    "events": {
+      "message_edit": "Edited messages (before and after)",
+      "message_delete": "Deleted messages",
+      "message_bulk_delete": "Bulk deletes (as a file)",
+      "member_join": "Joins (account age and invite used)",
+      "member_leave": "Leaves",
+      "member_nick": "Nickname changes",
+      "member_roles": "Role changes",
+      "member_ban": "Bans",
+      "member_unban": "Unbans",
+      "member_kick": "Kicks",
+      "member_timeout": "Timeouts",
+      "channel_create": "Channels created",
+      "channel_update": "Channels changed (including permissions and order)",
+      "channel_delete": "Channels deleted",
+      "role_create": "Roles created",
+      "role_update": "Roles changed (including order)",
+      "role_delete": "Roles deleted",
+      "guild_update": "Server settings changed",
+      "voice_join": "Voice joins",
+      "voice_leave": "Voice leaves",
+      "voice_move": "Voice moves",
+      "automod_action": "AutoMod actions",
+      "guardian_action": "Guardian detections"
+    },
+    "noMessageContent": "Don't log message text",
+    "noMessageContentHelp": "Niro then never keeps or shows what messages said: edits and deletions are logged without their text. Otherwise text is kept for up to 7 days to show edits and deletions, and never stored in Niro’s database.",
+    "ignoreHelp": "Ignored channels, roles and bots apply to message and voice logs.",
+    "ignoreBots": "Ignore bots",
+    "ignoreBotsHelp": "Skip messages and voice activity of bots and webhooks. Bots joining or leaving are always logged.",
+    "ignoreChannels": "Ignored channels",
+    "ignoreRoles": "Ignored roles",
+    "permissionsNote": "Niro needs to see each log channel, send messages and attach files there. Moderation and server changes come from the audit log (View Audit Log); the invite a member used needs Manage Server."
   }
 }

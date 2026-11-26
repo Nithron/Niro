@@ -328,6 +328,39 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/BotNotInGuild" }
+  /guilds/{guildId}/settings/logging:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    get:
+      operationId: getLoggingSettings
+      summary: Server-log settings
+      responses:
+        "200":
+          description: The settings (defaults if never saved)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoggingSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
+    put:
+      operationId: updateLoggingSettings
+      summary: Save server-log settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoggingSettings" }
+      responses:
+        "200":
+          description: The saved settings (every event kind filled in)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoggingSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/BotNotInGuild" }
   /guilds/{guildId}/guardian/events:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -708,6 +741,34 @@ components:
         accountAgeAction: { type: string, enum: [alert, kick, quarantine] }
         verifyRoleId: { type: string, pattern: "^[0-9]{1,20}$", description: '"0" when the verification gate is not set up' }
         verifyMinAccountAgeHours: { type: integer, minimum: 0, maximum: 8760 }
+    LoggingChannels:
+      type: object
+      additionalProperties: false
+      description: The log channel per category; "0" uses the default channel.
+      required: [messages, members, moderation, server, voice, automod, guardian]
+      properties:
+        messages: { $ref: "#/components/schemas/Snowflake" }
+        members: { $ref: "#/components/schemas/Snowflake" }
+        moderation: { $ref: "#/components/schemas/Snowflake" }
+        server: { $ref: "#/components/schemas/Snowflake" }
+        voice: { $ref: "#/components/schemas/Snowflake" }
+        automod: { $ref: "#/components/schemas/Snowflake" }
+        guardian: { $ref: "#/components/schemas/Snowflake" }
+    LoggingSettings:
+      type: object
+      additionalProperties: false
+      required: [defaultChannelId, channels, events, ignoreChannelIds, ignoreRoleIds, ignoreBots, noMessageContent]
+      properties:
+        defaultChannelId: { $ref: "#/components/schemas/Snowflake" }
+        channels: { $ref: "#/components/schemas/LoggingChannels" }
+        events:
+          type: object
+          description: Event kind (message_edit, member_join…) to on/off. Kinds left out keep their default.
+          additionalProperties: { type: boolean }
+        ignoreChannelIds: { type: array, maxItems: 100, items: { $ref: "#/components/schemas/Snowflake" } }
+        ignoreRoleIds: { type: array, maxItems: 25, items: { $ref: "#/components/schemas/Snowflake" } }
+        ignoreBots: { type: boolean, description: Skip messages and voice activity of bots (bot joins and leaves are always logged) }
+        noMessageContent: { type: boolean, description: Never cache or show message text }
     GuardianStatus:
       type: string
       enum: [open, kept, restored, banned, info, active, ended]

@@ -8,6 +8,7 @@ import {
   type GuardianResolve,
   type GuardianSettings,
   type GuardianStatus,
+  type LoggingSettings,
   type ModerationSettings,
   type ModuleState,
 } from './client'
@@ -244,6 +245,27 @@ export function useSaveGuardianSettings(guildId: string) {
     mutationFn: (body: GuardianSettings) =>
       unwrap(api.PUT('/guilds/{guildId}/settings/guardian', { params: { path: { guildId } }, body })),
     onSuccess: (saved) => qc.setQueryData(guardKeys.settings(guildId), saved),
+  })
+}
+
+export const logKeys = {
+  settings: (g: string) => ['guilds', g, 'settings', 'logging'] as const,
+}
+
+export function useLoggingSettings(guildId: string) {
+  return useQuery({
+    queryKey: logKeys.settings(guildId),
+    queryFn: () => unwrap(api.GET('/guilds/{guildId}/settings/logging', { params: { path: { guildId } } })),
+    retry,
+  })
+}
+
+export function useSaveLoggingSettings(guildId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: LoggingSettings) =>
+      unwrap(api.PUT('/guilds/{guildId}/settings/logging', { params: { path: { guildId } }, body })),
+    onSuccess: (saved) => qc.setQueryData(logKeys.settings(guildId), saved),
   })
 }
 
