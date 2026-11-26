@@ -15,7 +15,42 @@ Measured on 2026-11-26 with the `v0.1.0` candidate (M5 branch). Re-run after cha
   - a 50-join raid burst every 10 minutes.
 - **Machine:** the development workstation, with Postgres 18 and Valkey 8 in Docker on the same machine.
 
-RESULTS_PENDING
+**Results:**
+
+| Measure | Value |
+|---|---|
+| Events handled | 720,596 (100 a second, including setup and drain) |
+| Handler time (synchronous part) | p50 8µs, p99 26µs, max 2.877ms |
+| Heap after GC | 106.3 MB after warm-up, 103.4 MB at the end |
+| Goroutines | 5023 after warm-up, 4328 at the end |
+| CPU | 0.04 cores on average |
+| Discord REST calls (fake) | 465,911 |
+| Warnings / errors logged | 0 / 0 |
+| Result | **PASS** |
+
+Every 10 minutes:
+
+```
+10m0s     100 ev/s  p50 8µs       p99 18µs      heap  163.5 MB  goroutines  5073  REST   39050  warn 0  err 0
+   20m0s     100 ev/s  p50 9µs       p99 31µs      heap  115.9 MB  goroutines  5056  REST   78225  warn 0  err 0
+   30m0s     100 ev/s  p50 8µs       p99 19µs      heap  208.6 MB  goroutines  5026  REST  116831  warn 0  err 0
+   40m0s     100 ev/s  p50 8µs       p99 22µs      heap  184.2 MB  goroutines  5089  REST  155886  warn 0  err 0
+   50m0s     100 ev/s  p50 8µs       p99 19µs      heap  125.4 MB  goroutines  5108  REST  194455  warn 0  err 0
+  1h0m0s     100 ev/s  p50 8µs       p99 21µs      heap  193.3 MB  goroutines  5042  REST  233531  warn 0  err 0
+ 1h10m0s     100 ev/s  p50 8µs       p99 17µs      heap  155.9 MB  goroutines  5057  REST  272705  warn 0  err 0
+ 1h20m0s     100 ev/s  p50 8µs       p99 17µs      heap  172.3 MB  goroutines  5054  REST  312248  warn 0  err 0
+ 1h30m0s     100 ev/s  p50 8µs       p99 20µs      heap  167.3 MB  goroutines  5067  REST  351006  warn 0  err 0
+ 1h40m0s     100 ev/s  p50 8µs       p99 17µs      heap  214.9 MB  goroutines  5034  REST  389679  warn 0  err 0
+ 1h50m0s     100 ev/s  p50 9µs       p99 27µs      heap  151.3 MB  goroutines  5044  REST  427420  warn 0  err 0
+  2h0m0s     100 ev/s  p50 9µs       p99 33µs      heap  165.8 MB  goroutines  5044  REST  465804  warn 0  err 0
+```
+
+**Reading the numbers:**
+
+- **Handler time** is the synchronous part of each gateway event, which is what holds up the shard's event loop. Slow work (posting log entries, Guardian actions, database writes) runs in background workers.
+- **Goroutines:** most of the roughly 5,000 are the server log's per-channel workers. Each keeps a channel's log entries in order and exits after a minute idle, so the count follows the number of channels with recent activity, not the number of servers.
+- **Memory:** the live heap swings between about 100 and 200 MB between collections, and returns to the same level after GC. With Postgres, Valkey and the OS, a 4 GB VPS leaves ample room at this scale, and 2 GB is enough for a few hundred servers (self-host guide).
+- **Not measured here:** Discord's own rate limits and network latency. The fake API answers at once.
 
 ## Shard resume
 
