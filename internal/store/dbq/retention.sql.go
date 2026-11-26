@@ -12,6 +12,30 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countActiveGuilds = `-- name: CountActiveGuilds :one
+SELECT count(*) FROM guilds WHERE left_at IS NULL
+`
+
+func (q *Queries) CountActiveGuilds(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countActiveGuilds)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countMissingGuilds = `-- name: CountMissingGuilds :one
+SELECT count(*) FROM guilds WHERE left_at IS NULL AND NOT (id = ANY ($1::bigint[]))
+`
+
+// Servers recorded as active that the gateway did not report: Niro was
+// removed while it was offline, so no leave event ever came.
+func (q *Queries) CountMissingGuilds(ctx context.Context, present []int64) (int64, error) {
+	row := q.db.QueryRow(ctx, countMissingGuilds, present)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const deleteGuild = `-- name: DeleteGuild :execrows
 DELETE FROM guilds WHERE id = $1
 `
@@ -19,6 +43,19 @@ DELETE FROM guilds WHERE id = $1
 // A server owner asked for their server's data to be deleted now.
 func (q *Queries) DeleteGuild(ctx context.Context, id int64) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteGuild, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const markMissingGuildsLeft = `-- name: MarkMissingGuildsLeft :execrows
+UPDATE guilds SET left_at = now(), updated_at = now()
+WHERE left_at IS NULL AND NOT (id = ANY ($1::bigint[]))
+`
+
+func (q *Queries) MarkMissingGuildsLeft(ctx context.Context, present []int64) (int64, error) {
+	result, err := q.db.Exec(ctx, markMissingGuildsLeft, present)
 	if err != nil {
 		return 0, err
 	}

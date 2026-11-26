@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo"
@@ -111,6 +112,8 @@ type Deps struct {
 type Lifecycle interface {
 	retention.Store
 	DeleteGuild(ctx context.Context, id snowflake.ID) (bool, error)
+	// ReconcileGuilds marks active servers missing from present as left.
+	ReconcileGuilds(ctx context.Context, present []snowflake.ID, maxShare float64) (int64, error)
 }
 
 // GuildCache holds per-server keys outside Postgres.
@@ -140,11 +143,15 @@ type Bot struct {
 	// stopped is closed when Run returns; background work started by
 	// handlers (the second erasure pass) watches it.
 	stopped chan struct{}
+	// present holds every server the gateway reported (READY, joins), for
+	// the startup reconciliation.
+	presentMu sync.Mutex
+	present   map[snowflake.ID]bool
 }
 
 // New builds the client. Nothing connects until Run.
 func New(deps Deps) (*Bot, error) {
-	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute), stopped: make(chan struct{})}
+	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute), stopped: make(chan struct{}), present: map[snowflake.ID]bool{}}
 	var err error
 	if b.metrics, err = newMetrics(deps.Metrics); err != nil {
 		return nil, err
@@ -179,9 +186,18 @@ func New(deps Deps) (*Bot, error) {
 		bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(b.gatewayHandlers())),
 		bot.WithRestClientConfigOpts(restOpts...),
 		bot.WithEventListeners(router, bot.NewListenerFunc(b.metrics.countEvent), &events.ListenerAdapter{
+			OnReady: func(e *events.Ready) {
+				for _, g := range e.Guilds {
+					b.notePresent(g.ID, true)
+				}
+			},
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild); b.refreshInvites(e.GuildID) },
-			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
-			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
+			OnGuildJoin: func(e *events.GuildJoin) {
+				b.notePresent(e.GuildID, true)
+				b.recordGuild(e.Guild)
+				b.log.Info("joined guild", "guild_id", e.GuildID)
+			},
+			OnGuildLeave: func(e *events.GuildLeave) { b.notePresent(e.GuildID, false); b.forgetGuild(e.GuildID) },
 			OnGuildMessageCreate: func(e *events.GuildMessageCreate) {
 				b.onLogMessageCreate(e)
 				b.onGuildMessage(e)
@@ -409,8 +425,41 @@ func (b *Bot) runRetention(ctx context.Context) {
 		case <-time.After(10 * time.Second):
 		}
 	}
+	b.reconcileGuilds(ctx)
 	r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention"), Delay: 5 * time.Minute}
 	r.Run(ctx, time.Hour)
+}
+
+func (b *Bot) notePresent(id snowflake.ID, in bool) {
+	b.presentMu.Lock()
+	defer b.presentMu.Unlock()
+	if in {
+		b.present[id] = true
+	} else {
+		delete(b.present, id)
+	}
+}
+
+// reconcileGuilds marks servers that removed Niro while it was offline as
+// left, so their data is purged after the grace period like any other. It
+// runs once every shard has reported its servers.
+func (b *Bot) reconcileGuilds(ctx context.Context) {
+	b.presentMu.Lock()
+	ids := make([]snowflake.ID, 0, len(b.present))
+	for id := range b.present {
+		ids = append(ids, id)
+	}
+	b.presentMu.Unlock()
+	n, err := b.deps.Lifecycle.ReconcileGuilds(ctx, ids, 0.1)
+	if err != nil {
+		b.log.Error("reconciling servers failed", "err", err)
+		b.deps.Jobs.Done("reconcile", err)
+		return
+	}
+	b.deps.Jobs.Done("reconcile", nil)
+	if n > 0 {
+		b.log.Info("servers that removed Niro while it was offline marked as left", "count", n)
+	}
 }
 
 func (b *Bot) syncCommands() error {

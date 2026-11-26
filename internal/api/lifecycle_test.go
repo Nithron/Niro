@@ -27,6 +27,17 @@ func TestDeleteGuildDataIsOwnerOnly(t *testing.T) {
 	if len(h.rpc.calls) != 1 || h.rpc.calls[0].Method != dc.RPCGuildDeleteData || h.rpc.calls[0].Guild != noBotGuild {
 		t.Fatalf("rpc calls = %+v", h.rpc.calls)
 	}
+	// Ownership is read fresh from Discord: after a transfer, the old owner
+	// is refused at once, even with the server list still cached.
+	before := h.oauth.guildCalls
+	h.oauth.guilds[1].Owner = false
+	if rec := h.do("DELETE", "/api/v1/guilds/200/data", "", sid, sameOrigin); rec.Code != http.StatusForbidden {
+		t.Fatalf("delete after losing ownership = %d, want 403", rec.Code)
+	}
+	if h.oauth.guildCalls == before {
+		t.Fatal("ownership was not checked with Discord")
+	}
+	h.oauth.guilds[1].Owner = true
 	// Cross-site requests are refused like any other write.
 	if rec := h.do("DELETE", "/api/v1/guilds/200/data", "", sid, nil); rec.Code != http.StatusForbidden {
 		t.Fatalf("cross-site delete = %d", rec.Code)

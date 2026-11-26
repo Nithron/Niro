@@ -5,6 +5,18 @@
 -- Servers Niro left before the cutoff (the 30-day grace period is over).
 DELETE FROM guilds WHERE left_at IS NOT NULL AND left_at < $1;
 
+-- name: CountMissingGuilds :one
+-- Servers recorded as active that the gateway did not report: Niro was
+-- removed while it was offline, so no leave event ever came.
+SELECT count(*) FROM guilds WHERE left_at IS NULL AND NOT (id = ANY (@present::bigint[]));
+
+-- name: MarkMissingGuildsLeft :execrows
+UPDATE guilds SET left_at = now(), updated_at = now()
+WHERE left_at IS NULL AND NOT (id = ANY (@present::bigint[]));
+
+-- name: CountActiveGuilds :one
+SELECT count(*) FROM guilds WHERE left_at IS NULL;
+
 -- name: DeleteGuild :execrows
 -- A server owner asked for their server's data to be deleted now.
 DELETE FROM guilds WHERE id = $1;

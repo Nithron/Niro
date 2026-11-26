@@ -52,6 +52,11 @@ Do this before every upgrade.
    docker compose -f deploy/compose.yml start niro
    ```
 5. Check the logs for `bot online` and open the dashboard.
+6. **Honour deletions made after the dump.** A dump from before an owner pressed **Delete data…**, or before Niro was removed, brings those servers back. When the bot starts, servers it is no longer in are marked as left. To delete them at once instead of after 30 days, run this once all shards are connected:
+   ```sh
+   docker compose -f deploy/compose.yml exec -T postgres psql -U niro -c "DELETE FROM guilds WHERE left_at > now() - interval '1 hour'"
+   ```
+   This errs on the side of deleting: a server that simply removed Niro loses its 30-day grace period.
 
 **Restoring onto a new server:**
 

@@ -14,7 +14,7 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
   - Fuzz tests run on every parser. They found and fixed two edge cases: overflowing durations and host names after IDNA mapping.
   - A vulnerable websocket library was updated, and CI now fails on known vulnerabilities in Go or dashboard dependencies.
 - **Your data:**
-  - A server's data is deleted 30 days after Niro is removed. Re-adding Niro within that time keeps it.
+  - A server's data is deleted 30 days after Niro is removed, including when that happened while Niro was offline. Re-adding Niro within that time keeps it.
   - Server owners can delete everything at once from the dashboard (**Delete data…**).
   - Old records expire: finished timed actions after 30 days, ended raids after 90 days, the settings history after 1 year.
 - **Terms and privacy:** the Terms of Service and Privacy Policy are at `/terms` and `/privacy`, readable without logging in.

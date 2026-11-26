@@ -18,15 +18,15 @@ Niro is a Discord bot for moderation, protection against scams and raids, server
 
 | Data | Why | Kept |
 |---|---|---|
-| **Dashboard login:** your Discord user ID, username, display name, avatar, the list of servers you can manage, and a Discord access token | To sign you in and show the servers you can configure | The session ends after 24 hours without use, after 7 days at most, or when you log out. The token is never sent to your browser and is revoked when you log out |
+| **Dashboard login:** your Discord user ID, username, display name, avatar, the list of servers you can manage, and a Discord access token | To sign you in and show the servers you can configure | The session ends after 24 hours without use, after 7 days at most, or when you log out. "Log out on all devices" ends every session at once. The token is never sent to your browser, and the session's token is revoked at Discord when you log out |
 | **Server settings:** the server's ID and name, its settings, and who changed which setting and when | To run the features the server's admins turned on | While Niro is in the server. The change history is kept for 1 year |
 | **Moderation cases:** the member's user ID and name, the moderator, the action, the reason and the duration | Moderation records for the server's staff | While Niro is in the server |
 | **Guardian events:** user and channel IDs, counts, hashes and the type of detection. Never the text of messages | To detect hacked accounts, scam links and raids, and show staff what happened | 90 days. Events a moderator marked "kept", and quarantines still waiting for a decision, stay until resolved or until Niro leaves the server |
 | **Server log message cache:** the text and author of recent messages | Only if the server log is on, to show what an edited or deleted message said | 7 days, in memory storage, never in the database. Admins can turn this off |
 | **Ticket transcripts:** the messages in a closed ticket (author names and text) and attachment file names | A record of support conversations for the server's staff | 90 days by default. The server's admins can set between 1 and 365 days |
 | **Role panels, welcome settings, ticket panels:** the messages and roles the admins configured | To run those features | While Niro is in the server |
-| **Technical data:** IP addresses of dashboard visitors and request logs | Security and rate limiting (stopping abuse) | IP-based rate-limit counters last 1 minute. Service logs are kept about a week |
-| **Backups** of the database | To recover from failures | 28 days at most, encrypted |
+| **Technical data:** IP addresses of dashboard visitors, and service logs (which name user and server IDs, never message text) | Security, rate limiting (stopping abuse) and fixing faults | IP-based rate-limit counters last 1 minute. Service logs are rotated out once they reach 50 MB per service, usually within days |
+| **Backups** of the database | To recover from failures | 28 days at most. Every copy is encrypted |
 
 Messages are read by Niro as they arrive, to check for scams and spam. Apart from the cache and transcripts above, message text is not stored.
 

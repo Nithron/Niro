@@ -66,6 +66,9 @@ services:
 
   backup:
     extends: { file: ../compose.yml, service: backup }
+    environment:
+      # Hosted dumps are always encrypted (Privacy Policy).
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:?set BACKUP_AGE_RECIPIENT (an age public key) in deploy/hosted/.env}
     volumes:
       - ../backup:/backup:ro
       - backups:/backups

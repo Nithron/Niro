@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/disgoorg/snowflake/v2"
+
 	"github.com/nithron/niro/internal/core"
 	"github.com/nithron/niro/internal/core/message"
 	"github.com/nithron/niro/internal/modules/moderation"
@@ -114,5 +116,31 @@ func TestSchedulerSkipsServersNiroLeft(t *testing.T) {
 	claimed, err := s.ClaimDueActions(ctx, 10)
 	if err != nil || len(claimed) != 1 || claimed[0].GuildID != 1 {
 		t.Fatalf("claimed = %+v (%v), want only server 1's action", claimed, err)
+	}
+}
+
+func TestReconcileGuilds(t *testing.T) {
+	s := newStore(t)
+	ctx := t.Context()
+	var all []snowflake.ID
+	for id := int64(1); id <= 20; id++ {
+		if err := s.UpsertGuild(ctx, core.GuildInfo{ID: snow(id), Name: "G", OwnerID: 9}); err != nil {
+			t.Fatal(err)
+		}
+		all = append(all, snow(id))
+	}
+	// The gateway reports 19 of 20: the missing one removed Niro while it was offline.
+	if n, err := s.ReconcileGuilds(ctx, all[1:], 0.1); err != nil || n != 1 {
+		t.Fatalf("reconcile = (%d, %v), want 1", n, err)
+	}
+	if active, _ := s.IsGuildActive(ctx, 1); active {
+		t.Fatal("server 1 should be marked as left")
+	}
+	// An implausible report (half the servers gone) changes nothing.
+	if n, err := s.ReconcileGuilds(ctx, all[10:], 0.1); err == nil || n != 0 {
+		t.Fatalf("reconcile with half missing = (%d, %v), want a refusal", n, err)
+	}
+	if active, _ := s.IsGuildActive(ctx, 2); !active {
+		t.Fatal("a refused reconcile must not mark anything")
 	}
 }
