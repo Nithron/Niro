@@ -2,6 +2,17 @@
 
 All notable changes to Niro. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### M4: Community toolkit
+
+- **Message builder:** design messages in the dashboard with text, text-with-image sections, image galleries, spacers, link buttons and a colour bar, with a live preview that looks like Discord. Used by role panels, welcome and goodbye, and tickets. Images are linked, never uploaded or downloaded by Niro.
+- **Role panels:** buttons or a menu that let members pick roles, in **Toggle**, **Pick one** or **Verify** mode (verify only adds, with Guardian's minimum account age), an optional limit per member and an optional required role. Up to 25 panels with 25 roles each. Niro never hands out managed roles, roles with dangerous permissions, or roles above its own. This is checked when saving and on every click. Editing a panel updates the posted message.
+- **Welcome and goodbye:** a welcome message that may ping only the new member, an optional DM (off by default), a goodbye message, and up to 10 roles on join. Guardian comes first: members removed by the account-age gate aren't greeted. During raid mode, joins are summed up in one message. With the verification gate, roles are given on Verify.
+- **Tickets:** panels with up to 5 categories. Each category opens a private thread or a private channel, has staff roles, an optional form of up to 5 questions, and a limit of open tickets per member. **Claim**, **Close** (with a reason), **Reopen** and **Delete** buttons, plus `/ticket add|remove|close|claim`.
+- **Transcripts:** when a ticket closes, its messages are saved as an HTML transcript. Transcripts are kept 90 days by default (1–365), optionally posted to a channel, and viewable from the dashboard as a sandboxed page.
+- **Invite:** adds **Send Messages in Threads**, for ticket threads. Existing servers re-invite once.
+
 ## v0.1.0-alpha.1 (2026-11-26)
 
 First public release: moderation, Guardian and logging. Source only; container images and the self-host guide come with `v0.1.0`.

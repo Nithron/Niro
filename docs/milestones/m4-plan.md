@@ -91,6 +91,8 @@
 
 Each slice is reviewed by an ECC reviewer (Go, plus React for the builder) before it is merged into the branch, as in M3.
 
+**Status (2026-11-26):** slices 1 to 5 are built. The role-panel review found 11 issues and the tickets/welcome security review is in progress; fixes are committed on the branch. The demo checklist is [m4-demo.md](m4-demo.md).
+
 ## 4. Questions for the PM
 
 1. **Send Messages in Threads:** add it to the invite permissions for thread-mode tickets (recommended)? Otherwise tickets support channel mode only.

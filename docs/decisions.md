@@ -29,6 +29,7 @@
 | 23 | 2026-11-26 | **M3 accepted** (demo passed; merged in #7). Release `v0.1.0-alpha.1` prepared: full-history secret scan (gitleaks, clean; now a CI job), `SECURITY.md`, `CONTRIBUTING.md`, issue and PR templates, `LICENSE` checked identical with NithronOS and NithronAI | Done |
 | 24 | 2026-11-26 | **Repo public**, `v0.1.0-alpha.1` released (source only). Secret scanning with push protection, private vulnerability reporting, and branch protection on `main` (all CI checks required). M4 started: [M4 plan](milestones/m4-plan.md) | Done |
 | 25 | 2026-11-26 | **M4 choices:** add Send Messages in Threads to the invite (thread-mode tickets); ticket transcripts are stored in Postgres (gzip HTML, 90 days by default, 1–365) and viewable in the dashboard, the one place Niro stores message text; the message builder takes image URLs only (no hosting); limits of 25 role panels, 10 ticket panels, 5 categories per panel, 1 open ticket per member by default; welcome DMs off by default | Decided |
+| 26 | 2026-11-26 | **M4 design:** one message-document format (`internal/core/message`) for every designed message. Role panels and auto-roles refuse managed, `@everyone`, dangerous-permission and above-Niro roles, checked on save and on every click. Role menus toggle the picked roles. Picks use the interaction's roles with a per-member lock. Ticket transcripts are rendered with `html/template` and served with a `sandbox` CSP | Decided |
 
 ## Notes on these decisions
 
