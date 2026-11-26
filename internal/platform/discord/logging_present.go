@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -26,10 +27,24 @@ import (
 // for Components V2 messages.
 const (
 	logTextLimit    = 1500 // each message text block
-	logValueLimit   = 200  // each changed value
-	logChangesLimit = 15
+	logValueLimit   = 100  // each changed value
+	logChangesLimit = 10
 	logRolesLimit   = 20
+	// logCardLimit is a final cap on the card's main text block.
+	logCardLimit = 3600
 )
+
+// fitCard caps the card text, closing a code block cut in half.
+func fitCard(s string) string {
+	if utf8.RuneCountInString(s) <= logCardLimit {
+		return s
+	}
+	s = string([]rune(s)[:logCardLimit]) + "…"
+	if strings.Count(s, "```")%2 == 1 {
+		s += "\n```"
+	}
+	return s
+}
 
 func logColor(k logging.Kind) int {
 	switch k {
@@ -62,9 +77,11 @@ func logEmoji(e *Emojis, k logging.Kind) string {
 // zeroWidth breaks up a code fence inside user text.
 var zeroWidth = string(rune(0x200b))
 
-// codeBlock shows user text verbatim (no Markdown, no mentions).
+// codeBlock shows user text verbatim (no Markdown, no mentions). Every
+// backtick is followed by a zero-width space, so no run of backticks in the
+// text can close the block.
 func codeBlock(s string, limit int) string {
-	return "```\n" + strings.ReplaceAll(clip(s, limit), "```", "`"+zeroWidth+"``") + "\n```"
+	return "```\n" + strings.ReplaceAll(clip(s, limit), "`", "`"+zeroWidth) + "\n```"
 }
 
 func clip(s string, limit int) string {
@@ -112,9 +129,11 @@ func (p presenter) changeLabel(l, key string) string {
 	return inlineCode(key, 60)
 }
 
-// isMention reports whether a formatted value is a mention, which must not
-// be escaped.
-func isMention(v string) bool { return strings.HasPrefix(v, "<") && strings.HasSuffix(v, ">") }
+// mentionRE matches a single user, role or channel mention made by the
+// adapter (formatChange); only these are shown unescaped.
+var mentionRE = regexp.MustCompile(`^<(@&?|#)[0-9]{1,20}>$`)
+
+func isMention(v string) bool { return mentionRE.MatchString(v) }
 
 func (p presenter) changeLines(l string, kind logging.Kind, changes []logging.Change) []string {
 	none := p.t(l, i18n.LogNone, nil)
@@ -372,7 +391,7 @@ func (p presenter) logCard(l string, e logging.Entry, guildName, channelName str
 	if e.UserID != 0 {
 		footer = append(footer, "ID "+e.UserID.String())
 	}
-	comps := []discord.ContainerSubComponent{discord.NewTextDisplay(strings.Join(lines, "\n"))}
+	comps := []discord.ContainerSubComponent{discord.NewTextDisplay(fitCard(strings.Join(lines, "\n")))}
 	if file != nil {
 		comps = append(comps, discord.NewFileComponent("attachment://"+file.Name))
 	}
@@ -424,24 +443,30 @@ const (
 // instead of failing.
 type sendQueue struct {
 	mu     sync.Mutex
-	queues map[snowflake.ID]chan discord.MessageCreate
-	send   func(channelID snowflake.ID, m discord.MessageCreate)
+	queues map[snowflake.ID]chan queuedLog
+	send   func(channelID snowflake.ID, m queuedLog)
 	size   int
 	idle   time.Duration
 }
 
-func newSendQueue(send func(snowflake.ID, discord.MessageCreate)) *sendQueue {
-	return &sendQueue{queues: map[snowflake.ID]chan discord.MessageCreate{}, send: send, size: logQueueSize, idle: logQueueIdle}
+// queuedLog is a rendered log message and its kind (for metrics).
+type queuedLog struct {
+	msg  discord.MessageCreate
+	kind logging.Kind
+}
+
+func newSendQueue(send func(snowflake.ID, queuedLog)) *sendQueue {
+	return &sendQueue{queues: map[snowflake.ID]chan queuedLog{}, send: send, size: logQueueSize, idle: logQueueIdle}
 }
 
 // enqueue returns false if the channel's queue is full. It holds the lock
 // while queueing so a worker that is shutting down never strands a message.
-func (q *sendQueue) enqueue(channelID snowflake.ID, m discord.MessageCreate) bool {
+func (q *sendQueue) enqueue(channelID snowflake.ID, m queuedLog) bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	c, ok := q.queues[channelID]
 	if !ok {
-		c = make(chan discord.MessageCreate, q.size)
+		c = make(chan queuedLog, q.size)
 		q.queues[channelID] = c
 		go q.run(channelID, c)
 	}
@@ -453,7 +478,7 @@ func (q *sendQueue) enqueue(channelID snowflake.ID, m discord.MessageCreate) boo
 	}
 }
 
-func (q *sendQueue) run(channelID snowflake.ID, c chan discord.MessageCreate) {
+func (q *sendQueue) run(channelID snowflake.ID, c chan queuedLog) {
 	timer := time.NewTimer(q.idle)
 	defer timer.Stop()
 	for {
@@ -509,7 +534,7 @@ func (s *logSink) Post(_ context.Context, channelID snowflake.ID, e logging.Entr
 	if file != nil {
 		m.Files = []*discord.File{file}
 	}
-	if !s.queue.enqueue(channelID, m) {
+	if !s.queue.enqueue(channelID, queuedLog{msg: m, kind: e.Kind}) {
 		s.metrics.logEntries.WithLabelValues(string(e.Kind), "dropped").Inc()
 		return fmt.Errorf("log queue for channel %s is full", channelID)
 	}
@@ -517,11 +542,11 @@ func (s *logSink) Post(_ context.Context, channelID snowflake.ID, e logging.Entr
 	return nil
 }
 
-func (s *logSink) deliver(channelID snowflake.ID, m discord.MessageCreate) {
+func (s *logSink) deliver(channelID snowflake.ID, q queuedLog) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	if _, err := s.client.Rest.CreateMessage(channelID, m, rest.WithCtx(ctx)); err != nil {
-		s.metrics.logEntries.WithLabelValues("", "failed").Inc()
+	if _, err := s.client.Rest.CreateMessage(channelID, q.msg, rest.WithCtx(ctx)); err != nil {
+		s.metrics.logEntries.WithLabelValues(string(q.kind), "failed").Inc()
 		if last, ok := s.warned.Load(channelID); ok && time.Since(last.(time.Time)) < time.Hour {
 			return
 		}

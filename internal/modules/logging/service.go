@@ -43,6 +43,16 @@ type Service struct {
 	niroDeletes *ttlMap[[2]snowflake.ID, string]
 	// automod deduplicates the several actions one AutoMod trigger fires.
 	automod *ttlMap[string, struct{}]
+	// inviteLocks serialise invite snapshots per server (joins and invite
+	// changes race otherwise).
+	inviteLocks sync.Map // snowflake.ID -> *sync.Mutex
+}
+
+func (s *Service) lockInvites(guildID snowflake.ID) func() {
+	mu, _ := s.inviteLocks.LoadOrStore(guildID, &sync.Mutex{})
+	m := mu.(*sync.Mutex)
+	m.Lock()
+	return m.Unlock
 }
 
 func NewService(d Deps) *Service {
@@ -95,11 +105,10 @@ func (s *Service) post(ctx context.Context, channelID snowflake.ID, e Entry) err
 func cached(m Message, hideContent bool) CachedMessage {
 	c := CachedMessage{
 		ID: m.ID, ChannelID: m.ChannelID, AuthorID: m.AuthorID, AuthorName: m.AuthorName,
-		AuthorBot: m.AuthorBot, AuthorRoleIDs: m.AuthorRoleIDs, Attachments: m.Attachments,
-		CreatedAt: m.CreatedAt, EditedAt: m.EditedAt,
+		AuthorBot: m.AuthorBot, AuthorRoleIDs: m.AuthorRoleIDs, CreatedAt: m.CreatedAt, EditedAt: m.EditedAt,
 	}
 	if !hideContent {
-		c.Content = truncate(m.Content, MaxCachedContent)
+		c.Content, c.Attachments = truncate(m.Content, MaxCachedContent), m.Attachments
 	}
 	return c
 }
@@ -127,6 +136,11 @@ func (s *Service) HandleMessageEdit(ctx context.Context, m Message) error {
 	if !on || m.FromNiro || !st.cachesMessages() || st.ignored(m.ChannelID, m.ParentID, m.AuthorRoleIDs, m.AuthorBot) {
 		return nil
 	}
+	if m.EditedAt.IsZero() {
+		// Not an edit by the author (a link preview loaded, a pin…). These
+		// updates can be partial, so they must not overwrite the cache.
+		return nil
+	}
 	old, found, err := s.d.Cache.Get(ctx, m.ChannelID, m.ID)
 	if err != nil {
 		return fmt.Errorf("reading message cache: %w", err)
@@ -135,8 +149,8 @@ func (s *Service) HandleMessageEdit(ctx context.Context, m Message) error {
 		return fmt.Errorf("writing message cache: %w", err)
 	}
 	dest := st.Destination(KindMessageEdit)
-	if dest == 0 || m.EditedAt.IsZero() {
-		return nil // not an edit by the author (e.g. a link preview loaded)
+	if dest == 0 {
+		return nil
 	}
 	if found {
 		if !m.EditedAt.After(old.EditedAt) {
@@ -151,10 +165,10 @@ func (s *Service) HandleMessageEdit(ctx context.Context, m Message) error {
 		Kind: KindMessageEdit, GuildID: m.GuildID, At: m.EditedAt,
 		UserID: m.AuthorID, UserName: m.AuthorName, UserBot: m.AuthorBot,
 		ChannelID: m.ChannelID, MessageID: m.ID, Cached: found,
-		ContentHidden: st.NoMessageContent, Attachments: m.Attachments,
+		ContentHidden: st.NoMessageContent,
 	}
 	if !st.NoMessageContent {
-		e.After = m.Content
+		e.After, e.Attachments = m.Content, m.Attachments
 		if found {
 			e.Before = old.Content
 		}
@@ -180,36 +194,34 @@ func (s *Service) niroSource(channelID snowflake.ID, ids []snowflake.ID) (string
 }
 
 // HandleMessageDelete logs a deleted message with its cached text.
-// parentID is the parent channel when channelID is a thread.
+// parentID is the parent channel when channelID is a thread. Messages that
+// were not cached (older than the TTL, from ignored authors, or Niro's own)
+// are not logged: there is nothing to show about them.
 func (s *Service) HandleMessageDelete(ctx context.Context, guildID, channelID, parentID, messageID snowflake.ID) error {
-	st, on := s.settings(ctx, guildID)
-	if !on || !st.cachesMessages() {
-		return nil
-	}
-	// Always take the message out of the cache: deleted text must not linger.
+	// Take the message out of the cache first, whatever the settings say:
+	// deleted text must not linger.
 	msgs, err := s.d.Cache.Take(ctx, channelID, []snowflake.ID{messageID})
 	if err != nil {
 		return fmt.Errorf("reading message cache: %w", err)
 	}
+	if len(msgs) == 0 {
+		return nil
+	}
+	st, on := s.settings(ctx, guildID)
+	if !on {
+		return nil
+	}
+	m := msgs[0]
 	dest := st.Destination(KindMessageDelete)
-	if dest == 0 || st.ignored(channelID, parentID, nil, false) {
+	if dest == 0 || st.ignored(channelID, parentID, m.AuthorRoleIDs, m.AuthorBot) {
 		return nil
 	}
 	e := Entry{
-		Kind: KindMessageDelete, GuildID: guildID, ChannelID: channelID, MessageID: messageID,
-		ContentHidden: st.NoMessageContent,
+		Kind: KindMessageDelete, GuildID: guildID, ChannelID: channelID, MessageID: messageID, Cached: true,
+		UserID: m.AuthorID, UserName: m.AuthorName, UserBot: m.AuthorBot, ContentHidden: st.NoMessageContent,
 	}
-	if len(msgs) == 1 {
-		m := msgs[0]
-		if st.ignored(channelID, parentID, m.AuthorRoleIDs, m.AuthorBot) {
-			return nil
-		}
-		e.Cached = true
-		e.UserID, e.UserName, e.UserBot = m.AuthorID, m.AuthorName, m.AuthorBot
-		e.Attachments = m.Attachments
-		if !st.NoMessageContent {
-			e.Before = m.Content
-		}
+	if !st.NoMessageContent {
+		e.Before, e.Attachments = m.Content, m.Attachments
 	}
 	if src, ok := s.niroSource(channelID, []snowflake.ID{messageID}); ok {
 		e.ByNiro, e.ByNiroSource = true, src
@@ -220,13 +232,16 @@ func (s *Service) HandleMessageDelete(ctx context.Context, guildID, channelID, p
 // HandleBulkDelete logs a bulk delete as one entry; the adapter attaches
 // the cached messages as a file.
 func (s *Service) HandleBulkDelete(ctx context.Context, guildID, channelID, parentID snowflake.ID, messageIDs []snowflake.ID) error {
-	st, on := s.settings(ctx, guildID)
-	if !on || !st.cachesMessages() || len(messageIDs) == 0 {
+	if len(messageIDs) == 0 {
 		return nil
 	}
 	msgs, err := s.d.Cache.Take(ctx, channelID, messageIDs)
 	if err != nil {
 		return fmt.Errorf("reading message cache: %w", err)
+	}
+	st, on := s.settings(ctx, guildID)
+	if !on {
+		return nil
 	}
 	dest := st.Destination(KindMessageBulkDelete)
 	if dest == 0 || st.ignored(channelID, parentID, nil, false) {
@@ -235,7 +250,7 @@ func (s *Service) HandleBulkDelete(ctx context.Context, guildID, channelID, pare
 	slices.SortFunc(msgs, func(a, b CachedMessage) int { return compareIDs(a.ID, b.ID) })
 	if st.NoMessageContent {
 		for i := range msgs {
-			msgs[i].Content = ""
+			msgs[i].Content, msgs[i].Attachments = "", nil
 		}
 	}
 	e := Entry{
@@ -284,6 +299,8 @@ func (s *Service) usedInvite(ctx context.Context, guildID snowflake.ID) (Invite,
 	if s.d.Invites == nil || s.d.Snapshots == nil {
 		return Invite{}, false
 	}
+	unlock := s.lockInvites(guildID)
+	defer unlock()
 	cur, err := s.d.Invites.ListInvites(ctx, guildID)
 	if err != nil {
 		s.d.Log.DebugContext(ctx, "listing invites failed", "guild_id", guildID, "err", err)
@@ -303,6 +320,8 @@ func (s *Service) RefreshInvites(ctx context.Context, guildID snowflake.ID) erro
 	if !on || st.Destination(KindMemberJoin) == 0 || s.d.Invites == nil || s.d.Snapshots == nil {
 		return nil
 	}
+	unlock := s.lockInvites(guildID)
+	defer unlock()
 	cur, err := s.d.Invites.ListInvites(ctx, guildID)
 	if err != nil {
 		return err
@@ -311,8 +330,8 @@ func (s *Service) RefreshInvites(ctx context.Context, guildID snowflake.ID) erro
 	return err
 }
 
-// HandleMemberLeave logs a member leaving. Kicks and bans are logged
-// separately, from the audit log.
+// HandleMemberLeave logs a member leaving. A kick or ban also produces its
+// own moderation entry (from the audit log), with who did it and why.
 func (s *Service) HandleMemberLeave(ctx context.Context, l MemberLeave) error {
 	st, on := s.settings(ctx, l.GuildID)
 	if !on {
@@ -452,10 +471,9 @@ func (s *Service) HandleVoice(ctx context.Context, v VoiceChange) error {
 // action (block, alert, timeout); only the first is logged.
 func (s *Service) HandleAutoMod(ctx context.Context, a AutoModAction) error {
 	key := fmt.Sprintf("%s:%s:%s:%s:%s", a.GuildID, a.RuleID, a.UserID, a.ChannelID, a.Content)
-	if _, dup := s.automod.Get(key); dup {
+	if !s.automod.SetIfAbsent(key, struct{}{}, automodTTL) {
 		return nil
 	}
-	s.automod.Set(key, struct{}{}, automodTTL)
 	st, on := s.settings(ctx, a.GuildID)
 	if !on {
 		return nil
@@ -471,6 +489,8 @@ func (s *Service) HandleAutoMod(ctx context.Context, a AutoModAction) error {
 	}
 	if !st.NoMessageContent {
 		e.Before = a.Content
+	} else {
+		e.Keyword = "" // a matched pattern can quote the message
 	}
 	return s.post(ctx, dest, e)
 }
@@ -524,6 +544,18 @@ func (m *ttlMap[K, V]) Set(k K, v V, ttl time.Duration) {
 		m.sweep = now.Add(time.Minute)
 	}
 	m.items[k] = ttlItem[V]{v: v, exp: now.Add(ttl)}
+}
+
+// SetIfAbsent stores v unless a live entry exists; it reports whether it stored.
+func (m *ttlMap[K, V]) SetIfAbsent(k K, v V, ttl time.Duration) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := m.now()
+	if it, ok := m.items[k]; ok && !now.After(it.exp) {
+		return false
+	}
+	m.items[k] = ttlItem[V]{v: v, exp: now.Add(ttl)}
+	return true
 }
 
 func (m *ttlMap[K, V]) Get(k K) (V, bool) {

@@ -186,17 +186,47 @@ func TestDeleteShowsCachedTextAndForgetsIt(t *testing.T) {
 	}
 }
 
-func TestDeleteOfUncachedMessage(t *testing.T) {
+func TestDeleteOfUncachedMessageIsNotLogged(t *testing.T) {
+	ctx := context.Background()
 	h := newHarness(t, everything)
-	_ = h.svc.HandleMessageDelete(context.Background(), testGuild, chatChannel, 0, 5)
-	if e := h.only(t); e.Cached || e.UserID != 0 || e.MessageID != 5 {
-		t.Errorf("entry = %+v", e)
+	// Never cached: too old, Niro's own, or from an ignored bot.
+	bot := msg(6, "bot spam")
+	bot.AuthorBot = true
+	_ = h.svc.HandleMessage(ctx, bot)
+	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 5)
+	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 6)
+	h.none(t)
+}
+
+func TestDeletedTextIsDroppedEvenWithLoggingOff(t *testing.T) {
+	ctx := context.Background()
+	h := newHarness(t, everything)
+	_ = h.svc.HandleMessage(ctx, msg(5, "secret"))
+	_ = h.svc.HandleMessage(ctx, msg(6, "secret too"))
+	h.on = false
+	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 5)
+	_ = h.svc.HandleBulkDelete(ctx, testGuild, chatChannel, 0, []snowflake.ID{6})
+	if h.cache.Len() != 0 {
+		t.Error("deleted text still cached after logging was turned off")
+	}
+	h.none(t)
+}
+
+func TestNonEditUpdatesDoNotTouchTheCache(t *testing.T) {
+	ctx := context.Background()
+	h := newHarness(t, everything)
+	_ = h.svc.HandleMessage(ctx, msg(5, "original"))
+	partial := Message{ID: 5, GuildID: testGuild, ChannelID: chatChannel} // a link preview, no edit time
+	_ = h.svc.HandleMessageEdit(ctx, partial)
+	if c, _, _ := h.cache.Get(ctx, chatChannel, 5); c.Content != "original" || c.AuthorID != alice {
+		t.Errorf("cache overwritten by a partial update: %+v", c)
 	}
 }
 
 func TestDeleteByNiro(t *testing.T) {
 	ctx := context.Background()
 	h := newHarness(t, everything)
+	_ = h.svc.HandleMessage(ctx, msg(5, "scam link"))
 	h.svc.MarkNiroDeletes(chatChannel, []snowflake.ID{5}, "guardian")
 	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 5)
 	if e := h.only(t); !e.ByNiro || e.ByNiroSource != "guardian" {
@@ -204,6 +234,7 @@ func TestDeleteByNiro(t *testing.T) {
 	}
 	// The mark expires.
 	h.now = h.now.Add(niroDeleteTTL + time.Second)
+	_ = h.svc.HandleMessage(ctx, msg(5, "scam link"))
 	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 5)
 	if h.sink.got[1].entry.ByNiro {
 		t.Error("old mark still applies")
@@ -243,12 +274,12 @@ func TestNoMessageContent(t *testing.T) {
 	m.Content, m.EditedAt = "still private", h.now
 	_ = h.svc.HandleMessageEdit(ctx, m)
 	_ = h.svc.HandleMessageDelete(ctx, testGuild, chatChannel, 0, 5)
-	_ = h.svc.HandleAutoMod(ctx, AutoModAction{GuildID: testGuild, RuleID: 3, UserID: alice, Content: "bad words"})
+	_ = h.svc.HandleAutoMod(ctx, AutoModAction{GuildID: testGuild, RuleID: 3, UserID: alice, Content: "bad words", Keyword: "bad*"})
 	if len(h.sink.got) != 3 {
 		t.Fatalf("posted %d, want edit, delete and automod", len(h.sink.got))
 	}
 	for _, p := range h.sink.got {
-		if p.entry.Before != "" || p.entry.After != "" || !p.entry.ContentHidden {
+		if p.entry.Before != "" || p.entry.After != "" || p.entry.Keyword != "" || !p.entry.ContentHidden {
 			t.Errorf("%s shows content: %+v", p.entry.Kind, p.entry)
 		}
 	}
@@ -275,6 +306,18 @@ func TestIgnoredMessagesAreNotCached(t *testing.T) {
 	}
 	_ = h.svc.HandleMessageDelete(ctx, testGuild, quietChannel, 0, 5)
 	h.none(t)
+}
+
+func TestAutoModDedupeUnderConcurrency(t *testing.T) {
+	h := newHarness(t, everything)
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Go(func() {
+			_ = h.svc.HandleAutoMod(context.Background(), AutoModAction{GuildID: testGuild, RuleID: 3, UserID: alice, Content: "x"})
+		})
+	}
+	wg.Wait()
+	h.only(t)
 }
 
 func TestLogChannelsAreNotLogged(t *testing.T) {

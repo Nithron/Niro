@@ -101,13 +101,14 @@ type Bot struct {
 	guard     *guardian.Service
 	logs      *logging.Service
 	ruleNames ruleNameCache
+	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
 	pending   pendingBans
 }
 
 // New builds the client. Nothing connects until Run.
 func New(deps Deps) (*Bot, error) {
-	b := &Bot{deps: deps, log: deps.Log.With("component", "bot")}
+	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute)}
 	var err error
 	if b.metrics, err = newMetrics(deps.Metrics); err != nil {
 		return nil, err
@@ -157,7 +158,7 @@ func New(deps Deps) (*Bot, error) {
 				b.onLogVoice(e.VoiceState.GuildID, e.Member, e.OldVoiceState.ChannelID, e.VoiceState.ChannelID)
 			},
 			OnGuildVoiceLeave: func(e *events.GuildVoiceLeave) {
-				b.onLogVoice(e.OldVoiceState.GuildID, e.Member, e.OldVoiceState.ChannelID, nil)
+				b.onLogVoice(e.VoiceState.GuildID, e.Member, e.OldVoiceState.ChannelID, nil)
 			},
 			OnAutoModerationActionExecution: b.onLogAutoMod,
 			OnGuildInviteCreate: func(e *events.InviteCreate) {

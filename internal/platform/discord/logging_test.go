@@ -48,7 +48,7 @@ func TestLogCardShowsTextSafely(t *testing.T) {
 	p := testPresenter(t)
 	long := strings.Repeat("a", 5000)
 	e := logging.Entry{Kind: logging.KindMessageEdit, GuildID: 1, ChannelID: 2, MessageID: 3, UserID: 4, Cached: true,
-		Before: "hi @everyone ```break out```", After: long, At: time.Now()}
+		Before: "hi @everyone ````break out``` and ``````", After: long, At: time.Now()}
 	text, _ := cardParts(func() discord.ContainerComponent { c, _ := p.logCard("en", e, "", ""); return c }())
 	if strings.Count(text, "```") != 4 {
 		t.Errorf("user text escaped its code block:\n%s", text)
@@ -121,16 +121,16 @@ func TestSendQueueKeepsOrderAndBounds(t *testing.T) {
 	var mu sync.Mutex
 	var got []string
 	release := make(chan struct{})
-	q := newSendQueue(func(_ snowflake.ID, m discord.MessageCreate) {
+	q := newSendQueue(func(_ snowflake.ID, m queuedLog) {
 		<-release
 		mu.Lock()
-		got = append(got, m.Content)
+		got = append(got, m.msg.Content)
 		mu.Unlock()
 	})
 	q.size, q.idle = 3, 50*time.Millisecond
 	accepted := 0
 	for i := range 10 {
-		if q.enqueue(1, discord.MessageCreate{Content: string(rune('a' + i))}) {
+		if q.enqueue(1, queuedLog{msg: discord.MessageCreate{Content: string(rune('a' + i))}}) {
 			accepted++
 		}
 	}
@@ -187,5 +187,26 @@ func TestIntentsForLogging(t *testing.T) {
 	}
 	if Intents.Has(gateway.IntentGuildPresences) {
 		t.Error("the presence intent must never be requested")
+	}
+}
+
+func TestChangeValuesAreEscapedAndBounded(t *testing.T) {
+	p := testPresenter(t)
+	long := "<" + strings.Repeat("x", 3000) + ">"
+	var changes []logging.Change
+	for range 30 {
+		changes = append(changes, logging.Change{Key: "topic", Old: long, New: "<https://evil.example|click>"})
+	}
+	e := logging.Entry{Kind: logging.KindChannelUpdate, GuildID: 1, TargetID: 2, At: time.Now(), Changes: changes}
+	card, _ := p.logCard("en", e, "", "")
+	text, _ := cardParts(card)
+	if len([]rune(text)) > 4000 {
+		t.Errorf("card has %d characters", len([]rune(text)))
+	}
+	if strings.Contains(text, "<https://evil.example|click>") {
+		t.Errorf("unescaped link-like value:\n%s", text)
+	}
+	if !isMention("<#123>") || !isMention("<@&5>") || isMention("<#12 3>") || isMention(long) {
+		t.Error("isMention is too loose or too strict")
 	}
 }

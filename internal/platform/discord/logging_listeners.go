@@ -72,23 +72,90 @@ func (b *Bot) logMessage(guildID snowflake.ID, m discord.Message) (logging.Messa
 	return lm, true
 }
 
+// Message events for the log run in order per channel (b.msgOrder): a
+// delete handled before the create it follows would leave deleted text in
+// the cache.
+func (b *Bot) logInOrder(channelID snowflake.ID, what string, fn func(ctx context.Context) error) {
+	if !b.msgOrder.run(channelID, func() {
+		b.safely(what, func(ctx context.Context) {
+			if err := fn(ctx); err != nil {
+				b.log.Warn(what+" failed", "err", err)
+			}
+		})
+	}) {
+		b.metrics.logEntries.WithLabelValues("message", "dropped").Inc()
+	}
+}
+
 func (b *Bot) onLogMessageCreate(e *events.GuildMessageCreate) {
 	if m, ok := b.logMessage(e.GuildID, e.Message); ok {
-		b.logRun("caching message", func(ctx context.Context) error { return b.logs.HandleMessage(ctx, m) })
+		b.logInOrder(m.ChannelID, "caching message", func(ctx context.Context) error { return b.logs.HandleMessage(ctx, m) })
 	}
 }
 
 func (b *Bot) onLogMessageUpdate(e *events.GuildMessageUpdate) {
 	if m, ok := b.logMessage(e.GuildID, e.Message); ok {
-		b.logRun("logging message edit", func(ctx context.Context) error { return b.logs.HandleMessageEdit(ctx, m) })
+		b.logInOrder(m.ChannelID, "logging message edit", func(ctx context.Context) error { return b.logs.HandleMessageEdit(ctx, m) })
 	}
 }
 
 func (b *Bot) onLogMessageDelete(e *events.GuildMessageDelete) {
 	guildID, channelID, messageID, parent := e.GuildID, e.ChannelID, e.MessageID, b.parentOf(e.ChannelID)
-	b.logRun("logging message delete", func(ctx context.Context) error {
+	b.logInOrder(channelID, "logging message delete", func(ctx context.Context) error {
 		return b.logs.HandleMessageDelete(ctx, guildID, channelID, parent, messageID)
 	})
+}
+
+// orderedRunner runs functions one after another per key, each key in its
+// own goroutine that exits when idle.
+type orderedRunner struct {
+	mu     sync.Mutex
+	queues map[snowflake.ID]chan func()
+	size   int
+	idle   time.Duration
+}
+
+func newOrderedRunner(size int, idle time.Duration) *orderedRunner {
+	return &orderedRunner{queues: map[snowflake.ID]chan func(){}, size: size, idle: idle}
+}
+
+// run queues fn for key; false if that key's queue is full.
+func (r *orderedRunner) run(key snowflake.ID, fn func()) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	c, ok := r.queues[key]
+	if !ok {
+		c = make(chan func(), r.size)
+		r.queues[key] = c
+		go r.work(key, c)
+	}
+	select {
+	case c <- fn:
+		return true
+	default:
+		return false
+	}
+}
+
+func (r *orderedRunner) work(key snowflake.ID, c chan func()) {
+	timer := time.NewTimer(r.idle)
+	defer timer.Stop()
+	for {
+		select {
+		case fn := <-c:
+			fn()
+			timer.Reset(r.idle)
+		case <-timer.C:
+			r.mu.Lock()
+			if len(c) == 0 {
+				delete(r.queues, key)
+				r.mu.Unlock()
+				return
+			}
+			r.mu.Unlock()
+			timer.Reset(r.idle)
+		}
+	}
 }
 
 // gatewayHandlers are disgo's handlers with MESSAGE_DELETE_BULK replaced:
@@ -102,7 +169,7 @@ func (b *Bot) gatewayHandlers() map[gateway.EventType]bot.GatewayEventHandler {
 				return
 			}
 			guildID, channelID, ids, parent := *ev.GuildID, ev.ChannelID, slices.Clone(ev.IDs), b.parentOf(ev.ChannelID)
-			b.logRun("logging bulk delete", func(ctx context.Context) error {
+			b.logInOrder(channelID, "logging bulk delete", func(ctx context.Context) error {
 				return b.logs.HandleBulkDelete(ctx, guildID, channelID, parent, ids)
 			})
 		})
@@ -163,10 +230,7 @@ func (b *Bot) onLogAutoMod(e *events.AutoModerationActionExecution) {
 		a.ChannelID = *e.ChannelID
 	}
 	if e.MatchedKeywords != nil {
-		a.Keyword = *e.MatchedKeywords
-	}
-	if a.Keyword == "" && e.MatchedContent != nil {
-		a.Keyword = *e.MatchedContent
+		a.Keyword = *e.MatchedKeywords // the rule's keyword, not the member's text
 	}
 	if m, ok := b.client.Caches.Member(e.GuildID, e.UserID); ok {
 		a.UserName = displayName(m.User, m.Nick)
@@ -196,17 +260,19 @@ func (c *ruleNameCache) name(ctx context.Context, client *bot.Client, guildID, r
 		return n.name
 	}
 	c.mu.Unlock()
-	rule, err := client.Rest.GetAutoModerationRule(guildID, ruleID, rest.WithCtx(ctx))
-	if err != nil {
-		return ""
+	name := ""
+	if rule, err := client.Rest.GetAutoModerationRule(guildID, ruleID, rest.WithCtx(ctx)); err == nil {
+		name = rule.Name
 	}
+	// Failures (e.g. no Manage Server) are cached too, so a burst of
+	// triggers doesn't repeat a request that cannot succeed.
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.names == nil || len(c.names) > 10000 {
 		c.names = map[snowflake.ID]ruleName{}
 	}
-	c.names[ruleID] = ruleName{name: rule.Name, at: time.Now()}
-	return rule.Name
+	c.names[ruleID] = ruleName{name: name, at: time.Now()}
+	return name
 }
 
 func (b *Bot) refreshInvites(guildID snowflake.ID) {
