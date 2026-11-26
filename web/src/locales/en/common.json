@@ -248,6 +248,10 @@
       "604800": "1 week"
     }
   },
+  "legal": {
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  },
   "deleteData": {
     "title": "Delete this server's data",
     "body": "Removes Niro from the server and deletes everything it stores about it right away: settings, cases, panels, tickets, transcripts and Guardian records. Without this, the data is deleted 30 days after Niro is removed. This cannot be undone.",

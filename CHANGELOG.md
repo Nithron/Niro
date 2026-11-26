@@ -4,6 +4,30 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### M5: Hardening and launch
+
+- **Rate limits:** the dashboard API limits requests per user and per IP, and the login flow per IP. Over the limit, the dashboard says to wait a moment. Behind a reverse proxy, set `NIRO_TRUSTED_PROXIES`.
+- **Sessions:** dashboard sessions end after 24 hours without use (7 days at most). **Log out on all devices** is in the account menu. Logging out also revokes the Discord token. Over HTTPS the cookie uses the `__Host-` prefix.
+- **Security:**
+  - API answers are never cached, error messages don't echo internals, and there are new isolation headers.
+  - Every server endpoint, and every database query on server data, is checked in CI to be scoped to the right server.
+  - Fuzz tests run on every parser. They found and fixed two edge cases: overflowing durations and host names after IDNA mapping.
+  - A vulnerable websocket library was updated, and CI now fails on known vulnerabilities in Go or dashboard dependencies.
+- **Your data:**
+  - A server's data is deleted 30 days after Niro is removed. Re-adding Niro within that time keeps it.
+  - Server owners can delete everything at once from the dashboard (**Delete data…**).
+  - Old records expire: finished timed actions after 30 days, ended raids after 90 days, the settings history after 1 year.
+- **Terms and privacy:** the Terms of Service and Privacy Policy are at `/terms` and `/privacy`, readable without logging in.
+- **Monitoring:**
+  - New metrics: shards, gateway events, Discord API requests and rate limits, the database pool, and every background job.
+  - Readiness now needs every shard connected.
+  - Ready-to-use Prometheus alert rules (with tests), an Alertmanager config and a Grafana dashboard are in `deploy/monitoring/`.
+- **Self-hosting:**
+  - `deploy/compose.yml` runs Niro with Postgres, Valkey, nightly encrypted-if-you-like backups and optional Caddy for HTTPS.
+  - The [self-host guide](docs/self-host.md) and [backup and restore](docs/ops/backup-restore.md) explain it.
+  - Container logs rotate.
+- **Load-tested:** `make soak` runs the real handlers against 2,500 synthetic servers. See [baselines](docs/ops/baselines.md).
+
 ### M4: Community toolkit
 
 - **Message builder:** design messages in the dashboard with text, text-with-image sections, image galleries, spacers, link buttons and a colour bar, with a live preview that looks like Discord. Used by role panels, welcome and goodbye, and tickets. Images are linked, never uploaded or downloaded by Niro.

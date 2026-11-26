@@ -4,11 +4,10 @@
 
 A security-first Discord bot by [Nithron](https://nithron.com): one bot for moderation, scam and raid
 protection, logging, roles, welcome and tickets, managed from a web dashboard. AI features
-powered by nAI and NithronOS integration will follow.
+powered by nAI and nOS integration will follow.
 
-> **Status: alpha (`v0.1.0-alpha.1`).** Moderation, Guardian protection and server logging work end to end.
-> Role panels, welcome and tickets (M4) are built and waiting for their demo; the self-host guide and hosted
-> launch (M5) come next. See the [build plan](docs/plan.md). Expect breaking changes before `v0.1.0`.
+> **Status: alpha, heading for `v0.1.0`.** Every v0.1 feature works end to end. The last milestone (M5:
+> hardening, self-hosting, the hosted launch) is in progress. See the [build plan](docs/plan.md).
 
 ## What works today
 
@@ -19,16 +18,21 @@ powered by nAI and NithronOS integration will follow.
   Niro never opens links users post.
 - **Logging:** message edits and deletes (bulk deletes as a file), joins with the invite used, member,
   moderation, server, voice, AutoMod and Guardian events, routed per category.
+- **Community:** role panels, welcome and goodbye messages with auto-roles, and support tickets with
+  private threads and transcripts, all designed with a shared message builder.
 - **Dashboard:** Discord login and every setting above, applied live without a restart.
-- **Privacy:** least-privilege permissions (never Administrator), no message text in the database, and
-  servers can turn message-text logging off.
+- **Privacy:** least-privilege permissions (never Administrator), no message text in the database except
+  expiring ticket transcripts, servers can turn message-text logging off, data is deleted 30 days after
+  Niro is removed, and owners can delete their server's data at once.
 
-Self-hosting works from source today ([dev setup](docs/dev-setup.md)); the supported self-host guide and
-container images arrive with `v0.1.0`.
+Run your own: the [self-host guide](docs/self-host.md) sets up Niro with Docker Compose, HTTPS and nightly
+backups. Niro is built from source; there is no prebuilt image.
 
 ## Docs
 
+- [User guide](docs/user/README.md) · [Self-host guide](docs/self-host.md)
 - [Build plan](docs/plan.md) · [Decisions log](docs/decisions.md) · [Changelog](CHANGELOG.md)
+- Operations: [runbook](docs/ops/runbook.md), [backup and restore](docs/ops/backup-restore.md), [load-test baselines](docs/ops/baselines.md)
 - [Dev setup](docs/dev-setup.md) · [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
 - Research: [discovery](docs/research/2026-11-discovery.md), [Go library check](docs/research/2026-11-go-library-check.md)
 - [Brand assets](assets/brand/README.md)

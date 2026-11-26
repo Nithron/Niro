@@ -10,6 +10,10 @@
 # Runbook: docs/ops/runbook.md.
 name: niro-hosted
 
+x-logging: &logging
+  driver: json-file
+  options: { max-size: 10m, max-file: "5" }
+
 x-niro: &niro
   build:
     context: ../..
@@ -18,6 +22,7 @@ x-niro: &niro
       VERSION: ${NIRO_VERSION:?set NIRO_VERSION (the release tag) in deploy/hosted/.env}
   image: niro:${NIRO_VERSION}
   restart: unless-stopped
+  logging: *logging
   env_file: .env
   environment: &niro-env
     NIRO_ENV: production
@@ -68,6 +73,7 @@ services:
     networks: [niro]
 
   offsite:
+    logging: *logging
     image: restic/restic:0.18.1
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/offsite/offsite.sh"]
@@ -79,6 +85,7 @@ services:
     networks: [niro]
 
   caddy:
+    logging: *logging
     image: caddy:2-alpine
     restart: unless-stopped
     ports: ["80:80", "443:443", "443:443/udp"]
@@ -92,6 +99,7 @@ services:
     networks: [niro]
 
   prometheus:
+    logging: *logging
     image: prom/prometheus:v3.16.0
     restart: unless-stopped
     command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
@@ -102,6 +110,7 @@ services:
     networks: [niro]
 
   alertmanager:
+    logging: *logging
     image: prom/alertmanager:v0.35.1
     restart: unless-stopped
     volumes:
@@ -111,6 +120,7 @@ services:
     networks: [niro]
 
   node-exporter:
+    logging: *logging
     image: prom/node-exporter:v1.10.2
     restart: unless-stopped
     command: ["--path.rootfs=/host", "--collector.textfile.directory=/metrics"]
@@ -121,6 +131,7 @@ services:
     networks: [niro]
 
   grafana:
+    logging: *logging
     image: grafana/grafana:12.3.0
     restart: unless-stopped
     environment:

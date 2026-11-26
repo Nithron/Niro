@@ -278,6 +278,14 @@ describe('moderation pages', () => {
     expect(screen.queryByRole('button', { name: 'Delete data…' })).not.toBeInTheDocument()
   })
 
+  it('shows the legal pages without logging in', async () => {
+    routes['GET /api/v1/me'] = unauthorized
+    renderAt('/privacy')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms')
+    expect(calls.some((c) => c.path === '/api/v1/me')).toBe(false)
+  })
+
   it('explains a rate limit in plain words', async () => {
     routes['GET /api/v1/automod/presets'] = () => json([])
     routes['GET /api/v1/guilds/100/automod/rules'] = () => json({ code: 'rate_limited', message: 'Too many requests.' }, 429)

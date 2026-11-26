@@ -9,8 +9,15 @@
 # there is no prebuilt image for v0.1.0.
 name: niro
 
+# Container logs rotate at 5 x 10 MB per service, so they can't fill the disk
+# and user IDs in them don't linger (privacy policy: about a week of logs).
+x-logging: &logging
+  driver: json-file
+  options: { max-size: 10m, max-file: "5" }
+
 services:
   niro:
+    logging: *logging
     build:
       context: ..
       dockerfile: deploy/Dockerfile
@@ -39,6 +46,7 @@ services:
     networks: [niro]
 
   postgres:
+    logging: *logging
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
@@ -54,6 +62,7 @@ services:
     networks: [niro]
 
   valkey:
+    logging: *logging
     image: valkey/valkey:8-alpine
     restart: unless-stopped
     # Valkey holds sessions and caches only; nothing in it needs a backup.
@@ -71,6 +80,7 @@ services:
     networks: [niro]
 
   backup:
+    logging: *logging
     image: postgres:18-alpine
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/backup/backup.sh"]
@@ -92,6 +102,7 @@ services:
     networks: [niro]
 
   caddy:
+    logging: *logging
     profiles: [tls]
     image: caddy:2-alpine
     restart: unless-stopped

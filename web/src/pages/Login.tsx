@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Card, LinkButton, Logo } from '../components/ui'
 
@@ -18,6 +19,14 @@ export function LoginPage() {
           {t('login.button')}
         </LinkButton>
         <p className="mt-6 text-xs text-muted">{t('login.privacy')}</p>
+        <p className="mt-3 flex justify-center gap-4 text-xs text-muted">
+          <Link to="/terms" className="underline underline-offset-2 hover:text-fg">
+            {t('legal.terms')}
+          </Link>
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-fg">
+            {t('legal.privacy')}
+          </Link>
+        </p>
       </Card>
     </div>
   )

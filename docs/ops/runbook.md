@@ -8,10 +8,10 @@ How the hosted Niro (`niro.nithron.com`) runs and what to do when something happ
 |---|---|---|
 | `caddy` | HTTPS for `niro.nithron.com`, proxies to `api` | the internet (80, 443) |
 | `api` | Dashboard and API (`niro api`) | Caddy |
-| `bot` | The Discord bot, every shard (`niro bot`). **One replica only** | — |
-| `migrate` | Runs database migrations, then exits. `bot` and `api` wait for it | — |
+| `bot` | The Discord bot, every shard (`niro bot`). **One replica only** | not exposed |
+| `migrate` | Runs database migrations, then exits. `bot` and `api` wait for it | not exposed |
 | `postgres`, `valkey` | Data and caches | the compose network |
-| `backup`, `offsite` | Nightly dump at 03:00 UTC, copied off-site with restic at 04:00 | — |
+| `backup`, `offsite` | Nightly dump at 03:00 UTC, copied off-site with restic at 04:00 | not exposed |
 | `prometheus`, `alertmanager`, `node-exporter` | Metrics and alerts to the ops channel in the support server | the compose network |
 | `grafana` | Dashboards | `127.0.0.1:3000` on the server (SSH tunnel) |
 

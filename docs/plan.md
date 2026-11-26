@@ -200,6 +200,7 @@ Sizes are relative (S/M/L), not calendar promises.
 - **Hosted:** production deployment with TLS, monitoring and alerts.
 - **Legal and listing:** ToS, GDPR-compliant Privacy Policy, support server, Discord verification and privileged-intent applications, App Directory listing using the brand pack. User docs and changelog.
 - **Done when:** `v0.1.0` is tagged, the hosted bot is verified and live, and the self-host guide works from scratch.
+- **Status (2026-11-26):** built on the M5 branch, see [M5 plan](milestones/m5-plan.md) and [demo](milestones/m5-demo.md). Launch steps wait on hosting, legal review and Discord verification.
 
 ## 8. Roadmap after v0.1
 

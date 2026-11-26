@@ -62,6 +62,14 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <footer className="mx-auto flex max-w-5xl gap-4 px-4 pb-8 text-xs text-muted">
+        <Link to="/terms" className="hover:text-fg">
+          {t('legal.terms')}
+        </Link>
+        <Link to="/privacy" className="hover:text-fg">
+          {t('legal.privacy')}
+        </Link>
+      </footer>
     </div>
   )
 }

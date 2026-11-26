@@ -2,6 +2,8 @@
 
 *2026-11-26. Built from plan §7 (M5), plan §5 and §6, decisions 4, 14 and the notes under the decisions table, and two audits of the M0–M4 code (an ECC security pre-audit of the API and dashboard, and an operations inventory).*
 
+**Status (2026-11-26):** slices 1 to 7 are built and reviewed. Slice 8 (the `v0.1.0` tag) waits on the launch steps in [m5-demo.md](m5-demo.md) Part B.
+
 **Done when** (plan §7): `v0.1.0` is tagged, the hosted bot is verified and live, and the self-host guide works from scratch.
 
 ## 1. Where we stand
