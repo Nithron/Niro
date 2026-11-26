@@ -57,11 +57,14 @@ services:
     image: valkey/valkey:8-alpine
     restart: unless-stopped
     # Valkey holds sessions and caches only; nothing in it needs a backup.
-    command: ["sh", "-c", "exec valkey-server --requirepass \"$$VALKEY_PASSWORD\" --save '' --appendonly no"]
+    # The password goes in a config file, not on the command line, so it
+    # doesn't show in the process list.
+    command: ["sh", "-c", "umask 077 && printf 'requirepass %s\\nsave \"\"\\nappendonly no\\n' \"$$VALKEY_PASSWORD\" > /tmp/valkey.conf && exec valkey-server /tmp/valkey.conf"]
     environment:
       VALKEY_PASSWORD: ${VALKEY_PASSWORD:?set VALKEY_PASSWORD in deploy/.env}
+      REDISCLI_AUTH: ${VALKEY_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "valkey-cli -a \"$$VALKEY_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 30

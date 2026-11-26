@@ -1,13 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS",
-      "label": "Prometheus",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
   "title": "Niro",
   "uid": "niro-overview",
   "tags": [
@@ -29,7 +20,7 @@
       "title": "Servers",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -56,7 +47,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum(niro_bot_guilds)",
           "legendFormat": "servers"
@@ -69,7 +60,7 @@
       "title": "Shards connected",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 4,
@@ -96,7 +87,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum(niro_bot_shard_up)",
           "legendFormat": "up"
@@ -105,7 +96,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "count(niro_bot_shard_up)",
           "legendFormat": "total"
@@ -118,7 +109,7 @@
       "title": "Version",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 8,
@@ -145,7 +136,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "niro_build_info",
           "legendFormat": "{{version}}"
@@ -158,7 +149,7 @@
       "title": "Memory (RSS)",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -185,7 +176,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "process_resident_memory_bytes{job=\"niro\"}",
           "legendFormat": "rss"
@@ -198,7 +189,7 @@
       "title": "Goroutines",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 18,
@@ -225,7 +216,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "go_goroutines{job=\"niro\"}",
           "legendFormat": "goroutines"
@@ -238,7 +229,7 @@
       "title": "Shard status",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -263,7 +254,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "niro_bot_shard_up",
           "legendFormat": "shard {{shard}}"
@@ -276,7 +267,7 @@
       "title": "Gateway latency",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -301,7 +292,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "niro_bot_shard_latency_seconds",
           "legendFormat": "shard {{shard}}"
@@ -314,7 +305,7 @@
       "title": "Gateway events / s",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -339,7 +330,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (type) (rate(niro_bot_gateway_events_total[5m]))",
           "legendFormat": "{{type}}"
@@ -352,7 +343,7 @@
       "title": "Interactions / s and p95 time",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -377,7 +368,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (result) (rate(niro_bot_interactions_total[5m]))",
           "legendFormat": "{{result}}"
@@ -386,7 +377,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "histogram_quantile(0.95, sum by (le) (rate(niro_bot_interaction_duration_seconds_bucket[5m])))",
           "legendFormat": "p95 seconds"
@@ -399,7 +390,7 @@
       "title": "Discord REST / s by status",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -424,7 +415,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (status) (rate(niro_discord_rest_requests_total[5m]))",
           "legendFormat": "{{status}}"
@@ -437,7 +428,7 @@
       "title": "Discord 429s by route",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -462,7 +453,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (route) (rate(niro_discord_rest_requests_total{status=\"429\"}[5m]))",
           "legendFormat": "{{route}}"
@@ -475,7 +466,7 @@
       "title": "Dashboard API / s by status",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -500,7 +491,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (status) (rate(niro_api_requests_total[5m]))",
           "legendFormat": "{{status}}"
@@ -509,7 +500,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (rule) (rate(niro_api_rate_limited_total[5m]))",
           "legendFormat": "rate limited: {{rule}}"
@@ -522,7 +513,7 @@
       "title": "Database pool",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -547,7 +538,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "niro_db_pool_connections_acquired",
           "legendFormat": "in use"
@@ -556,7 +547,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "niro_db_pool_connections_max",
           "legendFormat": "max"
@@ -565,7 +556,7 @@
           "refId": "C",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "rate(niro_db_pool_acquire_wait_seconds_total[5m])",
           "legendFormat": "wait s/s"
@@ -578,7 +569,7 @@
       "title": "Time since each job last succeeded",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 0,
@@ -603,7 +594,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "time() - niro_job_last_success_timestamp_seconds",
           "legendFormat": "{{name}}"
@@ -616,7 +607,7 @@
       "title": "Guardian actions and server-log entries / s",
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "prometheus"
       },
       "gridPos": {
         "x": 12,
@@ -641,7 +632,7 @@
           "refId": "A",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (response) (rate(niro_guardian_actions_total[5m]))",
           "legendFormat": "guardian {{response}}"
@@ -650,7 +641,7 @@
           "refId": "B",
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "prometheus"
           },
           "expr": "sum by (result) (rate(niro_log_entries_total[5m]))",
           "legendFormat": "log {{result}}"

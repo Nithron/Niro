@@ -132,6 +132,13 @@ groups:
         annotations:
           summary: No successful database backup in the last 26 hours
           description: See docs/ops/backup-restore.md. Run the backup by hand and check its log.
+      - alert: NiroOffsiteCopyMissing
+        # Hosted only: written by deploy/hosted/offsite.sh.
+        expr: time() - niro_offsite_last_success_timestamp_seconds > 26 * 3600
+        labels: { severity: critical }
+        annotations:
+          summary: The database dumps have not been copied off the server for 26 hours
+          description: "Check the offsite service's log (docker compose logs offsite) and the restic repository."
       - alert: NiroBackupNeverRan
         expr: absent(niro_backup_last_success_timestamp_seconds)
         for: 26h

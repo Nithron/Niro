@@ -3,7 +3,8 @@
 ## What is backed up
 
 - **Postgres:** all of Niro's data. The `backup` service in [`deploy/compose.yml`](../../deploy/compose.yml) runs [`deploy/backup/backup.sh`](../../deploy/backup/backup.sh), which:
-  - makes a `pg_dump` in custom format every day at `BACKUP_HOUR` (UTC, default 03:00);
+  - makes a `pg_dump` in custom format when it first starts with no dump yet, then every day at `BACKUP_HOUR` (UTC, default 03:00);
+  - checks each dump (non-empty, readable by `pg_restore --list`) before publishing it. A failed run keeps every existing dump and doesn't record a success, so the alert fires;
   - writes it to `BACKUP_DIR` (default `deploy/backups/`), readable by its owner only;
   - keeps `BACKUP_KEEP_DAILY` daily dumps (7) and `BACKUP_KEEP_WEEKLY` Sunday dumps (3);
   - encrypts the dumps with [age](https://age-encryption.org) if `BACKUP_AGE_RECIPIENT` is set. Keep the private key **off** the server.

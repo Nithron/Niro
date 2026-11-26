@@ -1,0 +1,5 @@
+# niro.nithron.com: HTTPS in front of the API and dashboard.
+{$NIRO_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8080
+}

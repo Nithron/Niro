@@ -46,7 +46,9 @@ Fill in `deploy/.env`:
 
 - `NIRO_DISCORD_TOKEN`, `NIRO_DISCORD_CLIENT_ID`, `NIRO_DISCORD_CLIENT_SECRET`: from step 1.
 - `NIRO_PUBLIC_URL` (for example `https://niro.example.com`) and `NIRO_DOMAIN` (`niro.example.com`).
-- `POSTGRES_PASSWORD` and `VALKEY_PASSWORD`: long random values. `openssl rand -hex 32` makes one.
+- `POSTGRES_PASSWORD` and `VALKEY_PASSWORD`: long random values made of letters and digits. `openssl rand -hex 32` makes one. Characters such as `@ : / ? #` would break the database URL.
+
+The compose network uses `172.31.250.0/24`. If your server already uses that range, change the `subnet` and `NIRO_TRUSTED_PROXIES` in `deploy/compose.yml` to match.
 
 ## 4. Start
 
@@ -76,6 +78,7 @@ Open `https://<your domain>`, log in with Discord, and click **Add Niro** next t
 - **Health:** `docker run --rm --network niro_niro curlimages/curl -s niro:9090/readyz`. It answers `"ready":true` when Postgres, Valkey and every gateway shard are fine.
 - **Logs:** `docker compose -f deploy/compose.yml logs -f niro` (JSON).
 - **Metrics:** Prometheus can scrape `niro:9090/metrics` on the compose network. Alert rules, an Alertmanager config and a Grafana dashboard are in [`deploy/monitoring/`](../deploy/monitoring/).
+- **Backup alerts:** these need node_exporter to read the `backup-metrics` volume as its textfile directory (`--collector.textfile.directory`). [`deploy/hosted/compose.yml`](../deploy/hosted/compose.yml) shows the full setup.
 
 ## Updating
 
@@ -91,7 +94,7 @@ Database migrations run automatically when Niro starts. Read the [changelog](../
 
 The `backup` service:
 
-- dumps the database every night at 03:00 UTC to `deploy/backups/`;
+- dumps the database when it first starts, then every night at 03:00 UTC, to `deploy/backups/`;
 - keeps 7 daily and 3 weekly copies;
 - can encrypt the dumps.
 
