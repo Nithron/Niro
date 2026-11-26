@@ -579,6 +579,8 @@
     "anyone": "Everyone",
     "message": "Message",
     "menuPlaceholder": "Pick your roles",
-    "saveAndPost": "Save and post"
+    "saveAndPost": "Save and post",
+    "unavailable": "not allowed",
+    "unsafeRoles": "Remove {{list}}: Niro no longer hands out these roles (managed or with dangerous permissions)."
   }
 }

@@ -75,19 +75,9 @@ func fromAPIPanel(gid snowflake.ID, a apigen.RolePanel) (roles.Panel, error) {
 
 func panelError(err error) error {
 	if errors.Is(err, roles.ErrInvalid) {
-		return httpErr(http.StatusBadRequest, apigen.ErrorCodeBadRequest, trimPrefix(err.Error())+".")
+		return httpErr(http.StatusBadRequest, apigen.ErrorCodeBadRequest, dc.ValidationMessage(err)+".")
 	}
 	return err
-}
-
-// trimPrefix drops the "invalid …: " wrapper from a validation error.
-func trimPrefix(msg string) string {
-	for i := 0; i+1 < len(msg); i++ {
-		if msg[i] == ':' && msg[i+1] == ' ' {
-			return msg[i+2:]
-		}
-	}
-	return msg
 }
 
 // checkPanelRefs gives quick feedback with the cached server data; the bot

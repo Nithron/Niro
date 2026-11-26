@@ -255,18 +255,49 @@ func checkURL(raw string, schemes ...string) error {
 	return nil
 }
 
-// IsEmoji reports whether s looks like one Unicode emoji (possibly with
-// modifiers and joiners): no letters, digits, spaces or markup.
+// IsEmoji reports whether s is one Unicode emoji, possibly with skin-tone
+// modifiers, variation selectors, joiners (family, profession emoji), tag
+// sequences (flags of regions) or a keycap. Discord rejects anything else.
 func IsEmoji(s string) bool {
 	if s == "" || utf8.RuneCountInString(s) > 16 {
 		return false
 	}
-	for _, r := range s {
-		if r < 0x2000 && r != 0x00A9 && r != 0x00AE && r != '#' && r != '*' && !(r >= '0' && r <= '9') {
+	runes := []rune(s)
+	// Keycaps: 0-9, # or *, an optional variation selector, then U+20E3.
+	if r := runes[0]; (r >= '0' && r <= '9') || r == '#' || r == '*' {
+		rest := runes[1:]
+		if len(rest) > 0 && rest[0] == 0xFE0F {
+			rest = rest[1:]
+		}
+		return len(rest) == 1 && rest[0] == 0x20E3
+	}
+	pictographs := 0
+	for _, r := range runes {
+		switch {
+		case isPictograph(r):
+			pictographs++
+		case r == 0x200D, r == 0xFE0F, r == 0xFE0E, r >= 0xE0020 && r <= 0xE007F:
+			// joiner, variation selectors, tags
+		default:
 			return false
 		}
 	}
-	return true
+	return pictographs > 0
+}
+
+func isPictograph(r rune) bool {
+	switch {
+	case r >= 0x1F000 && r <= 0x1FAFF: // emoji blocks, incl. skin tones and regional indicators
+		return true
+	case r >= 0x2600 && r <= 0x27BF, r >= 0x2300 && r <= 0x23FF, r >= 0x2B00 && r <= 0x2BFF,
+		r >= 0x2190 && r <= 0x21FF, r >= 0x25A0 && r <= 0x25FF, r >= 0x2934 && r <= 0x2935:
+		return true
+	}
+	switch r {
+	case 0x00A9, 0x00AE, 0x203C, 0x2049, 0x2122, 0x2139, 0x24C2, 0x3030, 0x303D, 0x3297, 0x3299:
+		return true
+	}
+	return false
 }
 
 // ---- variables -----------------------------------------------------------------

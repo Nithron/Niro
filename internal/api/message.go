@@ -3,10 +3,10 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/nithron/niro/internal/api/apigen"
 	"github.com/nithron/niro/internal/core/message"
+	dc "github.com/nithron/niro/internal/platform/discord"
 )
 
 func toAPIDocument(d message.Document) apigen.MessageDocument {
@@ -87,11 +87,7 @@ func fromAPIDocument(a apigen.MessageDocument, reserve message.Budget) (message.
 
 func documentError(err error) error {
 	if errors.Is(err, message.ErrInvalid) {
-		msg := err.Error()
-		if i := strings.Index(msg, ": "); i >= 0 {
-			msg = msg[i+2:]
-		}
-		return httpErr(http.StatusBadRequest, apigen.ErrorCodeBadRequest, "Message: "+msg+".")
+		return httpErr(http.StatusBadRequest, apigen.ErrorCodeBadRequest, "Message: "+dc.ValidationMessage(err)+".")
 	}
 	return err
 }

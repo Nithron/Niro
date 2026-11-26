@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -281,9 +282,11 @@ func (p Panel) Press(member []snowflake.ID, roleID snowflake.ID) (Change, error)
 	}
 }
 
-// Choose is a select-menu submission: chosen are the panel roles the member
-// wants; the menu replaces their panel roles with exactly these (verify mode
-// only adds).
+// Choose is a select-menu submission. A panel's menu is one public message
+// that can't show which roles each member already has, so picking works
+// like pressing the buttons: each picked role is toggled (added if missing,
+// removed if held; verify mode only adds), and roles not picked are left
+// alone. In unique mode one pick swaps the member's panel role.
 func (p Panel) Choose(member, chosen []snowflake.ID) (Change, error) {
 	if err := p.canUse(member); err != nil {
 		return Change{}, err
@@ -293,18 +296,27 @@ func (p Panel) Choose(member, chosen []snowflake.ID) (Change, error) {
 			return Change{}, ErrNotOnPanel
 		}
 	}
-	if (p.Mode == ModeUnique && len(chosen) > 1) || (p.MaxRoles > 0 && len(chosen) > p.MaxRoles) {
-		return Change{}, ErrTooManyPicked
+	if p.Mode == ModeUnique {
+		if len(chosen) > 1 {
+			return Change{}, ErrTooManyPicked
+		}
+		if len(chosen) == 0 {
+			return Change{}, nil
+		}
+		return p.Press(member, chosen[0])
 	}
 	var c Change
-	for _, id := range p.RoleIDs() {
-		want, has := slices.Contains(chosen, id), slices.Contains(member, id)
+	for _, id := range chosen {
+		has := slices.Contains(member, id)
 		switch {
-		case want && !has:
+		case !has:
 			c.Add = append(c.Add, id)
-		case !want && has && p.Mode != ModeVerify:
+		case p.Mode != ModeVerify:
 			c.Remove = append(c.Remove, id)
 		}
+	}
+	if p.MaxRoles > 0 && len(p.held(member))+len(c.Add)-len(c.Remove) > p.MaxRoles {
+		return Change{}, ErrLimitReached
 	}
 	return c, nil
 }
@@ -337,7 +349,6 @@ type Store interface {
 type Platform interface {
 	Roles(ctx context.Context, guildID snowflake.ID) ([]RoleInfo, error)
 	BotTopPosition(ctx context.Context, guildID snowflake.ID) (int, error)
-	MemberRoles(ctx context.Context, guildID, userID snowflake.ID) ([]snowflake.ID, error)
 	AddRole(ctx context.Context, guildID, userID, roleID snowflake.ID, reason string) error
 	RemoveRole(ctx context.Context, guildID, userID, roleID snowflake.ID, reason string) error
 	// PostPanel posts the panel and returns the message ID.
@@ -362,14 +373,69 @@ type Deps struct {
 	// Enabled reports whether the module is on in a server.
 	Enabled func(ctx context.Context, guildID snowflake.ID) (bool, error)
 	// VerifyGate checks Guardian's minimum account age for verify-mode
-	// panels; ok is false (with when it becomes old enough) if too new.
-	VerifyGate func(ctx context.Context, guildID, userID snowflake.ID) (ok bool, when time.Time)
+	// panels; ok is false (with when it becomes old enough) if too new. An
+	// error denies the pick (the gate fails closed).
+	VerifyGate func(ctx context.Context, guildID, userID snowflake.ID) (ok bool, when time.Time, err error)
+	Now        func() time.Time
 }
 
 // Service manages panels and picks.
-type Service struct{ d Deps }
+type Service struct {
+	d Deps
+	// locks serialise picks per member, so two quick clicks can't both read
+	// the same roles (a unique panel would end with two roles).
+	locks sync.Map // [2]snowflake.ID -> *sync.Mutex
+	// recent remembers a member's roles right after a pick: the next click's
+	// interaction may still carry the roles from before it.
+	recentMu sync.Mutex
+	recent   map[[2]snowflake.ID]recentRoles
+}
 
-func NewService(d Deps) *Service { return &Service{d: d} }
+type recentRoles struct {
+	roles []snowflake.ID
+	at    time.Time
+}
+
+// recentTTL: interactions carry the member's roles; after a pick they can
+// lag a moment behind what Niro just changed.
+const recentTTL = 10 * time.Second
+
+func NewService(d Deps) *Service {
+	if d.Now == nil {
+		d.Now = time.Now
+	}
+	return &Service{d: d, recent: map[[2]snowflake.ID]recentRoles{}}
+}
+
+func (s *Service) lock(guildID, userID snowflake.ID) func() {
+	mu, _ := s.locks.LoadOrStore([2]snowflake.ID{guildID, userID}, &sync.Mutex{})
+	m := mu.(*sync.Mutex)
+	m.Lock()
+	return m.Unlock
+}
+
+func (s *Service) memberRoles(guildID, userID snowflake.ID, fromInteraction []snowflake.ID) []snowflake.ID {
+	s.recentMu.Lock()
+	defer s.recentMu.Unlock()
+	k := [2]snowflake.ID{guildID, userID}
+	if r, ok := s.recent[k]; ok && s.d.Now().Sub(r.at) < recentTTL {
+		return slices.Clone(r.roles)
+	}
+	delete(s.recent, k)
+	return slices.Clone(fromInteraction)
+}
+
+func (s *Service) remember(guildID, userID snowflake.ID, roles []snowflake.ID) {
+	s.recentMu.Lock()
+	defer s.recentMu.Unlock()
+	now := s.d.Now()
+	for k, r := range s.recent {
+		if now.Sub(r.at) >= recentTTL {
+			delete(s.recent, k)
+		}
+	}
+	s.recent[[2]snowflake.ID{guildID, userID}] = recentRoles{roles: roles, at: now}
+}
 
 func (s *Service) checkRoles(ctx context.Context, p Panel) error {
 	roles, err := s.d.Platform.Roles(ctx, p.GuildID)
@@ -412,6 +478,14 @@ func (s *Service) Save(ctx context.Context, p Panel) (Panel, error) {
 		if err != nil {
 			return Panel{}, err
 		}
+		posted, err := s.publish(ctx, saved)
+		if err != nil {
+			// Don't keep a panel that was never posted: the dashboard would
+			// create another one on retry.
+			_ = s.d.Store.DeletePanel(ctx, p.GuildID, saved.ID)
+			return Panel{}, err
+		}
+		return posted, nil
 	} else {
 		old, err := s.d.Store.GetPanel(ctx, p.GuildID, p.ID)
 		if err != nil {
@@ -421,6 +495,9 @@ func (s *Service) Save(ctx context.Context, p Panel) (Panel, error) {
 		if old.ChannelID != p.ChannelID && old.MessageID != 0 {
 			_ = s.d.Platform.DeleteMessage(ctx, old.ChannelID, old.MessageID) // moved: the old message goes
 			p.MessageID = 0
+			if err := s.d.Store.SetPanelMessage(ctx, p.GuildID, p.ID, old.ChannelID, 0); err != nil {
+				return Panel{}, err
+			}
 		}
 		if saved, err = s.d.Store.UpdatePanel(ctx, p); err != nil {
 			return Panel{}, err
@@ -468,21 +545,29 @@ type Result struct {
 	Failed []*RoleError
 }
 
+// Picker is who is picking: the member and the roles the interaction says
+// they have (fresher than any cache).
+type Picker struct {
+	UserID  snowflake.ID
+	RoleIDs []snowflake.ID
+}
+
 // PressButton handles a button press.
-func (s *Service) PressButton(ctx context.Context, guildID snowflake.ID, panelID int64, userID, roleID snowflake.ID) (Result, error) {
-	return s.pick(ctx, guildID, panelID, userID, func(p Panel, member []snowflake.ID) (Change, error) {
+func (s *Service) PressButton(ctx context.Context, guildID snowflake.ID, panelID int64, who Picker, roleID snowflake.ID) (Result, error) {
+	return s.pick(ctx, guildID, panelID, who, func(p Panel, member []snowflake.ID) (Change, error) {
 		return p.Press(member, roleID)
 	})
 }
 
 // ChooseMenu handles a select-menu submission.
-func (s *Service) ChooseMenu(ctx context.Context, guildID snowflake.ID, panelID int64, userID snowflake.ID, chosen []snowflake.ID) (Result, error) {
-	return s.pick(ctx, guildID, panelID, userID, func(p Panel, member []snowflake.ID) (Change, error) {
+func (s *Service) ChooseMenu(ctx context.Context, guildID snowflake.ID, panelID int64, who Picker, chosen []snowflake.ID) (Result, error) {
+	return s.pick(ctx, guildID, panelID, who, func(p Panel, member []snowflake.ID) (Change, error) {
 		return p.Choose(member, chosen)
 	})
 }
 
-func (s *Service) pick(ctx context.Context, guildID snowflake.ID, panelID int64, userID snowflake.ID, decide func(Panel, []snowflake.ID) (Change, error)) (Result, error) {
+func (s *Service) pick(ctx context.Context, guildID snowflake.ID, panelID int64, who Picker, decide func(Panel, []snowflake.ID) (Change, error)) (Result, error) {
+	userID := who.UserID
 	on, err := s.d.Enabled(ctx, guildID)
 	if err != nil {
 		return Result{}, err
@@ -494,16 +579,19 @@ func (s *Service) pick(ctx context.Context, guildID snowflake.ID, panelID int64,
 	if err != nil {
 		return Result{}, err
 	}
-	member, err := s.d.Platform.MemberRoles(ctx, guildID, userID)
-	if err != nil {
-		return Result{}, err
-	}
+	unlock := s.lock(guildID, userID)
+	defer unlock()
+	member := s.memberRoles(guildID, userID, who.RoleIDs)
 	c, err := decide(p, member)
 	if err != nil || c.Empty() {
 		return Result{}, err
 	}
 	if p.Mode == ModeVerify && len(c.Add) > 0 && s.d.VerifyGate != nil {
-		if ok, when := s.d.VerifyGate(ctx, guildID, userID); !ok {
+		ok, when, err := s.d.VerifyGate(ctx, guildID, userID)
+		if err != nil {
+			return Result{}, fmt.Errorf("checking the verification gate: %w", err)
+		}
+		if !ok {
 			return Result{}, &TooNewError{When: when}
 		}
 	}
@@ -519,26 +607,41 @@ func (s *Service) pick(ctx context.Context, guildID snowflake.ID, panelID int64,
 	}
 	var res Result
 	reason := fmt.Sprintf("Role panel: %s", p.Name)
-	for _, id := range c.Remove {
-		if err := CheckRole(id, roles, top); err != nil {
-			res.Failed = append(res.Failed, err.(*RoleError))
-			continue
+	fail := func(id snowflake.ID, err error) {
+		var re *RoleError
+		if !errors.As(err, &re) {
+			re = &RoleError{RoleID: id, Err: err}
 		}
-		if err := s.d.Platform.RemoveRole(ctx, guildID, userID, id, reason); err != nil {
-			return res, err
-		}
-		res.Removed = append(res.Removed, id)
+		res.Failed = append(res.Failed, re)
 	}
+	// Add first: if adding fails, a unique-mode swap keeps the old role
+	// instead of leaving the member with none.
 	for _, id := range c.Add {
 		if err := CheckRole(id, roles, top); err != nil {
-			res.Failed = append(res.Failed, err.(*RoleError))
+			fail(id, err)
 			continue
 		}
 		if err := s.d.Platform.AddRole(ctx, guildID, userID, id, reason); err != nil {
-			return res, err
+			fail(id, err)
+			continue
 		}
 		res.Added = append(res.Added, id)
 	}
+	if p.Mode != ModeUnique || len(c.Add) == 0 || len(res.Added) > 0 {
+		for _, id := range c.Remove {
+			if err := CheckRole(id, roles, top); err != nil {
+				fail(id, err)
+				continue
+			}
+			if err := s.d.Platform.RemoveRole(ctx, guildID, userID, id, reason); err != nil {
+				fail(id, err)
+				continue
+			}
+			res.Removed = append(res.Removed, id)
+		}
+	}
+	after := slices.DeleteFunc(slices.Clone(member), func(id snowflake.ID) bool { return slices.Contains(res.Removed, id) })
+	s.remember(guildID, userID, append(after, res.Added...))
 	return res, nil
 }
 

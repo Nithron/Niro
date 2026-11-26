@@ -93,7 +93,11 @@ func TestRenderVariables(t *testing.T) {
 }
 
 func TestIsEmoji(t *testing.T) {
-	for s, want := range map[string]bool{"🎨": true, "👩‍💻": true, "❤️": true, "a": false, "": false, ":x:": false, "<:a:1>": false, "🎨 art": false} {
+	for s, want := range map[string]bool{
+		"🎨": true, "👩‍💻": true, "❤️": true, "👍🏽": true, "🇳🇱": true, "1️⃣": true, "#⃣": true, "©️": true,
+		"a": false, "": false, ":x:": false, "<:a:1>": false, "🎨 art": false, "漢": false, "Ａ": false, "Ⅷ": false,
+		string(rune(0x200b)): false, "1": false, "🎨" + string(rune(0x301)): false,
+	} {
 		if IsEmoji(s) != want {
 			t.Errorf("IsEmoji(%q) = %v", s, !want)
 		}

@@ -15,6 +15,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/nithron/niro/internal/core"
+	"github.com/nithron/niro/internal/core/message"
 	"github.com/nithron/niro/internal/i18n"
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/roles"
@@ -57,6 +58,8 @@ func roleInfo(guildID snowflake.ID, r discord.Role) roles.RoleInfo {
 	}
 }
 
+// BotTopPosition is the position of Niro's highest role, from the same
+// role data as Roles (cache, or REST when the cache is cold).
 func (rp rolesPlatform) BotTopPosition(ctx context.Context, guildID snowflake.ID) (int, error) {
 	self, ok := rp.client.Caches.SelfUser()
 	if !ok {
@@ -66,7 +69,17 @@ func (rp rolesPlatform) BotTopPosition(ctx context.Context, guildID snowflake.ID
 	if err != nil {
 		return 0, err
 	}
-	return rankOf(rp.client, guildID, self.ID, roleIDs).TopRolePosition, nil
+	list, err := rp.Roles(ctx, guildID)
+	if err != nil {
+		return 0, err
+	}
+	top := 0
+	for _, r := range list {
+		if slices.Contains(roleIDs, r.ID) && r.Position > top {
+			top = r.Position
+		}
+	}
+	return top, nil
 }
 
 func (rp rolesPlatform) MemberRoles(ctx context.Context, guildID, userID snowflake.ID) ([]snowflake.ID, error) {
@@ -226,7 +239,7 @@ func (b *Bot) handleRoleButton(_ discord.ButtonInteractionData, e *handler.Compo
 	if err := e.DeferCreateMessage(true); err != nil {
 		return err
 	}
-	res, err := b.roles.PressButton(e.Ctx, *gid, panelID, m.User.ID, roleID)
+	res, err := b.roles.PressButton(e.Ctx, *gid, panelID, roles.Picker{UserID: m.User.ID, RoleIDs: m.RoleIDs}, roleID)
 	return b.finishPick(e, res, err)
 }
 
@@ -248,7 +261,7 @@ func (b *Bot) handleRoleMenu(data discord.SelectMenuInteractionData, e *handler.
 	if err := e.DeferCreateMessage(true); err != nil {
 		return err
 	}
-	res, err := b.roles.ChooseMenu(e.Ctx, *gid, panelID, m.User.ID, chosen)
+	res, err := b.roles.ChooseMenu(e.Ctx, *gid, panelID, roles.Picker{UserID: m.User.ID, RoleIDs: m.RoleIDs}, chosen)
 	return b.finishPick(e, res, err)
 }
 
@@ -281,16 +294,21 @@ func isPickError(err error) bool {
 }
 
 // verifyGate applies Guardian's minimum account age to verify-mode panels.
-func (b *Bot) verifyGate(ctx context.Context, guildID, userID snowflake.ID) (bool, time.Time) {
+// Errors are returned so the pick is refused (the gate fails closed).
+func (b *Bot) verifyGate(ctx context.Context, guildID, userID snowflake.ID) (bool, time.Time, error) {
 	on, err := b.deps.Config.IsEnabled(ctx, guildID, core.ModuleGuardian)
-	if err != nil || !on {
-		return true, time.Time{}
+	if err != nil {
+		return false, time.Time{}, err
+	}
+	if !on {
+		return true, time.Time{}, nil
 	}
 	s, err := guardian.LoadSettings(ctx, b.deps.Config, guildID)
 	if err != nil {
-		return true, time.Time{}
+		return false, time.Time{}, err
 	}
-	return guardian.CanVerify(s, userID, time.Now())
+	ok, when := guardian.CanVerify(s, userID, time.Now())
+	return ok, when, nil
 }
 
 // ---- RPC --------------------------------------------------------------------
@@ -337,13 +355,20 @@ func rolesRPCError(err error) error {
 	case errors.As(err, &re):
 		return rpc.Errorf(rpc.CodeInvalid, "%s", re.Error())
 	case errors.Is(err, roles.ErrInvalid):
-		msg := err.Error()
-		if i := strings.LastIndex(msg, ": "); i >= 0 {
-			msg = msg[i+2:]
-		}
-		return rpc.Errorf(rpc.CodeInvalid, "%s", msg)
+		return rpc.Errorf(rpc.CodeInvalid, "%s", ValidationMessage(err))
 	case errors.Is(err, roles.ErrTooManyPanel):
 		return rpc.Errorf(rpc.CodeInvalid, "a server can have at most %d role panels", roles.MaxPanels)
 	}
 	return discordRPCError(err)
+}
+
+// ValidationMessage strips the "invalid …: " prefixes of Niro's validation
+// errors (role panels, messages), keeping the useful detail ("role 3:
+// choose a role"). Shared with the API so both say the same thing.
+func ValidationMessage(err error) string {
+	msg := err.Error()
+	for _, prefix := range []string{roles.ErrInvalid.Error() + ": ", message.ErrInvalid.Error() + ": "} {
+		msg = strings.TrimPrefix(msg, prefix)
+	}
+	return msg
 }

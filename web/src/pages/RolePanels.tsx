@@ -93,7 +93,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
   const meta = useGuildMeta(guildId)
   const save = useSaveRolePanel(guildId)
   const [p, setP] = useState<RolePanel>(initial)
-  const set = <K extends keyof RolePanel>(k: K, v: RolePanel[K]) => setP({ ...p, [k]: v })
+  const set = <K extends keyof RolePanel>(k: K, v: RolePanel[K]) => setP((prev) => ({ ...prev, [k]: v }))
 
   const textChannels = (meta.data?.channels ?? []).filter((c) => c.type === 'text' || c.type === 'announcement')
   const allRoles = (meta.data?.roles ?? []).filter((r) => r.id !== guildId).sort((a, b) => b.position - a.position)
@@ -102,13 +102,25 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
   const roleName = (id: string) => allRoles.find((r) => r.id === id)?.name ?? id
   const reserved = reservedParts(p)
   const tooBig = componentCount(p.message) + reserved > limits.components
-  const ready = p.name.trim() !== '' && p.channelId !== '0' && p.roles.length > 0 && p.roles.every((r) => r.roleId !== '0') && !tooBig
+  const roleIds = p.roles.map((r) => r.roleId)
+  const unsafe = p.roles.filter((r) => blocked.some((b) => b.id === r.roleId))
+  const ready =
+    p.name.trim() !== '' &&
+    p.channelId !== '0' &&
+    p.roles.length > 0 &&
+    p.roles.every((r) => r.roleId !== '0') &&
+    new Set(roleIds).size === roleIds.length &&
+    unsafe.length === 0 &&
+    p.maxRoles <= p.roles.length &&
+    !tooBig
 
   const setRole = (i: number, patch: Partial<RolePanel['roles'][number]>) =>
-    set(
-      'roles',
-      p.roles.map((r, j) => (j === i ? { ...r, ...patch } : r)),
-    )
+    setP((prev) => ({ ...prev, roles: prev.roles.map((r, j) => (j === i ? { ...r, ...patch } : r)) }))
+  const removeRole = (i: number) =>
+    setP((prev) => {
+      const next = prev.roles.filter((_, j) => j !== i)
+      return { ...prev, roles: next, maxRoles: Math.min(prev.maxRoles, next.length) }
+    })
 
   const controls =
     p.style === 'select' ? (
@@ -167,10 +179,15 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
                     @{role.name}
                   </option>
                 ))}
+                {r.roleId !== '0' && !assignable.some((role) => role.id === r.roleId) && (
+                  <option value={r.roleId} disabled>
+                    @{roleName(r.roleId)} ({t('rolePanels.unavailable')})
+                  </option>
+                )}
               </Select>
               <TextInput aria-label={t('rolePanels.labelN', { n: i + 1 })} placeholder={t('rolePanels.label')} value={r.label} maxLength={80} onChange={(e) => setRole(i, { label: e.target.value })} />
               <TextInput aria-label={t('rolePanels.emojiN', { n: i + 1 })} placeholder="🎨" value={r.emoji ?? ''} onChange={(e) => setRole(i, { emoji: e.target.value || undefined })} />
-              <Button type="button" variant="secondary" onClick={() => set('roles', p.roles.filter((_, j) => j !== i))}>
+              <Button type="button" variant="secondary" onClick={() => removeRole(i)}>
                 {t('builder.remove')}
               </Button>
               {p.style === 'select' && (
@@ -186,10 +203,11 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
             </div>
           ))}
           {p.roles.length < MAX_ROLES && (
-            <Button type="button" variant="secondary" onClick={() => set('roles', [...p.roles, { roleId: '0', label: '' }])}>
+            <Button type="button" variant="secondary" onClick={() => setP((prev) => ({ ...prev, roles: [...prev.roles, { roleId: '0', label: '' }] }))}>
               {t('rolePanels.addRole')}
             </Button>
           )}
+          {unsafe.length > 0 && <p className="text-sm text-danger">{t('rolePanels.unsafeRoles', { list: unsafe.map((r) => '@' + roleName(r.roleId)).join(', ') })}</p>}
           {blocked.length > 0 && <p className="text-xs text-muted">{t('rolePanels.blockedRoles', { list: blocked.map((r) => '@' + r.name).join(', ') })}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {p.mode === 'toggle' && (

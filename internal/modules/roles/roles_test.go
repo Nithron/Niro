@@ -135,9 +135,14 @@ func TestPress(t *testing.T) {
 func TestChoose(t *testing.T) {
 	p := panel(ModeToggle, red, blue, green)
 	p.Style = StyleSelect
-	c, err := p.Choose([]snowflake.ID{red, vip}, []snowflake.ID{blue, green})
-	if err != nil || !slices.Equal(c.Add, []snowflake.ID{blue, green}) || !slices.Equal(c.Remove, []snowflake.ID{red}) {
+	// Picked roles toggle; roles not picked (red) are left alone.
+	c, err := p.Choose([]snowflake.ID{red, blue, vip}, []snowflake.ID{blue, green})
+	if err != nil || !slices.Equal(c.Add, []snowflake.ID{green}) || !slices.Equal(c.Remove, []snowflake.ID{blue}) {
 		t.Errorf("toggle menu: %+v %v", c, err)
+	}
+	p.MaxRoles = 2
+	if _, err := p.Choose([]snowflake.ID{red, blue}, []snowflake.ID{green}); !errors.Is(err, ErrLimitReached) {
+		t.Errorf("menu over the limit: %v", err)
 	}
 	if _, err := p.Choose(nil, []snowflake.ID{vip}); !errors.Is(err, ErrNotOnPanel) {
 		t.Errorf("forged option: %v", err)
@@ -145,6 +150,9 @@ func TestChoose(t *testing.T) {
 	u := panel(ModeUnique, red, blue)
 	if _, err := u.Choose(nil, []snowflake.ID{red, blue}); !errors.Is(err, ErrTooManyPicked) || u.MaxPicks() != 1 {
 		t.Errorf("unique menu: %v", err)
+	}
+	if c, _ := u.Choose([]snowflake.ID{red}, []snowflake.ID{blue}); !slices.Equal(c.Add, []snowflake.ID{blue}) || !slices.Equal(c.Remove, []snowflake.ID{red}) {
+		t.Errorf("unique menu swap: %+v", c)
 	}
 	v := panel(ModeVerify, red, blue)
 	if c, _ := v.Choose([]snowflake.ID{red}, nil); !c.Empty() {
@@ -232,15 +240,16 @@ type fakePlatform struct {
 	gone     bool
 	nextMsg  snowflake.ID
 	addedLog []snowflake.ID
+	addErr   error
+	postErr  error
 }
 
 func (f *fakePlatform) Roles(context.Context, snowflake.ID) ([]RoleInfo, error)   { return f.roles, nil }
 func (f *fakePlatform) BotTopPosition(context.Context, snowflake.ID) (int, error) { return f.top, nil }
-func (f *fakePlatform) MemberRoles(context.Context, snowflake.ID, snowflake.ID) ([]snowflake.ID, error) {
-	return slices.Clone(f.member), nil
-}
-
 func (f *fakePlatform) AddRole(_ context.Context, _, _, r snowflake.ID, _ string) error {
+	if f.addErr != nil {
+		return f.addErr
+	}
 	f.member = append(f.member, r)
 	f.addedLog = append(f.addedLog, r)
 	return nil
@@ -252,6 +261,9 @@ func (f *fakePlatform) RemoveRole(_ context.Context, _, _, r snowflake.ID, _ str
 }
 
 func (f *fakePlatform) PostPanel(context.Context, Panel) (snowflake.ID, error) {
+	if f.postErr != nil {
+		return 0, f.postErr
+	}
 	f.posted++
 	f.nextMsg++
 	return 500 + f.nextMsg, nil
@@ -340,40 +352,83 @@ func TestPicksRecheckRoles(t *testing.T) {
 	ctx := context.Background()
 	svc, _, pf := newService(t)
 	p, _ := svc.Save(ctx, panel(ModeToggle, red, blue))
-	res, err := svc.PressButton(ctx, guild, p.ID, user, red)
+	res, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: pf.member}, red)
 	if err != nil || !slices.Equal(res.Added, []snowflake.ID{red}) {
 		t.Fatalf("press: %+v %v", res, err)
 	}
 	// Someone gave Blue the Administrator permission after the panel was saved.
 	pf.roles[1].Dangerous = []string{"administrator"}
-	res, err = svc.PressButton(ctx, guild, p.ID, user, blue)
+	res, err = svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: pf.member}, blue)
 	if err != nil || len(res.Added) != 0 || len(res.Failed) != 1 || !errors.Is(res.Failed[0], ErrRoleDangerous) {
 		t.Errorf("dangerous now: %+v %v", res, err)
 	}
 	if slices.Contains(pf.member, blue) {
 		t.Error("dangerous role was given")
 	}
-	res, err = svc.ChooseMenu(ctx, guild, p.ID, user, nil)
+	res, err = svc.ChooseMenu(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: pf.member}, []snowflake.ID{red})
 	if err != nil || !slices.Equal(res.Removed, []snowflake.ID{red}) {
-		t.Errorf("menu clear: %+v %v", res, err)
+		t.Errorf("menu toggle off: %+v %v", res, err)
+	}
+}
+
+func TestQuickClicksSeeTheirOwnChanges(t *testing.T) {
+	ctx := context.Background()
+	svc, _, pf := newService(t)
+	p, _ := svc.Save(ctx, panel(ModeUnique, red, blue))
+	stale := []snowflake.ID{} // both interactions were created before either click was handled
+	if _, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: stale}, red); err != nil {
+		t.Fatal(err)
+	}
+	res, _ := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: stale}, blue)
+	if !slices.Equal(res.Removed, []snowflake.ID{red}) || slices.Contains(pf.member, red) {
+		t.Errorf("second click ignored the first: %+v, member %v", res, pf.member)
+	}
+}
+
+func TestFailedAddKeepsTheOldRole(t *testing.T) {
+	ctx := context.Background()
+	svc, _, pf := newService(t)
+	p, _ := svc.Save(ctx, panel(ModeUnique, red, blue))
+	pf.member = []snowflake.ID{red}
+	pf.addErr = errors.New("missing permissions")
+	res, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: pf.member}, blue)
+	if err != nil || len(res.Failed) != 1 || len(res.Removed) != 0 || !slices.Contains(pf.member, red) {
+		t.Errorf("swap with a failing add: %+v %v, member %v", res, err, pf.member)
+	}
+}
+
+func TestFailedPostLeavesNoPanel(t *testing.T) {
+	svc, st, pf := newService(t)
+	pf.postErr = errors.New("missing access")
+	if _, err := svc.Save(context.Background(), panel(ModeToggle, red)); err == nil {
+		t.Fatal("save succeeded")
+	}
+	if len(st.panels) != 0 {
+		t.Errorf("an unposted panel was kept: %v", st.panels)
 	}
 }
 
 func TestVerifyGateAndModuleOff(t *testing.T) {
 	ctx := context.Background()
-	svc, _, _ := newService(t)
+	svc, _, pf := newService(t)
 	p, _ := svc.Save(ctx, panel(ModeVerify, red))
 	when := time.Now().Add(time.Hour)
-	svc.d.VerifyGate = func(context.Context, snowflake.ID, snowflake.ID) (bool, time.Time) { return false, when }
+	svc.d.VerifyGate = func(context.Context, snowflake.ID, snowflake.ID) (bool, time.Time, error) { return false, when, nil }
 	var tn *TooNewError
-	if _, err := svc.PressButton(ctx, guild, p.ID, user, red); !errors.As(err, &tn) || !tn.When.Equal(when) {
+	if _, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user}, red); !errors.As(err, &tn) || !tn.When.Equal(when) {
 		t.Errorf("gate: %v", err)
 	}
-	if _, err := svc.PressButton(ctx, 999, p.ID, user, red); !errors.Is(err, ErrNotFound) {
+	svc.d.VerifyGate = func(context.Context, snowflake.ID, snowflake.ID) (bool, time.Time, error) {
+		return true, time.Time{}, errors.New("database down")
+	}
+	if _, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user}, red); err == nil {
+		t.Error("the gate failed open")
+	}
+	if _, err := svc.PressButton(ctx, 999, p.ID, Picker{UserID: user}, red); !errors.Is(err, ErrNotFound) {
 		t.Errorf("another server's panel: %v", err)
 	}
 	svc.d.Enabled = func(context.Context, snowflake.ID) (bool, error) { return false, nil }
-	if _, err := svc.PressButton(ctx, guild, p.ID, user, red); !errors.Is(err, ErrModuleOff) {
+	if _, err := svc.PressButton(ctx, guild, p.ID, Picker{UserID: user, RoleIDs: pf.member}, red); !errors.Is(err, ErrModuleOff) {
 		t.Errorf("module off: %v", err)
 	}
 }
