@@ -19,6 +19,7 @@ import (
 	"github.com/nithron/niro/internal/i18n"
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/roles"
+	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/rpc"
 )
 
@@ -367,7 +368,7 @@ func rolesRPCError(err error) error {
 // choose a role"). Shared with the API so both say the same thing.
 func ValidationMessage(err error) string {
 	msg := err.Error()
-	for _, prefix := range []string{roles.ErrInvalid.Error() + ": ", message.ErrInvalid.Error() + ": "} {
+	for _, prefix := range []string{roles.ErrInvalid.Error() + ": ", tickets.ErrInvalid.Error() + ": ", message.ErrInvalid.Error() + ": "} {
 		msg = strings.TrimPrefix(msg, prefix)
 	}
 	return msg

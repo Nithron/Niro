@@ -34,6 +34,7 @@ import (
 	"github.com/nithron/niro/internal/modules/guardian"
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
+	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/modules/welcome"
 	"github.com/nithron/niro/internal/observability"
 	"github.com/nithron/niro/internal/platform/discord"
@@ -136,6 +137,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 	modules = core.WithSettings(modules, core.ModuleGuardian, guardian.SettingsSpec{})
 	modules = core.WithSettings(modules, core.ModuleLogging, logging.SettingsSpec{})
 	modules = core.WithSettings(modules, core.ModuleWelcome, welcome.SettingsSpec{})
+	modules = core.WithSettings(modules, core.ModuleTickets, tickets.SettingsSpec{})
 	registry, err := core.NewRegistry(modules...)
 	if err != nil {
 		return err
@@ -171,7 +173,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 		b, err := discord.New(discord.Deps{
 			Token: cfg.Discord.Token, DevGuildID: cfg.Discord.DevGuildID, DashboardURL: cfg.DashboardURL,
 			Version: buildinfo.String(), Log: log, Config: configs, Guilds: db, Cases: db, Catalog: catalog, Metrics: metrics,
-			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(), RolePanels: db,
+			GuardianStore: db, GuardianTracker: kv.Guardian(), ScamFeedURLs: scamFeeds(cfg), LogCache: kv.Logging(), RolePanels: db, Tickets: db,
 		})
 		if err != nil {
 			return err

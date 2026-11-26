@@ -87,6 +87,7 @@ func (b *Bot) RegisterRPC(srv *rpc.Server) {
 	srv.Handle(RPCAutoModDelete, b.rpcAutoModDelete)
 	b.registerGuardianRPC(srv)
 	b.registerRolesRPC(srv)
+	b.registerTicketsRPC(srv)
 }
 
 func caseRPCError(err error) error {

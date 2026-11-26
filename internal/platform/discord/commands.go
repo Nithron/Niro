@@ -1,6 +1,8 @@
 package discord
 
 import (
+	"slices"
+
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/omit"
 	"golang.org/x/text/language"
@@ -34,7 +36,7 @@ func (b *Bot) commands() []discord.ApplicationCommandCreate {
 		slash("ping", i18n.CmdPingDescription),
 		slash("about", i18n.CmdAboutDescription),
 		modules,
-	}, append(b.moderationCommands(), b.guardianCommands()...)...)
+	}, slices.Concat(b.moderationCommands(), b.guardianCommands(), b.ticketCommands())...)
 }
 
 // localizations maps a key's translations onto Discord's locale codes,

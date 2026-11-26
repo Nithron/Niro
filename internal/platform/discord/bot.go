@@ -28,6 +28,7 @@ import (
 	"github.com/nithron/niro/internal/modules/logging"
 	"github.com/nithron/niro/internal/modules/moderation"
 	"github.com/nithron/niro/internal/modules/roles"
+	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/modules/welcome"
 )
 
@@ -84,6 +85,7 @@ type Deps struct {
 	GuardianStore   guardian.Store
 	GuardianTracker guardian.Tracker
 	RolePanels      roles.Store
+	Tickets         tickets.Store
 	// LogCache keeps recent messages and invite snapshots for the server log.
 	LogCache interface {
 		logging.MessageCache
@@ -105,6 +107,7 @@ type Bot struct {
 	logs      *logging.Service
 	roles     *roles.Service
 	welcome   *welcome.Service
+	tickets   *tickets.Service
 	ruleNames ruleNameCache
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
@@ -127,6 +130,7 @@ func New(deps Deps) (*Bot, error) {
 	b.registerModeration(router)
 	b.registerGuardian(router)
 	b.registerRoles(router)
+	b.registerTickets(router)
 	router.Error(b.handleError)
 	router.NotFound(func(e *handler.InteractionEvent) error {
 		b.log.Warn("unhandled interaction", "type", e.Type())
@@ -194,6 +198,19 @@ func New(deps Deps) (*Bot, error) {
 			return deps.Config.IsEnabled(ctx, guildID, core.ModuleRoles)
 		},
 		VerifyGate: b.verifyGate,
+	})
+	b.tickets = tickets.NewService(tickets.Deps{
+		Store:    deps.Tickets,
+		Platform: ticketsPlatform{client: b.client, p: b.presenter(), locale: b.guildLocale},
+		Settings: func(ctx context.Context, guildID snowflake.ID) (tickets.Settings, bool, error) {
+			on, err := deps.Config.IsEnabled(ctx, guildID, core.ModuleTickets)
+			if err != nil || !on {
+				return tickets.Settings{}, false, err
+			}
+			s, err := tickets.LoadSettings(ctx, deps.Config, guildID)
+			return s, err == nil, err
+		},
+		Log: b.log.With("module", "tickets"),
 	})
 	b.welcome = welcome.NewService(welcome.Deps{
 		Settings: func(ctx context.Context, guildID snowflake.ID) (welcome.Settings, bool, error) {
@@ -309,6 +326,7 @@ func (b *Bot) Run(ctx context.Context) error {
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
 	go b.runScheduler(ctx)
 	go b.guard.RunMaintenance(ctx, 15*time.Second)
+	go b.tickets.RunMaintenance(ctx, time.Hour)
 	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
 	go feed.Run(ctx)
 
