@@ -31,7 +31,7 @@ Measured on 2026-11-26 with the `v0.1.0` candidate (M5 branch). Re-run after cha
 Every 10 minutes:
 
 ```
-10m0s     100 ev/s  p50 8µs       p99 18µs      heap  163.5 MB  goroutines  5073  REST   39050  warn 0  err 0
+   10m0s     100 ev/s  p50 8µs       p99 18µs      heap  163.5 MB  goroutines  5073  REST   39050  warn 0  err 0
    20m0s     100 ev/s  p50 9µs       p99 31µs      heap  115.9 MB  goroutines  5056  REST   78225  warn 0  err 0
    30m0s     100 ev/s  p50 8µs       p99 19µs      heap  208.6 MB  goroutines  5026  REST  116831  warn 0  err 0
    40m0s     100 ev/s  p50 8µs       p99 22µs      heap  184.2 MB  goroutines  5089  REST  155886  warn 0  err 0
