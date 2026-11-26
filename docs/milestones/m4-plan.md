@@ -1,6 +1,6 @@
 # M4 implementation plan: Community toolkit
 
-*Draft, 2026-11-26. Built from plan §7 (M4), the M0–M3 code and a check of disgo v0.20. Items marked **PM** need your decision before the slice named.*
+*2026-11-26. Built from plan §7 (M4), the M0–M3 code and a check of disgo v0.20. The PM accepted every recommendation in §4 (decision 25).*
 
 **Done when** (plan §7): role panels, welcome/goodbye and tickets each work end to end when configured only from the dashboard.
 

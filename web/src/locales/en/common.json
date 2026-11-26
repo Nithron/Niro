@@ -491,5 +491,42 @@
     "ignoreChannels": "Ignored channels",
     "ignoreRoles": "Ignored roles",
     "permissionsNote": "Niro needs to see each log channel, send messages and attach files there. Moderation and server changes come from the audit log (View Audit Log); the invite a member used needs Manage Server."
+  },
+  "builder": {
+    "accent": "Colour bar",
+    "accentColor": "Colour",
+    "parts": "{{used}} of {{max}} parts",
+    "chars": "{{used}} of {{max}} characters",
+    "types": {
+      "text": "Text",
+      "section": "Text with image",
+      "gallery": "Images",
+      "separator": "Spacer",
+      "links": "Link buttons"
+    },
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove",
+    "removeBlock": "Remove block",
+    "add": "Add a block",
+    "choose": "Choose…",
+    "text": "Text (Markdown)",
+    "thumbnail": "Image URL",
+    "imageHelp": "An https link to an image. Discord loads it; Niro never downloads it.",
+    "imageUrl": "Image {{n}} URL",
+    "imageAlt": "Image {{n}} description",
+    "alt": "Description (for screen readers)",
+    "addImage": "Add an image",
+    "divider": "Show a line",
+    "large": "Large gap",
+    "linkLabel": "Link {{n}} label",
+    "linkUrl": "Link {{n}} URL",
+    "linkEmoji": "Link {{n}} emoji",
+    "label": "Label",
+    "addLink": "Add a link",
+    "variables": "Variables: {{list}}",
+    "unknownVariables": "Unknown variables (shown as typed): {{list}}",
+    "preview": "Preview",
+    "emptyPreview": "Add a block to see the preview."
   }
 }

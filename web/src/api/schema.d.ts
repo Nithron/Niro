@@ -584,6 +584,32 @@ export interface components {
             verifyRoleId: string;
             verifyMinAccountAgeHours: number;
         };
+        /** @description A message designed in the dashboard (Components V2). Validated against Discord's limits on save. */
+        MessageDocument: {
+            version: number;
+            /** @description Colour bar as 0xRRGGBB; absent for none */
+            accentColor?: number;
+            blocks: components["schemas"]["MessageBlock"][];
+        };
+        MessageBlock: {
+            /** @enum {string} */
+            type: "text" | "section" | "gallery" | "separator" | "links";
+            /** @description Markdown; text and section blocks. Variables: {user}, {user.name}, {user.id}, {server}, {memberCount}, {channel} */
+            text?: string;
+            /** @description https image URL; section blocks */
+            thumbnail?: string;
+            images?: {
+                url: string;
+                description?: string;
+            }[];
+            divider?: boolean;
+            large?: boolean;
+            links?: {
+                label: string;
+                url: string;
+                emoji?: string;
+            }[];
+        };
         /** @description The log channel per category; "0" uses the default channel. */
         LoggingChannels: {
             messages: components["schemas"]["Snowflake"];
