@@ -7,7 +7,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 OAPI := go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
-.PHONY: fuzz audit monitoring-check soak soak-short help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
+.PHONY: fuzz audit deploy-check monitoring-check soak soak-short help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
         generate generate-check test test-short lint build docker clean
 
 help: ## Show this help
@@ -90,6 +90,11 @@ soak: ## Load test: 2,500 servers, 100 msg/s for 2 hours (SOAK_DB must be a thro
 
 soak-short: ## A one-minute load test (CI)
 	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 200 -rate 50 -duration 60s -warmup 20s -raid-every 20s -report 20s
+
+deploy-check: monitoring-check ## Validate the compose file (with the example settings) and the monitoring config
+	@tmp=$$(mktemp -d) && cp -r deploy "$$tmp/" && cp deploy/.env.example "$$tmp/deploy/.env" && \
+	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x NIRO_DOMAIN=example.com docker compose -f "$$tmp/deploy/compose.yml" --profile tls config -q && \
+	  echo "deploy/compose.yml is valid"; rc=$$?; rm -rf "$$tmp"; exit $$rc
 
 monitoring-check: ## Validate the alert rules (with their unit tests) and the Alertmanager config
 	docker run --rm -v "$(CURDIR)/deploy/monitoring:/etc/prometheus:ro" -w /etc/prometheus --entrypoint promtool prom/prometheus:v3.16.0 check config prometheus.yml

@@ -130,12 +130,12 @@ jobs:
           go-version-file: go.mod
       - run: make soak-short
 
-  monitoring:
-    name: Alert rules and monitoring config
+  deploy:
+    name: Deployment config (compose, alert rules)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - run: make monitoring-check
+      - run: make deploy-check
 
   secrets:
     name: Secret scan
