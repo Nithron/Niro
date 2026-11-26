@@ -6,7 +6,8 @@ A security-first Discord bot by [Nithron](https://nithron.com): one bot for mode
 protection, logging, roles, welcome and tickets, managed from a web dashboard. AI features
 powered by nAI and NithronOS integration will follow.
 
-> **Status:** building v0.1 (M0 Foundations). Plan approved.
+> **Status:** building v0.1. M0 Foundations, M1 Moderation and M2 Guardian are done; M3 Logging is next
+> ([M3 plan](docs/milestones/m3-plan.md)), followed by the first public release, `v0.1.0-alpha.1`.
 > - [Discovery research](docs/research/2026-11-discovery.md)
 > - [Go library check](docs/research/2026-11-go-library-check.md)
 > - [Build plan](docs/plan.md) · [Dev setup](docs/dev-setup.md)
