@@ -3,26 +3,15 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
 
 export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
-const actionTone: Record<CaseAction, 'neutral' | 'brand' | 'success' | 'warning' | 'danger'> = {
-  warn: 'warning',
-  timeout: 'warning',
-  untimeout: 'success',
-  kick: 'danger',
-  ban: 'danger',
-  unban: 'success',
-  note: 'brand',
-  purge: 'neutral',
-  quarantine: 'danger',
-  unquarantine: 'success',
-}
-
 export function ActionBadge({ action }: { action: CaseAction }) {
   const { t } = useTranslation()
-  return <Badge tone={actionTone[action]}>{t(`cases.actions.${action}`)}</Badge>
+  // An action is told apart by its word, never by a colour: a ban is not a failure.
+  return <Badge>{t(`cases.actions.${action}`)}</Badge>
 }
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
@@ -123,7 +112,7 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
         {items.length > 0 && (
           <>
             <p className="mb-2 text-sm text-muted">{t('cases.total', { count: total })}</p>
-            <div className="overflow-x-auto rounded-xl border border-border">
+            <div className="overflow-x-auto border border-border">
               <table className="w-full text-left text-sm">
                 <thead className="bg-surface-2 text-xs text-muted uppercase">
                   <tr>
@@ -143,7 +132,7 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
               </table>
             </div>
             {cases.hasNextPage && (
-              <Button variant="secondary" className="mt-4" onClick={() => void cases.fetchNextPage()} disabled={cases.isFetchingNextPage}>
+              <Button variant="line" className="mt-4" onClick={() => void cases.fetchNextPage()} disabled={cases.isFetchingNextPage}>
                 {t('common.loadMore')}
               </Button>
             )}
@@ -157,9 +146,9 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
 function CaseRow({ guildId, c }: { guildId: string; c: Case }) {
   const { t } = useTranslation()
   return (
-    <tr className="border-t border-border bg-surface hover:bg-surface-2">
+    <tr className="border-t border-border hover:bg-hover">
       <td className="px-3 py-2 font-mono">
-        <Link to="/guilds/$guildId/cases/$number" params={{ guildId, number: String(c.number) }} className="text-brand hover:underline">
+        <Link to="/guilds/$guildId/cases/$number" params={{ guildId, number: String(c.number) }} className="underline underline-offset-2">
           #{c.number}
         </Link>
       </td>
@@ -182,6 +171,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   const kase = useCase(guildId, number)
   const update = useUpdateCaseReason(guildId, number)
   const del = useDeleteCase(guildId, number)
+  const [confirm, confirmDialog] = useConfirm()
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
 
@@ -208,8 +198,9 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
 
   return (
     <div className="max-w-2xl">
-      <Link to="/guilds/$guildId/cases" params={{ guildId }} search={{}} className="text-sm text-muted hover:text-fg">
-        ← {t('cases.title')}
+      <Link to="/guilds/$guildId/cases" params={{ guildId }} search={{}} className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <Icon name="back" />
+        {t('cases.title')}
       </Link>
       <div className="mt-3 flex items-center gap-3">
         <h2 className="text-lg font-semibold">{t('cases.detail', { number: c.number })}</h2>
@@ -233,7 +224,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
               <p className="mt-1 text-sm whitespace-pre-wrap">{c.reason || <span className="text-muted">{t('cases.noReason')}</span>}</p>
               <div className="mt-4 flex gap-2">
                 <Button
-                  variant="secondary"
+                  variant="line"
                   onClick={() => {
                     setReason(c.reason)
                     setEditing(true)
@@ -242,10 +233,9 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
                   {t('cases.editReason')}
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="text-danger hover:text-danger"
-                  onClick={() => {
-                    if (window.confirm(t('cases.deleteConfirm', { number: c.number }))) {
+                  variant="line"
+                  onClick={async () => {
+                    if (await confirm({ message: t('cases.deleteConfirm', { number: c.number }), action: t('cases.deleteAction', { number: c.number }) })) {
                       del.mutate(undefined, { onSuccess: () => void navigate({ to: '/guilds/$guildId/cases', params: { guildId }, search: {} }) })
                     }
                   }}
@@ -255,6 +245,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
                 </Button>
               </div>
               <RequestError error={del.error} />
+              {confirmDialog}
             </>
           ) : (
             <form

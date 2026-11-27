@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import type { AuditFinding } from '../api/client'
 import { useAudit } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Spinner } from '../components/ui'
+import { Badge, Button, Card, ErrorState, Spinner, Status } from '../components/ui'
 
-const tone = { critical: 'danger', high: 'danger', medium: 'warning', info: 'brand' } as const
+// A cross for "fix this", an open square for "check this"; information is a word with no mark.
+const tone = { critical: 'failed', high: 'failed', medium: 'warning', info: 'neutral' } as const
 
 function FindingText({ f }: { f: AuditFinding }) {
   const { t } = useTranslation()
@@ -23,7 +24,7 @@ export function AuditPage({ guildId }: { guildId: string }) {
           <h2 className="text-lg font-semibold">{t('audit.title')}</h2>
           <p className="mt-1 text-muted">{t('audit.subtitle')}</p>
         </div>
-        <Button variant="secondary" onClick={() => void audit.refetch()} disabled={audit.isFetching}>
+        <Button variant="line" onClick={() => void audit.refetch()} disabled={audit.isFetching}>
           {t('audit.rerun')}
         </Button>
       </div>
@@ -34,7 +35,7 @@ export function AuditPage({ guildId }: { guildId: string }) {
           <ul className="grid gap-2">
             {audit.data.findings.length === 0 && (
               <Card>
-                <p className="text-success">{t('audit.clean')}</p>
+                <Status state="ok">{t('audit.clean')}</Status>
               </Card>
             )}
             {audit.data.findings.map((f, i) => (
@@ -50,7 +51,7 @@ export function AuditPage({ guildId }: { guildId: string }) {
             {!audit.data.webhooksChecked && (
               <li>
                 <Card className="flex items-start gap-3 p-4">
-                  <Badge tone="brand">{t('audit.severity.info')}</Badge>
+                  <Badge>{t('audit.severity.info')}</Badge>
                   <p className="text-sm">{t('audit.webhooksUnchecked')}</p>
                 </Card>
               </li>

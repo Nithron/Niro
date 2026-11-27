@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { ApiError, type ModuleState } from '../api/client'
 import { useGuild, useModules, useSetModule } from '../api/queries'
 import { DeleteServerData } from '../components/DeleteServerData'
-import { Card, ErrorState, GuildIcon, Spinner, Switch } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Card, ErrorState, GuildIcon, Spinner, Status, Switch } from '../components/ui'
 import i18n from '../i18n'
 import { InviteButton } from './Servers'
 
@@ -29,8 +30,9 @@ export function GuildLayout({ guildId }: { guildId: string }) {
 
   return (
     <section>
-      <Link to="/" className="text-sm text-muted hover:text-fg">
-        ← {t('guild.back')}
+      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <Icon name="back" />
+        {t('guild.back')}
       </Link>
 
       {guild.isPending && <Spinner />}
@@ -137,10 +139,14 @@ function ModuleRow({ guildId, module }: { guildId: string; module: ModuleState }
         <div>
           <p className="font-semibold">{name}</p>
           <p className="mt-1 text-sm text-muted">{moduleText(module.id, 'description')}</p>
-          {status === 'saved' && <p className="mt-2 text-xs text-success">{t('guild.saved')}</p>}
+          {status === 'saved' && (
+            <p className="mt-2 text-xs">
+              <Status state="ok">{t('guild.saved')}</Status>
+            </p>
+          )}
           {status === 'failed' && (
-            <p role="alert" className="mt-2 text-xs text-danger">
-              {t('guild.saveFailed')}
+            <p role="alert" className="mt-2 text-xs">
+              <Status state="failed">{t('guild.saveFailed')}</Status>
             </p>
           )}
         </div>

@@ -20,7 +20,7 @@ export function LegalPage({ doc }: { doc: keyof typeof docs }) {
   }, [title])
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-border bg-surface/60">
+      <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <Link to="/" aria-label="Niro">
             <Logo className="h-7" />

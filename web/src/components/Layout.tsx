@@ -34,23 +34,23 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
     await signedOut(qc)
   }
 
-  const item = 'block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-border/40 focus-visible:bg-border/40'
+  const item = 'block w-full rounded-ctl px-3 py-2 text-left text-sm hover:bg-hover focus-visible:bg-hover'
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-border bg-surface/60 backdrop-blur">
+      <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
           <Link to="/" aria-label={t('nav.servers')}>
             <Logo className="h-7" />
           </Link>
           <details ref={menu} className="relative">
             <summary
-              className="flex cursor-pointer list-none items-center gap-3 rounded-md px-2 py-1 hover:bg-border/40 [&::-webkit-details-marker]:hidden"
+              className="flex cursor-pointer list-none items-center gap-3 rounded-ctl px-2 py-1 hover:bg-hover [&::-webkit-details-marker]:hidden"
               aria-label={t('nav.account')}
             >
               <img src={user.avatarUrl} alt="" className="size-8 rounded-full" />
               <span className="hidden text-sm sm:inline">{user.globalName ?? user.username}</span>
             </summary>
-            <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-surface p-1 shadow-lg">
+            <div className="absolute right-0 z-20 mt-2 w-56 border border-edge bg-bg p-1">
               <button type="button" className={item} onClick={() => void signOut(false)}>
                 {t('nav.logout')}
               </button>

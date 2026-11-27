@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { Card, LinkButton, Logo } from '../components/ui'
+import { Card, LinkButton, Logo, Status } from '../components/ui'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -13,8 +13,12 @@ export function LoginPage() {
         <p className="mt-3 text-sm text-muted">{t('app.tagline')}</p>
         <h1 className="mt-8 text-xl font-semibold">{t('login.title')}</h1>
         <p className="mt-2 text-muted">{t('login.body')}</p>
-        {status === 'failed' && <p className="mt-4 text-sm text-danger">{t('login.failed')}</p>}
-        {status === 'cancelled' && <p className="mt-4 text-sm text-warning">{t('login.cancelled')}</p>}
+        {status === 'failed' && (
+          <p role="alert" className="mt-4 text-sm">
+            <Status state="failed">{t('login.failed')}</Status>
+          </p>
+        )}
+        {status === 'cancelled' && <p className="mt-4 text-sm">{t('login.cancelled')}</p>}
         <LinkButton href="/auth/login" className="mt-6 w-full py-3">
           {t('login.button')}
         </LinkButton>

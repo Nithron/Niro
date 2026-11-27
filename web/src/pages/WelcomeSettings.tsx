@@ -5,7 +5,7 @@ import { useGuild, useGuildMeta, useMe, useModules, useSaveWelcomeSettings, useW
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview } from '../components/builder/MessagePreview'
 import { renderVariables, type PreviewVars } from '../components/builder/vars'
-import { Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow } from '../components/ui'
+import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 const MAX_AUTO_ROLES = 10
 
@@ -68,7 +68,7 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
     <div className="max-w-5xl">
       <h2 className="text-lg font-semibold">{t('welcomeSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('welcomeSettings.subtitle')}</p>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('welcomeSettings.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('welcomeSettings.moduleOff')}</Notice>}
       <p className="mt-4 text-sm text-muted">{t('welcomeSettings.guardianNote')}</p>
 
       <div className="mt-6 grid gap-4">
@@ -135,11 +135,11 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
         </Section>
       </div>
 
-      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">
         <Button onClick={() => save.mutate(draft, { onSuccess: () => setEdits(null) })} disabled={!dirty || invalid || save.isPending}>
           {save.isPending ? t('common.saving') : t('common.save')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+        {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
     </div>

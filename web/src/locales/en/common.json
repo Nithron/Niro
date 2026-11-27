@@ -147,6 +147,7 @@
     "editReason": "Edit reason",
     "deleteCase": "Delete case",
     "deleteConfirm": "Delete case #{{number}} from the history? It is kept in the audit trail and marked as deleted in the log channel.",
+    "deleteAction": "Delete case #{{number}}",
     "deletedDone": "Case deleted.",
     "notFound": "This case doesn't exist (or was deleted).",
     "actions": {
@@ -205,6 +206,7 @@
     "enabled": "Enabled",
     "createdByNiro": "Created by Niro",
     "deleteConfirm": "Delete the rule \"{{name}}\"?",
+    "deleteAction": "Delete rule",
     "triggers": {
       "keyword": "Keywords",
       "spam": "Suspected spam",
@@ -363,6 +365,7 @@
     "ban": "Ban",
     "keep": "Keep quarantined",
     "banConfirm": "Ban {{user}}? Their messages from the last day are deleted too.",
+    "banAction": "Ban {{user}}",
     "resolvedBy": "by {{name}}",
     "titles": {
       "compromised": "Possible hacked account",
@@ -555,6 +558,7 @@
     "empty": "No role panels yet.",
     "notPosted": "Not posted",
     "confirmDelete": "Delete \"{{name}}\" and its message in Discord?",
+    "deleteAction": "Delete panel and message",
     "roleCount_one": "{{count}} role",
     "roleCount_other": "{{count}} roles",
     "newTitle": "New role panel",
@@ -634,6 +638,7 @@
     "newPanel": "New panel",
     "noPanels": "No ticket panels yet.",
     "confirmDelete": "Delete \"{{name}}\" and its message? Open tickets stay.",
+    "deleteAction": "Delete panel and message",
     "list": "Tickets",
     "filterStatus": "Status",
     "allStatuses": "All",

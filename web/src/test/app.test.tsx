@@ -355,7 +355,6 @@ describe('guardian pages', () => {
       raid = { active: true, problems: [], endsAt: new Date(Date.now() + 30 * 60_000).toISOString() }
       return json(raid)
     }
-    vi.stubGlobal('confirm', () => true)
     renderAt('/guilds/100/guardian/detections')
 
     expect(await screen.findByText('Possible hacked account')).toBeInTheDocument()
@@ -369,6 +368,11 @@ describe('guardian pages', () => {
     expect(screen.queryByRole('button', { name: 'Restore' })).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Start raid mode' }))
+    // Niro's own dialog asks first; Cancel is focused, and Escape or Cancel changes nothing.
+    const dialog = await screen.findByRole('alertdialog')
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Start raid mode' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(await screen.findByText('Raid mode is on')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'End raid mode' })).toBeInTheDocument()
   })

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LoggingSettings } from '../api/client'
 import { useGuildMeta, useLoggingSettings, useModules, useSaveLoggingSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow } from '../components/ui'
+import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 type Category = keyof LoggingSettings['channels']
 
@@ -72,7 +72,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
     <div className="max-w-3xl">
       <h2 className="text-lg font-semibold">{t('loggingSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('loggingSettings.subtitle')}</p>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('loggingSettings.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('loggingSettings.moduleOff')}</Notice>}
       {meta.isError && (
         <div className="mt-4">
           <RequestError error={meta.error} />
@@ -84,7 +84,11 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
           <Field label={t('loggingSettings.defaultChannel')} help={t('loggingSettings.defaultChannelHelp')} htmlFor="l-default">
             {channelSelect('l-default', draft.defaultChannelId, t('loggingSettings.off'), (v) => set('defaultChannelId', v))}
           </Field>
-          {nothingRouted && <p className="text-sm text-warning">{t('loggingSettings.nothingRouted')}</p>}
+          {nothingRouted && (
+            <p className="text-sm">
+              <Status state="warning">{t('loggingSettings.nothingRouted')}</Status>
+            </p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             {categories.map((c) => (
               <Field key={c.id} label={t(`loggingSettings.categories.${c.id}`)} htmlFor={`l-ch-${c.id}`}>
@@ -165,11 +169,11 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
         <p className="text-xs text-muted">{t('loggingSettings.permissionsNote')}</p>
       </div>
 
-      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">
         <Button onClick={() => save.mutate(draft, { onSuccess: () => setEdits(null) })} disabled={!dirty || save.isPending}>
           {save.isPending ? t('common.saving') : t('common.save')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+        {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
     </div>

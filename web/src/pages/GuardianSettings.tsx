@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianSettings } from '../api/client'
 import { useGuardianSettings, useGuildMeta, useModules, useSaveGuardianSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow, TextArea, TextInput } from '../components/ui'
+import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow, TextArea, TextInput } from '../components/ui'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -107,7 +107,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
     <div className="max-w-3xl">
       <h2 className="text-lg font-semibold">{t('guardianSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('guardianSettings.subtitle')}</p>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('guardianSettings.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('guardianSettings.moduleOff')}</Notice>}
       {meta.isError && (
         <div className="mt-4">
           <RequestError error={meta.error} />
@@ -246,11 +246,11 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
         </Section>
       </div>
 
-      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">
         <Button onClick={onSave} disabled={!dirty || invalidNumber || save.isPending}>
           {save.isPending ? t('common.saving') : t('common.save')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+        {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
     </div>

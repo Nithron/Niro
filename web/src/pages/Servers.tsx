@@ -1,8 +1,9 @@
+import { clsx } from 'clsx'
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { GuildSummary } from '../api/client'
 import { useGuilds, useInvite } from '../api/queries'
-import { Card, ErrorState, GuildIcon, LinkButton, Spinner } from '../components/ui'
+import { buttonClasses, Card, ErrorState, GuildIcon, LinkButton, Spinner } from '../components/ui'
 
 export function ServersPage() {
   const { t } = useTranslation()
@@ -52,7 +53,7 @@ function ServerCard({ guild }: { guild: GuildSummary }) {
             <Link
               to="/guilds/$guildId"
               params={{ guildId: guild.id }}
-              className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand to-brand-2 px-4 py-2 text-sm font-semibold text-on-brand hover:opacity-90"
+              className={clsx(buttonClasses('primary'), 'w-full')}
             >
               {t('servers.manage')}
             </Link>
@@ -70,7 +71,7 @@ export function InviteButton({ guildId }: { guildId: string }) {
   const invite = useInvite(guildId)
   return (
     <LinkButton
-      variant="secondary"
+      variant="line"
       className="w-full"
       href={invite.data?.url}
       target="_blank"

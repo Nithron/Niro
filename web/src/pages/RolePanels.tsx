@@ -5,7 +5,7 @@ import { useDeleteRolePanel, useGuildMeta, useModules, useRolePanels, useSaveRol
 import { componentCount, emptyDocument, limits } from '../components/builder/document'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton, PreviewSelect } from '../components/builder/MessagePreview'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextInput } from '../components/ui'
+import { Badge, Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, TextInput, useConfirm } from '../components/ui'
 
 const MAX_PANELS = 25
 const MAX_ROLES = 25
@@ -34,6 +34,7 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
   const meta = useGuildMeta(guildId)
   const modules = useModules(guildId, true)
   const remove = useDeleteRolePanel(guildId)
+  const [confirm, confirmDialog] = useConfirm()
   const [editing, setEditing] = useState<RolePanel | null>(null)
 
   if (panels.isError) return <ErrorState onRetry={() => void panels.refetch()} />
@@ -54,7 +55,7 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
           {t('rolePanels.new')}
         </Button>
       </div>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('rolePanels.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('rolePanels.moduleOff')}</Notice>}
       <div className="mt-6 grid gap-3">
         {panels.data.items.length === 0 && <Card className="text-muted">{t('rolePanels.empty')}</Card>}
         {panels.data.items.map((p) => (
@@ -68,13 +69,13 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
             </div>
             <div className="flex gap-2">
               {!p.messageId && <Badge tone="warning">{t('rolePanels.notPosted')}</Badge>}
-              <Button variant="secondary" onClick={() => setEditing(p)}>
+              <Button variant="line" onClick={() => setEditing(p)}>
                 {t('common.edit')}
               </Button>
               <Button
-                variant="secondary"
-                onClick={() => {
-                  if (p.id && window.confirm(t('rolePanels.confirmDelete', { name: p.name }))) remove.mutate(p.id)
+                variant="line"
+                onClick={async () => {
+                  if (p.id && (await confirm({ message: t('rolePanels.confirmDelete', { name: p.name }), action: t('rolePanels.deleteAction') }))) remove.mutate(p.id)
                 }}
               >
                 {t('common.delete')}
@@ -83,6 +84,7 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
           </Card>
         ))}
         <RequestError error={remove.error} />
+        {confirmDialog}
       </div>
     </div>
   )
@@ -187,7 +189,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
               </Select>
               <TextInput aria-label={t('rolePanels.labelN', { n: i + 1 })} placeholder={t('rolePanels.label')} value={r.label} maxLength={80} onChange={(e) => setRole(i, { label: e.target.value })} />
               <TextInput aria-label={t('rolePanels.emojiN', { n: i + 1 })} placeholder="🎨" value={r.emoji ?? ''} onChange={(e) => setRole(i, { emoji: e.target.value || undefined })} />
-              <Button type="button" variant="secondary" onClick={() => removeRole(i)}>
+              <Button type="button" variant="line" onClick={() => removeRole(i)}>
                 {t('builder.remove')}
               </Button>
               {p.style === 'select' && (
@@ -203,11 +205,15 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
             </div>
           ))}
           {p.roles.length < MAX_ROLES && (
-            <Button type="button" variant="secondary" onClick={() => setP((prev) => ({ ...prev, roles: [...prev.roles, { roleId: '0', label: '' }] }))}>
+            <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, roles: [...prev.roles, { roleId: '0', label: '' }] }))}>
               {t('rolePanels.addRole')}
             </Button>
           )}
-          {unsafe.length > 0 && <p className="text-sm text-danger">{t('rolePanels.unsafeRoles', { list: unsafe.map((r) => '@' + roleName(r.roleId)).join(', ') })}</p>}
+          {unsafe.length > 0 && (
+            <p className="text-sm">
+              <Status state="failed">{t('rolePanels.unsafeRoles', { list: unsafe.map((r) => '@' + roleName(r.roleId)).join(', ') })}</Status>
+            </p>
+          )}
           {blocked.length > 0 && <p className="text-xs text-muted">{t('rolePanels.blockedRoles', { list: blocked.map((r) => '@' + r.name).join(', ') })}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {p.mode === 'toggle' && (
@@ -240,11 +246,11 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
           <MessageBuilder id="rp-msg" value={p.message} onChange={(m) => set('message', m)} reserved={reserved} />
         </Card>
 
-        <div className="sticky bottom-0 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+        <div className="sticky bottom-0 flex items-center gap-4 border-t border-border bg-bg py-4">
           <Button onClick={() => save.mutate(p, { onSuccess: onDone })} disabled={!ready || save.isPending}>
             {save.isPending ? t('common.saving') : t('rolePanels.saveAndPost')}
           </Button>
-          <Button variant="secondary" onClick={onDone}>
+          <Button variant="line" onClick={onDone}>
             {t('common.cancel')}
           </Button>
           <RequestError error={save.error} />

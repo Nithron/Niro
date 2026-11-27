@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutoModRule, GuildMeta } from '../api/client'
 import { useAutoModPresets, useAutoModRules, useDeleteAutoModRule, useGuildMeta, useSaveAutoModRule } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, Switch, SwitchRow, TextArea, TextInput } from '../components/ui'
+import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, Switch, SwitchRow, TextArea, TextInput, useConfirm } from '../components/ui'
 
 type Trigger = AutoModRule['trigger']
 type WordList = NonNullable<AutoModRule['presets']>[number]
@@ -21,6 +21,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
   const presets = useAutoModPresets()
   const save = useSaveAutoModRule(guildId)
   const del = useDeleteAutoModRule(guildId)
+  const [confirm, confirmDialog] = useConfirm()
   const meta = useGuildMeta(guildId)
   const [editing, setEditing] = useState<AutoModRule | null>(null)
   const [addingPreset, setAddingPreset] = useState<string | null>(null)
@@ -64,7 +65,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                     <p className="mt-1 text-sm text-muted">{t(`automod.presets.${p.id}.description` as never)}</p>
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="line"
                     className="mt-auto"
                     disabled={added || save.isPending}
                     onClick={() => {
@@ -92,7 +93,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
           {rules.isError && (
             <Card>
               <RequestError error={rules.error} />
-              <Button variant="secondary" className="mt-3" onClick={() => void rules.refetch()}>
+              <Button variant="line" className="mt-3" onClick={() => void rules.refetch()}>
                 {t('app.retry')}
               </Button>
             </Card>
@@ -109,7 +110,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{r.name}</p>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      <Badge tone="brand">{t(`automod.triggers.${r.trigger}`)}</Badge>
+                      <Badge>{t(`automod.triggers.${r.trigger}`)}</Badge>
                       {r.createdByBot && <Badge>{t('automod.createdByNiro')}</Badge>}
                     </div>
                   </div>
@@ -120,14 +121,15 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                       disabled={save.isPending}
                       onCheckedChange={(enabled) => save.mutate({ ...r, enabled })}
                     />
-                    <Button variant="secondary" onClick={() => setEditing(r)}>
+                    <Button variant="line" onClick={() => setEditing(r)}>
                       {t('common.edit')}
                     </Button>
                     <Button
-                      variant="ghost"
-                      className="text-danger hover:text-danger"
+                      variant="line"
                       disabled={del.isPending}
-                      onClick={() => r.id && window.confirm(t('automod.deleteConfirm', { name: r.name })) && del.mutate(r.id)}
+                      onClick={async () => {
+                        if (r.id && (await confirm({ message: t('automod.deleteConfirm', { name: r.name }), action: t('automod.deleteAction') }))) del.mutate(r.id)
+                      }}
                     >
                       {t('common.delete')}
                     </Button>
@@ -138,6 +140,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
           </ul>
           <div className="mt-3">
             <RequestError error={del.error} />
+            {confirmDialog}
           </div>
         </div>
       </section>

@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Select, TextArea, TextInput } from '../ui'
+import { Icon } from '../Icon'
+import { Button, Field, Select, Status, TextArea, TextInput } from '../ui'
 import {
   componentCount,
   limits,
@@ -14,9 +16,9 @@ import {
 
 const blockTypes: BlockType[] = ['text', 'section', 'gallery', 'separator', 'links']
 
-function SmallButton(props: { onClick: () => void; disabled?: boolean; label?: string; children: string }) {
+function SmallButton(props: { onClick: () => void; disabled?: boolean; label?: string; children: ReactNode }) {
   return (
-    <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={props.onClick} disabled={props.disabled} aria-label={props.label}>
+    <Button type="button" variant="line" size="compact" className="text-xs" onClick={props.onClick} disabled={props.disabled} aria-label={props.label}>
       {props.children}
     </Button>
   )
@@ -79,20 +81,20 @@ export function MessageBuilder({
             onChange={(e) => onChange({ ...value, accentColor: parseInt(e.target.value.slice(1), 16) })}
           />
         )}
-        <span className={used > limits.components ? 'text-danger' : 'text-muted'}>{t('builder.parts', { used, max: limits.components })}</span>
-        <span className={chars > limits.text ? 'text-danger' : 'text-muted'}>{t('builder.chars', { used: chars, max: limits.text })}</span>
+        {used > limits.components ? <Status state="failed">{t('builder.parts', { used, max: limits.components })}</Status> : <span className="text-muted">{t('builder.parts', { used, max: limits.components })}</span>}
+        {chars > limits.text ? <Status state="failed">{t('builder.chars', { used: chars, max: limits.text })}</Status> : <span className="text-muted">{t('builder.chars', { used: chars, max: limits.text })}</span>}
       </div>
 
       {value.blocks.map((b, i) => (
-        <fieldset key={i} className="grid gap-3 rounded-lg border border-border p-3">
+        <fieldset key={i} className="grid gap-3 border border-border p-3">
           <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t(`builder.types.${b.type}`)}</legend>
           <BlockEditor id={`${id}-${i}`} block={b} onChange={(nb) => update(i, nb)} />
           <div className="flex gap-2">
             <SmallButton onClick={() => move(i, -1)} disabled={i === 0} label={t('builder.moveUp')}>
-              ↑
+              <Icon name="up" />
             </SmallButton>
             <SmallButton onClick={() => move(i, 1)} disabled={i === value.blocks.length - 1} label={t('builder.moveDown')}>
-              ↓
+              <Icon name="down" />
             </SmallButton>
             <SmallButton onClick={() => setBlocks(value.blocks.filter((_, j) => j !== i))}>{t('builder.removeBlock')}</SmallButton>
           </div>
@@ -121,7 +123,11 @@ export function MessageBuilder({
         </Select>
       </div>
       {variables && <p className="text-xs text-muted">{t('builder.variables', { list: variableNames.map((v) => `{${v}}`).join(' ') })}</p>}
-      {unknown.length > 0 && <p className="text-xs text-warning">{t('builder.unknownVariables', { list: unknown.map((v) => `{${v}}`).join(' ') })}</p>}
+      {unknown.length > 0 && (
+        <p className="text-xs">
+          <Status state="warning">{t('builder.unknownVariables', { list: unknown.map((v) => `{${v}}`).join(' ') })}</Status>
+        </p>
+      )}
     </div>
   )
 }

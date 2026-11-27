@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
 import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner } from '../components/ui'
+import { Badge, Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const relFmt = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
@@ -13,25 +13,28 @@ function relative(iso: string) {
   return Math.abs(minutes) < 60 ? relFmt.format(minutes, 'minute') : relFmt.format(Math.round(minutes / 60), 'hour')
 }
 
-const statusTone: Record<GuardianStatus, 'neutral' | 'brand' | 'success' | 'warning' | 'danger'> = {
-  open: 'danger',
-  kept: 'warning',
-  restored: 'success',
-  banned: 'danger',
+// A state has a mark: an open quarantine and an active raid wait (warning), a restored member is ok. A ban is
+// an outcome told by its word, not a failure.
+const statusTone: Record<GuardianStatus, 'neutral' | 'ok' | 'warning'> = {
+  open: 'warning',
+  kept: 'neutral',
+  restored: 'ok',
+  banned: 'neutral',
   info: 'neutral',
-  active: 'danger',
-  ended: 'success',
+  active: 'warning',
+  ended: 'neutral',
 }
 
 function RaidCard({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
   const raid = useRaidStatus(guildId)
   const setRaid = useSetRaidMode(guildId)
+  const [confirm, confirmDialog] = useConfirm()
   if (raid.isPending) return null
   if (raid.isError) return <RequestError error={raid.error} />
   const on = raid.data.active
   return (
-    <Card className={on ? 'border-danger/50 bg-danger/5' : undefined}>
+    <Card className={on ? 'border-warning' : undefined}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="font-semibold">{on ? t('detections.raidOn') : t('detections.raidOff')}</p>
@@ -39,22 +42,23 @@ function RaidCard({ guildId }: { guildId: string }) {
             {on && raid.data.endsAt ? t('detections.raidOnBody', { ends: relative(raid.data.endsAt) }) : t('detections.raidOffBody')}
           </p>
           {raid.data.problems.map((p) => (
-            <p key={p} className="mt-1 text-sm text-warning">
-              {t(`detections.problemText.${p}` as never, { defaultValue: p })}
+            <p key={p} className="mt-1 text-sm">
+              <Status state="warning">{t(`detections.problemText.${p}` as never, { defaultValue: p })}</Status>
             </p>
           ))}
         </div>
         <Button
-          variant={on ? 'primary' : 'secondary'}
+          variant={on ? 'primary' : 'line'}
           disabled={setRaid.isPending}
-          onClick={() => {
-            if (on || window.confirm(t('detections.startRaidConfirm'))) setRaid.mutate(!on)
+          onClick={async () => {
+            if (on || (await confirm({ message: t('detections.startRaidConfirm'), action: t('detections.startRaid') }))) setRaid.mutate(!on)
           }}
         >
           {on ? t('detections.endRaid') : t('detections.startRaid')}
         </Button>
       </div>
       <RequestError error={setRaid.error} />
+      {confirmDialog}
     </Card>
   )
 }
@@ -62,11 +66,13 @@ function RaidCard({ guildId }: { guildId: string }) {
 function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
   const { t } = useTranslation()
   const resolve = useResolveEvent(guildId)
+  const [confirm, confirmDialog] = useConfirm()
   const reviewable = ev.status === 'open' || ev.status === 'kept'
   const user = ev.userName ? `${ev.userName} (${ev.userId})` : ev.userId
 
-  function act(action: GuardianResolve) {
-    if (action === 'ban' && !window.confirm(t('detections.banConfirm', { user: ev.userName || ev.userId }))) return
+  async function act(action: GuardianResolve) {
+    const user = ev.userName || ev.userId
+    if (action === 'ban' && !(await confirm({ message: t('detections.banConfirm', { user }), action: t('detections.banAction', { user }) }))) return
     resolve.mutate({ eventId: ev.id, action })
   }
 
@@ -100,7 +106,7 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
             <Link
               to="/guilds/$guildId/cases/$number"
               params={{ guildId, number: String(ev.caseNumber) }}
-              className="text-brand hover:underline"
+              className="underline underline-offset-2"
             >
               {t('detections.case', { number: ev.caseNumber })}
             </Link>
@@ -130,25 +136,25 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
         </dl>
         {ev.monitor && <p className="mt-3 text-sm text-muted">{t('detections.monitor')}</p>}
         {ev.problems.length > 0 && (
-          <div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
-            <p className="font-medium">{t('detections.problems')}</p>
+          <Notice state="warning" className="mt-3">
+            <p className="font-[560]">{t('detections.problems')}</p>
             <ul className="mt-1 list-disc pl-5">
               {ev.problems.map((p) => (
                 <li key={p}>{t(`detections.problemText.${p}` as never, { defaultValue: p })}</li>
               ))}
             </ul>
-          </div>
+          </Notice>
         )}
         {reviewable && (
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => act('restore')} disabled={resolve.isPending}>
+            <Button onClick={() => void act('restore')} disabled={resolve.isPending}>
               {t('detections.restore')}
             </Button>
-            <Button variant="secondary" className="text-danger" onClick={() => act('ban')} disabled={resolve.isPending}>
+            <Button variant="line" onClick={() => void act('ban')} disabled={resolve.isPending}>
               {t('detections.ban')}
             </Button>
             {ev.status === 'open' && (
-              <Button variant="ghost" onClick={() => act('keep')} disabled={resolve.isPending}>
+              <Button variant="ghost" onClick={() => void act('keep')} disabled={resolve.isPending}>
                 {t('detections.keep')}
               </Button>
             )}
@@ -156,6 +162,7 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
         )}
         <div className="mt-2">
           <RequestError error={resolve.error} />
+          {confirmDialog}
         </div>
       </Card>
     </li>
@@ -203,7 +210,7 @@ export function DetectionsPage({ guildId }: { guildId: string }) {
           </ul>
         )}
         {events.hasNextPage && (
-          <Button variant="secondary" className="mt-4" onClick={() => void events.fetchNextPage()} disabled={events.isFetchingNextPage}>
+          <Button variant="line" className="mt-4" onClick={() => void events.fetchNextPage()} disabled={events.isFetchingNextPage}>
             {t('common.loadMore')}
           </Button>
         )}
