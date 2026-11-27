@@ -14,6 +14,15 @@
 }
 
 @font-face {
+  font-family: "Nithron Pixel";
+  /* From public/fonts, not hashed: at 2 KB Vite would inline it as a data: URL, which the API's CSP (font-src 'self') refuses. */
+  src: url("/fonts/nithron-pixel.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Monaspace Neon";
   src: url("./assets/fonts/MonaspaceNeonVar.woff2") format("woff2");
   font-weight: 200 800;
@@ -115,11 +124,31 @@ body {
   outline-offset: 2px;
 }
 
-/* The pixel display face, for the product's name, a screen's one large number and the words of an empty or
-   loading screen. The face is issued by the website session; until it arrives the text falls back to mono. */
-.pixel-display {
-  font-family: var(--font-pixel, var(--font-mono));
+/* Nithron Pixel, the pixel display face (--font-pixel), for the product's name, a screen's one large number,
+   the words of an empty or loading screen and the number beside a block meter. Nothing else. It is sharp only
+   at whole multiples of 8 px and left aligned on whole pixels, so it comes in these sizes and no other. */
+.pixel {
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 400;
+  font-style: normal;
   font-synthesis: none;
+  letter-spacing: 0;
+  font-kerning: none;
+  font-variant-ligatures: none;
+}
+
+.pixel-24 {
+  font-size: 24px;
+}
+
+.pixel-32 {
+  font-size: 32px;
+}
+
+.pixel-48 {
+  font-size: 48px;
 }
 
 /* A pixel element is never blurred: whole pixels, no smoothing. */
