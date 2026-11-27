@@ -1,0 +1,149 @@
+# Prometheus alert rules for Niro. Checked in CI with `promtool check rules`
+# and unit-tested with `promtool test rules alerts_test.yml`.
+# Severities: critical pages someone, warning goes to the ops channel only.
+groups:
+  - name: niro-availability
+    rules:
+      - alert: NiroDown
+        expr: up{job="niro"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: Niro's metrics endpoint is not answering
+          description: "Prometheus cannot scrape {{ $labels.instance }}. The process is down or the ops port is unreachable."
+      - alert: NiroShardDown
+        expr: niro_bot_shard_up == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Shard {{ $labels.shard }} is not connected to the gateway"
+          description: Servers on this shard get no moderation, protection or logging until it reconnects.
+      - alert: NiroGatewayReconnecting
+        # Every shard sends one Ready when it starts, so a restart is allowed one per shard.
+        expr: sum(increase(niro_bot_gateway_events_total{type="Ready"}[15m])) > 5 + count(niro_bot_shard_up)
+        labels: { severity: warning }
+        annotations:
+          summary: The bot keeps re-identifying with the gateway
+          description: "More than 5 full reconnects (Ready events) in 15 minutes: resumes are failing or the connection is flapping."
+      - alert: NiroGatewayLatencyHigh
+        expr: max(niro_bot_shard_latency_seconds) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Gateway heartbeat latency is above 1 s
+          description: "Shard latency has been above a second for 10 minutes; check the host's network and CPU."
+
+  - name: niro-errors
+    rules:
+      - alert: NiroDiscordRateLimited
+        expr: sum(rate(niro_discord_rest_requests_total{status="429"}[5m])) > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Discord is rate-limiting Niro
+          description: "More than one 429 every 2 seconds for 10 minutes. Look at niro_discord_rest_requests_total by route."
+      - alert: NiroDiscordErrors
+        expr: sum(rate(niro_discord_rest_requests_total{status=~"5..|error"}[5m])) > 0.2
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Discord's API is failing for Niro
+          description: Discord answers with 5xx or the requests fail outright. Check discordstatus.com before anything else.
+      - alert: NiroAPIErrors
+        expr: |
+          sum(rate(niro_api_requests_total{status="5xx"}[5m]))
+            / clamp_min(sum(rate(niro_api_requests_total[5m])), 0.001) > 0.05
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: More than 5% of dashboard API requests fail
+          description: "Look for 'api request failed' in the logs."
+      - alert: NiroRateLimiterDown
+        expr: increase(niro_api_rate_limiter_errors_total[10m]) > 0
+        labels: { severity: warning }
+        annotations:
+          summary: The API's rate limiter cannot reach Valkey
+          description: Requests are let through unlimited until Valkey answers again.
+
+  - name: niro-resources
+    rules:
+      - alert: NiroDBPoolExhausted
+        expr: niro_db_pool_connections_acquired / niro_db_pool_connections_max > 0.9
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: The Postgres connection pool is nearly full
+          description: Requests wait for connections. Look for slow queries or raise pool_max_conns in NIRO_DATABASE_URL.
+      - alert: NiroDBPoolWaiting
+        expr: rate(niro_db_pool_acquire_wait_seconds_total[5m]) > 0.5
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: Requests spend a lot of time waiting for a database connection
+      - alert: NiroMemoryHigh
+        expr: process_resident_memory_bytes{job="niro"} > 1.5e9
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: Niro uses more than 1.5 GB of memory
+          description: Compare with the baselines in docs/ops/baselines.md; a steady climb is a leak.
+      - alert: HostDiskLow
+        expr: node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} < 0.1
+        for: 15m
+        labels: { severity: critical }
+        annotations:
+          summary: "Less than 10% disk left on {{ $labels.mountpoint }}"
+          description: Postgres stops accepting writes when the disk fills up. Prune old backups or images.
+      - alert: HostMemoryLow
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: Less than 10% memory available on the host
+
+  - name: niro-jobs
+    # Each background job records its last success. An alert fires when a job
+    # has not succeeded for a few of its intervals.
+    rules:
+      - alert: NiroJobStale
+        expr: |
+          (time() - niro_job_last_success_timestamp_seconds{name="scheduler"}) > 600
+          or (time() - niro_job_last_success_timestamp_seconds{name="retention"}) > 3 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="transcript_purge"}) > 3 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="guardian_purge"}) > 13 * 3600
+          or (time() - niro_job_last_success_timestamp_seconds{name="scam_feed"}) > 3 * 3600
+        labels: { severity: warning }
+        annotations:
+          summary: "Background job {{ $labels.name }} has not succeeded recently"
+          description: "Check the logs for the job's errors. Scheduler: temp-bans are not lifted. Retention: data is not deleted on time."
+      - alert: NiroJobFailing
+        expr: increase(niro_job_failures_total[1h]) > 3
+        labels: { severity: warning }
+        annotations:
+          summary: "Background job {{ $labels.name }} keeps failing"
+
+  - name: niro-backups
+    # Written by the backup service (deploy/compose.yml) through
+    # node_exporter's textfile collector.
+    rules:
+      - alert: NiroBackupMissing
+        expr: time() - niro_backup_last_success_timestamp_seconds > 26 * 3600
+        labels: { severity: critical }
+        annotations:
+          summary: No successful database backup in the last 26 hours
+          description: See docs/ops/backup-restore.md. Run the backup by hand and check its log.
+      - alert: NiroOffsiteCopyMissing
+        # Only where off-site copies are on (hosted, offsite profile): written by
+        # deploy/hosted/offsite.sh. Without them the metric is absent and this never fires.
+        expr: time() - niro_offsite_last_success_timestamp_seconds > 26 * 3600
+        labels: { severity: critical }
+        annotations:
+          summary: The database dumps have not been copied off the server for 26 hours
+          description: "Check the offsite service's log (docker compose logs offsite) and the restic repository."
+      - alert: NiroBackupNeverRan
+        expr: absent(niro_backup_last_success_timestamp_seconds)
+        for: 26h
+        labels: { severity: critical }
+        annotations:
+          summary: No database backup has been recorded at all
+          description: The backup service is not running or cannot write its status file. See docs/ops/backup-restore.md.

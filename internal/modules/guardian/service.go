@@ -465,17 +465,23 @@ func (s *Service) ListEvents(ctx context.Context, guildID snowflake.ID, f EventF
 const Retention = 90 * 24 * time.Hour
 
 // RunMaintenance ends expired raids and deletes old events until ctx is done.
-func (s *Service) RunMaintenance(ctx context.Context, interval time.Duration) {
+// RunMaintenance ends due raids every interval and purges old events every 6
+// hours. done, if set, is told how each purge went (job metrics).
+func (s *Service) RunMaintenance(ctx context.Context, interval time.Duration, done func(error)) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	lastPurge := time.Time{}
 	for {
 		s.endDueRaids(ctx)
 		if s.d.Now().Sub(lastPurge) > 6*time.Hour {
-			if n, err := s.d.Store.PurgeEventsBefore(ctx, s.d.Now().Add(-Retention)); err != nil {
+			n, err := s.d.Store.PurgeEventsBefore(ctx, s.d.Now().Add(-Retention))
+			if err != nil {
 				s.d.Log.WarnContext(ctx, "purging old guardian events failed", "err", err)
 			} else if n > 0 {
 				s.d.Log.InfoContext(ctx, "purged old guardian events", "count", n)
+			}
+			if done != nil && ctx.Err() == nil {
+				done(err)
 			}
 			lastPurge = s.d.Now()
 		}

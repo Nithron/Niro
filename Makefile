@@ -7,7 +7,7 @@ SQLC := go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1
 OAPI := go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.9.0
 GOLANGCI := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
-.PHONY: help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
+.PHONY: fuzz audit deploy-check monitoring-check soak soak-short help dev-deps dev-down run run-api run-bot migrate web-install web-dev web-build \
         generate generate-check test test-short lint build docker clean
 
 help: ## Show this help
@@ -61,6 +61,54 @@ test: ## Run all Go tests (integration tests need Docker)
 
 test-short: ## Run Go unit tests only
 	go test -race -short ./...
+
+FUZZTIME ?= 30s
+FUZZ_TARGETS := ./internal/core/message:FuzzDocument \
+	./internal/core/message:FuzzIsEmoji \
+	./internal/modules/moderation:FuzzParseDuration \
+	./internal/modules/guardian:FuzzExtractLinks \
+	./internal/modules/guardian:FuzzNormalizeHost \
+	./internal/modules/guardian:FuzzNormalizeText \
+	./internal/modules/guardian:FuzzNormalizeDomains \
+	./internal/modules/guardian:FuzzParseFeed \
+	./internal/modules/tickets:FuzzTranscript \
+	./internal/config:FuzzParseBaseURL \
+	./internal/api:FuzzClientIP
+
+fuzz: ## Run every fuzz target for FUZZTIME (default 30s each)
+	@n=$$(grep -rh '^func Fuzz' --include='*_test.go' internal | wc -l); \
+	  [ $$n -eq $(words $(FUZZ_TARGETS)) ] || { echo "FUZZ_TARGETS lists $(words $(FUZZ_TARGETS)) of $$n fuzz targets"; exit 1; }
+	@set -e; for t in $(FUZZ_TARGETS); do \
+	  echo "== $${t##*:}"; go test -run='^$$' -fuzz="^$${t##*:}$$" -fuzztime=$(FUZZTIME) $${t%%:*}; \
+	done
+
+SOAK_DB ?= postgres://niro:niro@localhost:5432/niro_soak?sslmode=disable
+SOAK_VALKEY ?= localhost:6379
+
+soak: ## Load test: 2,500 servers, 100 msg/s for 2 hours (SOAK_DB must be a throwaway database)
+	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 2500 -rate 100 -duration 2h -warmup 5m
+
+# The warm-up must outlast the server log's per-channel workers, which stop
+# after a minute idle; before that the goroutine count is still climbing.
+soak-short: ## A three-minute load test (CI)
+	go run ./cmd/niro-soak -database "$(SOAK_DB)" -valkey $(SOAK_VALKEY) -guilds 200 -rate 50 -duration 3m -warmup 90s -raid-every 30s -report 30s
+
+deploy-check: monitoring-check ## Validate the compose file (with the example settings) and the monitoring config
+	@tmp=$$(mktemp -d) && cp -r deploy "$$tmp/" && cp deploy/.env.example "$$tmp/deploy/.env" && \
+	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x NIRO_DOMAIN=example.com docker compose -f "$$tmp/deploy/compose.yml" --profile tls config -q && \
+	  cp deploy/hosted/.env.example "$$tmp/deploy/hosted/.env" && cp deploy/hosted/offsite.env.example "$$tmp/deploy/hosted/offsite.env" && \
+	  POSTGRES_PASSWORD=x VALKEY_PASSWORD=x GRAFANA_ADMIN_PASSWORD=x BACKUP_AGE_RECIPIENT=age1example docker compose -f "$$tmp/deploy/hosted/compose.yml" --profile tls --profile offsite config -q && \
+	  echo "deploy/compose.yml and deploy/hosted/compose.yml are valid"; rc=$$?; rm -rf "$$tmp"; exit $$rc
+
+monitoring-check: ## Validate the alert rules (with their unit tests) and the Alertmanager config
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/etc/prometheus:ro" -w /etc/prometheus --entrypoint promtool prom/prometheus:v3.16.0 check config prometheus.yml
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint promtool prom/prometheus:v3.16.0 test rules alerts_test.yml
+	docker run --rm -v "$(CURDIR)/deploy/monitoring:/m:ro" -w /m --entrypoint amtool prom/alertmanager:v0.35.1 check-config alertmanager.yml
+	python3 -c "import json,sys; json.load(open('deploy/monitoring/grafana-dashboard.json'))"
+
+audit: ## Check Go and dashboard dependencies for known vulnerabilities
+	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
+	cd web && pnpm audit --prod
 
 lint: ## Run golangci-lint and the dashboard linters
 	$(GOLANGCI) run ./...

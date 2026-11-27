@@ -206,6 +206,7 @@ const (
 	ErrorCodeInternal       ErrorCode = "internal"
 	ErrorCodeModuleAlwaysOn ErrorCode = "module_always_on"
 	ErrorCodeNotFound       ErrorCode = "not_found"
+	ErrorCodeRateLimited    ErrorCode = "rate_limited"
 	ErrorCodeUnauthorized   ErrorCode = "unauthorized"
 )
 
@@ -227,6 +228,8 @@ func (e ErrorCode) Valid() bool {
 	case ErrorCodeModuleAlwaysOn:
 		return true
 	case ErrorCodeNotFound:
+		return true
+	case ErrorCodeRateLimited:
 		return true
 	case ErrorCodeUnauthorized:
 		return true
@@ -1338,6 +1341,9 @@ type ServerInterface interface {
 	// UpdateCase Change a case's reason
 	// (PATCH /guilds/{guildId}/cases/{caseNumber})
 	UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int)
+	// DeleteGuildData Remove Niro from the server and delete all of its data now
+	// (DELETE /guilds/{guildId}/data)
+	DeleteGuildData(w http.ResponseWriter, r *http.Request, guildId GuildId)
 	// GetPermissionAudit Audit the server for dangerous permissions and settings
 	// (GET /guilds/{guildId}/guardian/audit)
 	GetPermissionAudit(w http.ResponseWriter, r *http.Request, guildId GuildId)
@@ -1502,6 +1508,12 @@ func (_ Unimplemented) GetCase(w http.ResponseWriter, r *http.Request, guildId G
 // UpdateCase Change a case's reason
 // (PATCH /guilds/{guildId}/cases/{caseNumber})
 func (_ Unimplemented) UpdateCase(w http.ResponseWriter, r *http.Request, guildId GuildId, caseNumber int) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// DeleteGuildData Remove Niro from the server and delete all of its data now
+// (DELETE /guilds/{guildId}/data)
+func (_ Unimplemented) DeleteGuildData(w http.ResponseWriter, r *http.Request, guildId GuildId) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -2072,6 +2084,32 @@ func (siw *ServerInterfaceWrapper) UpdateCase(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateCase(w, r, guildId, caseNumber)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteGuildData operation middleware
+func (siw *ServerInterfaceWrapper) DeleteGuildData(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "guildId" -------------
+	var guildId GuildId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "guildId", chi.URLParam(r, "guildId"), &guildId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "guildId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGuildData(w, r, guildId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3201,6 +3239,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/guilds/{guildId}", wrapper.GetGuild)
 	})
 	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/guilds/{guildId}/data", wrapper.DeleteGuildData)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/guilds/{guildId}/modules", wrapper.ListGuildModules)
 	})
 	r.Group(func(r chi.Router) {
@@ -4150,6 +4191,64 @@ func (response UpdateCase409JSONResponse) VisitUpdateCaseResponse(w http.Respons
 type UpdateCase502JSONResponse struct{ BotErrorJSONResponse }
 
 func (response UpdateCase502JSONResponse) VisitUpdateCaseResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGuildDataRequestObject struct {
+	GuildId GuildId `json:"guildId"`
+}
+
+type DeleteGuildDataResponseObject interface {
+	VisitDeleteGuildDataResponse(w http.ResponseWriter) error
+}
+
+type DeleteGuildData204Response struct {
+}
+
+func (response DeleteGuildData204Response) VisitDeleteGuildDataResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteGuildData401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response DeleteGuildData401JSONResponse) VisitDeleteGuildDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.UnauthorizedJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGuildData403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeleteGuildData403JSONResponse) VisitDeleteGuildDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := runtime.JSONMarshalWrite(&buf, response.ForbiddenJSONResponse); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteGuildData502JSONResponse struct{ BotErrorJSONResponse }
+
+func (response DeleteGuildData502JSONResponse) VisitDeleteGuildDataResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := runtime.JSONMarshalWrite(&buf, response.BotErrorJSONResponse); err != nil {
@@ -6580,6 +6679,9 @@ type StrictServerInterface interface {
 	// UpdateCase Change a case's reason
 	// (PATCH /guilds/{guildId}/cases/{caseNumber})
 	UpdateCase(ctx context.Context, request UpdateCaseRequestObject) (UpdateCaseResponseObject, error)
+	// DeleteGuildData Remove Niro from the server and delete all of its data now
+	// (DELETE /guilds/{guildId}/data)
+	DeleteGuildData(ctx context.Context, request DeleteGuildDataRequestObject) (DeleteGuildDataResponseObject, error)
 	// GetPermissionAudit Audit the server for dangerous permissions and settings
 	// (GET /guilds/{guildId}/guardian/audit)
 	GetPermissionAudit(ctx context.Context, request GetPermissionAuditRequestObject) (GetPermissionAuditResponseObject, error)
@@ -7022,6 +7124,32 @@ func (sh *strictHandler) UpdateCase(w http.ResponseWriter, r *http.Request, guil
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateCaseResponseObject); ok {
 		if err := validResponse.VisitUpdateCaseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteGuildData operation middleware
+func (sh *strictHandler) DeleteGuildData(w http.ResponseWriter, r *http.Request, guildId GuildId) {
+	var request DeleteGuildDataRequestObject
+
+	request.GuildId = guildId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.DeleteGuildData(ctx, request.(DeleteGuildDataRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteGuildData")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteGuildDataResponseObject); ok {
+		if err := validResponse.VisitDeleteGuildDataResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

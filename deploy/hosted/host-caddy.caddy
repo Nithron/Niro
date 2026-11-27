@@ -1,0 +1,11 @@
+# niro.nithron.com on a server whose own Caddy already holds ports 80 and 443
+# (the shared Nithron VPS). Install it as /etc/caddy/sites.d/niro.caddy; the
+# host's Caddyfile imports that folder. Runbook: "Shared server".
+niro.nithron.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080 {
+		# Behind Cloudflare's proxy: pass on the visitor's address rather than
+		# Cloudflare's, so rate limits apply per visitor.
+		header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+	}
+}

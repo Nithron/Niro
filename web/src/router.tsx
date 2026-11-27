@@ -4,6 +4,7 @@ import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  useRouterState,
   type RouterHistory,
 } from '@tanstack/react-router'
 import { ApiError, type CaseAction } from './api/client'
@@ -20,12 +21,22 @@ import { RolePanelsPage } from './pages/RolePanels'
 import { TicketsPage } from './pages/Tickets'
 import { WelcomeSettingsPage } from './pages/WelcomeSettings'
 import { GuildLayout, ModulesPage } from './pages/Guild'
+import { LegalPage } from './pages/Legal'
 import { LoginPage } from './pages/Login'
 import { ModerationSettingsPage } from './pages/ModerationSettings'
 import { ServersPage } from './pages/Servers'
 
-/** Every page needs a logged-in user; without one, show the login screen. */
+/** Pages anyone can read without logging in. */
+const publicPaths = new Set(['/terms', '/privacy'])
+
+/** Every other page needs a logged-in user; without one, show the login screen. */
 function Root() {
+  const path = useRouterState({ select: (s) => s.location.pathname })
+  if (publicPaths.has(path)) return <Outlet />
+  return <AuthedRoot />
+}
+
+function AuthedRoot() {
   const me = useMe()
   if (me.isPending) return <Spinner />
   if (me.isError) {
@@ -46,6 +57,9 @@ function Root() {
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({ component: Root })
 
 const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: ServersPage })
+
+const termsRoute = createRoute({ getParentRoute: () => rootRoute, path: '/terms', component: () => <LegalPage doc="terms" /> })
+const privacyRoute = createRoute({ getParentRoute: () => rootRoute, path: '/privacy', component: () => <LegalPage doc="privacy" /> })
 
 const guildRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -173,6 +187,8 @@ const ticketsRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  termsRoute,
+  privacyRoute,
   guildRoute.addChildren([modulesRoute, moderationRoute, casesRoute, caseRoute, automodRoute, guardianRoute, detectionsRoute, auditRoute, loggingRoute, rolePanelsRoute, welcomeRoute, ticketsRoute]),
 ])
 

@@ -1,0 +1,7 @@
+# Caddy in front of Niro: automatic HTTPS for NIRO_DOMAIN (deploy/compose.yml,
+# profile "tls"). Caddy adds X-Forwarded-For, which Niro trusts from the
+# compose network only (NIRO_TRUSTED_PROXIES).
+{$NIRO_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy niro:8080
+}

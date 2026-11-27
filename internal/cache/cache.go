@@ -8,8 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/valkey-io/valkey-go"
 
 	"github.com/nithron/niro/internal/core"
@@ -95,8 +99,113 @@ func (c *Client) SetJSON(ctx context.Context, key string, v any, ttl time.Durati
 	return c.c.Do(ctx, c.c.B().Set().Key(key).Value(string(b)).Ex(ttl).Build()).Error()
 }
 
+// ForgetGuild deletes the Valkey keys that belong to one server: Guardian's
+// counters and watch state and the invite snapshot. The message cache is keyed
+// by channel and expires on its own within 7 days.
+func (c *Client) ForgetGuild(ctx context.Context, g snowflake.ID) error {
+	keys := []string{sinceKey(g), joinsKey(g), invitesKey(g)}
+	for _, pattern := range []string{"niro:guardian:msgs:" + g.String() + ":*", "niro:guardian:seen:" + g.String() + ":*"} {
+		var cursor uint64
+		for {
+			e, err := c.c.Do(ctx, c.c.B().Scan().Cursor(cursor).Match(pattern).Count(500).Build()).AsScanEntry()
+			if err != nil {
+				return err
+			}
+			keys = append(keys, e.Elements...)
+			if cursor = e.Cursor; cursor == 0 {
+				break
+			}
+		}
+	}
+	for chunk := range slices.Chunk(keys, 500) {
+		if err := c.c.Do(ctx, c.c.B().Del().Key(chunk...).Build()).Error(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ForgetMessages deletes the cached message text of the given channels (the
+// server log's edit/delete cache), for an immediate erasure. One SCAN over the
+// message keys, filtered here, is cheaper than one SCAN per channel.
+func (c *Client) ForgetMessages(ctx context.Context, channels []snowflake.ID) error {
+	if len(channels) == 0 {
+		return nil
+	}
+	want := make(map[string]bool, len(channels))
+	for _, ch := range channels {
+		want[ch.String()] = true
+	}
+	const prefix = "niro:logging:msg:"
+	var keys []string
+	var cursor uint64
+	for {
+		e, err := c.c.Do(ctx, c.c.B().Scan().Cursor(cursor).Match(prefix+"*").Count(1000).Build()).AsScanEntry()
+		if err != nil {
+			return err
+		}
+		for _, k := range e.Elements {
+			ch, _, _ := strings.Cut(strings.TrimPrefix(k, prefix), ":")
+			if want[ch] {
+				keys = append(keys, k)
+			}
+		}
+		if cursor = e.Cursor; cursor == 0 {
+			break
+		}
+	}
+	for chunk := range slices.Chunk(keys, 500) {
+		if err := c.c.Do(ctx, c.c.B().Del().Key(chunk...).Build()).Error(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReplaceJSON overwrites an existing key, keeping its TTL; it never creates one.
+func (c *Client) ReplaceJSON(ctx context.Context, key string, v any) (bool, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return false, err
+	}
+	err = c.c.Do(ctx, c.c.B().Set().Key(key).Value(string(b)).Xx().Keepttl().Build()).Error()
+	if valkey.IsValkeyNil(err) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
 func (c *Client) Delete(ctx context.Context, key string) error {
 	return c.c.Do(ctx, c.c.B().Del().Key(key).Build()).Error()
+}
+
+// hitScript increments a fixed-window counter, starting the window on the
+// first hit, and returns the count and the milliseconds left in the window.
+var hitScript = valkey.NewLuaScript(`
+local n = redis.call('INCR', KEYS[1])
+if n == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[1]) end
+local ttl = redis.call('PTTL', KEYS[1])
+if ttl < 0 then redis.call('PEXPIRE', KEYS[1], ARGV[1]); ttl = tonumber(ARGV[1]) end
+return {n, ttl}`)
+
+// Hit counts one request against a rate-limit window (api.Limiter).
+func (c *Client) Hit(ctx context.Context, key string, window time.Duration) (int64, time.Duration, error) {
+	vals, err := hitScript.Exec(ctx, c.c, []string{key}, []string{strconv.FormatInt(window.Milliseconds(), 10)}).ToArray()
+	if err != nil {
+		return 0, 0, err
+	}
+	if len(vals) != 2 {
+		return 0, 0, fmt.Errorf("rate limit script returned %d values", len(vals))
+	}
+	n, err := vals[0].AsInt64()
+	if err != nil {
+		return 0, 0, err
+	}
+	ms, err := vals[1].AsInt64()
+	if err != nil {
+		return 0, 0, err
+	}
+	return n, time.Duration(ms) * time.Millisecond, nil
 }
 
 // Raw returns the underlying Valkey client (for the RPC bridge).

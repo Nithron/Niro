@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/testcontainers/testcontainers-go"
 	tcvalkey "github.com/testcontainers/testcontainers-go/modules/valkey"
 
@@ -97,5 +98,93 @@ func TestJSONRoundTripAndTTL(t *testing.T) {
 	}
 	if found, _ := c.GetJSON(ctx, "d", &out); found {
 		t.Fatal("deleted key still present")
+	}
+}
+
+func TestRateLimitHit(t *testing.T) {
+	c := newClient(t)
+	ctx := t.Context()
+	for want := int64(1); want <= 3; want++ {
+		n, reset, err := c.Hit(ctx, "niro:ratelimit:test", time.Minute)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != want || reset <= 0 || reset > time.Minute {
+			t.Fatalf("hit %d = (%d, %s)", want, n, reset)
+		}
+	}
+	// A new window starts once the old one expires.
+	if _, _, err := c.Hit(ctx, "niro:ratelimit:short", 50*time.Millisecond); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(120 * time.Millisecond)
+	if n, _, err := c.Hit(ctx, "niro:ratelimit:short", 50*time.Millisecond); err != nil || n != 1 {
+		t.Fatalf("after the window = (%d, %v), want 1", n, err)
+	}
+}
+
+func TestReplaceJSONNeverCreates(t *testing.T) {
+	c := newClient(t)
+	ctx := t.Context()
+	if ok, err := c.ReplaceJSON(ctx, "niro:test:missing", map[string]int{"a": 1}); err != nil || ok {
+		t.Fatalf("replace of a missing key = (%v, %v), want (false, nil)", ok, err)
+	}
+	if found, _ := c.GetJSON(ctx, "niro:test:missing", &map[string]int{}); found {
+		t.Fatal("ReplaceJSON created a key")
+	}
+	if err := c.SetJSON(ctx, "niro:test:k", 1, time.Minute); err != nil {
+		t.Fatal(err)
+	}
+	if ok, err := c.ReplaceJSON(ctx, "niro:test:k", 2); err != nil || !ok {
+		t.Fatalf("replace = (%v, %v)", ok, err)
+	}
+	var v int
+	if _, err := c.GetJSON(ctx, "niro:test:k", &v); err != nil || v != 2 {
+		t.Fatalf("value = %d (%v)", v, err)
+	}
+	ttl, err := c.Raw().Do(ctx, c.Raw().B().Pttl().Key("niro:test:k").Build()).AsInt64()
+	if err != nil || ttl <= 0 {
+		t.Fatalf("TTL lost on replace: %d (%v)", ttl, err)
+	}
+}
+
+func TestForgetGuildAndMessages(t *testing.T) {
+	c := newClient(t)
+	ctx := t.Context()
+	set := func(k string) {
+		if err := c.Raw().Do(ctx, c.Raw().B().Set().Key(k).Value("x").Build()).Error(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mine := []string{
+		"niro:guardian:msgs:1:5", "niro:guardian:seen:1:5", "niro:guardian:since:1", "niro:guardian:joins:1",
+		"niro:logging:invites:1", "niro:logging:msg:10:99", "niro:logging:msg:11:98",
+	}
+	other := []string{"niro:guardian:msgs:2:5", "niro:guardian:msgs:12:5", "niro:logging:msg:20:97", "niro:guardian:since:12"}
+	for _, k := range append(append([]string{}, mine...), other...) {
+		set(k)
+	}
+	if err := c.ForgetGuild(ctx, 1); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.ForgetMessages(ctx, []snowflake.ID{10, 11}); err != nil {
+		t.Fatal(err)
+	}
+	exists := func(k string) bool {
+		n, err := c.Raw().Do(ctx, c.Raw().B().Exists().Key(k).Build()).AsInt64()
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n == 1
+	}
+	for _, k := range mine {
+		if exists(k) {
+			t.Errorf("%s survived", k)
+		}
+	}
+	for _, k := range other {
+		if !exists(k) {
+			t.Errorf("%s of another server was deleted", k)
+		}
 	}
 }

@@ -11,6 +11,9 @@ import (
 
 var errDurationSyntax = errors.New("invalid duration")
 
+// maxParsedDuration bounds what ParseDuration accepts (about 100 years).
+const maxParsedDuration = 100 * 365 * 24 * time.Hour
+
 // ParseDuration parses moderator-friendly durations: a sequence of
 // number+unit pairs with units s, m, h, d, w (e.g. "10m", "1d12h", "2w").
 // Spaces are ignored and units are case-insensitive.
@@ -48,8 +51,15 @@ func ParseDuration(s string) (time.Duration, error) {
 		default:
 			return 0, errDurationSyntax
 		}
+		// Guard against overflow: "100000w" would wrap around int64.
+		if time.Duration(n) > (maxParsedDuration-total)/d {
+			return 0, errDurationSyntax
+		}
 		total += time.Duration(n) * d
 		s = s[i+1:]
+	}
+	if total == 0 {
+		return 0, errDurationSyntax // "0s" is not a duration a moderator means
 	}
 	return total, nil
 }

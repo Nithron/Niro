@@ -72,6 +72,71 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: web/package.json
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "26"
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+      - run: make audit
+
+  fuzz:
+    name: Fuzz parsers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: make fuzz FUZZTIME=30s
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: internal/**/testdata/fuzz/
+          retention-days: 7
+
+  soak:
+    name: Load test (three minutes)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: niro_soak
+          POSTGRES_USER: niro
+          POSTGRES_PASSWORD: niro
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U niro -d niro_soak"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: make soak-short
+
+  deploy:
+    name: Deployment config (compose, alert rules)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: make deploy-check
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest

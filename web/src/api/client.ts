@@ -36,6 +36,14 @@ export async function unwrap<T>(p: Promise<Result<T>>): Promise<T> {
   return data
 }
 
+/** Ends every session of the signed-in user, on all devices. */
+export async function logoutEverywhere(): Promise<void> {
+  await globalThis.fetch(new URL('/auth/logout-everywhere', window.location.origin), {
+    method: 'POST',
+    credentials: 'same-origin',
+  })
+}
+
 export async function logout(): Promise<void> {
   await globalThis.fetch(new URL('/auth/logout', window.location.origin), {
     method: 'POST',

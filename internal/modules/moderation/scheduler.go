@@ -11,14 +11,18 @@ const maxScheduledAttempts = 5
 
 // RunScheduler executes due scheduled actions (currently: lifting temporary
 // bans) until ctx is done. bot identifies the bot as the case moderator.
-func (s *Service) RunScheduler(ctx context.Context, bot Actor, every time.Duration) {
+func (s *Service) RunScheduler(ctx context.Context, bot Actor, every time.Duration, done func(error)) {
 	t := time.NewTicker(every)
 	defer t.Stop()
 	for {
-		if n, err := s.RunDue(ctx, bot); err != nil {
+		n, err := s.RunDue(ctx, bot)
+		if err != nil {
 			s.log.WarnContext(ctx, "running scheduled actions failed", "err", err)
 		} else if n > 0 {
 			s.log.InfoContext(ctx, "ran scheduled actions", "count", n)
+		}
+		if done != nil && ctx.Err() == nil {
+			done(err)
 		}
 		select {
 		case <-ctx.Done():

@@ -1,0 +1,25 @@
+# Alertmanager: alerts go to a private channel in the support server through
+# a Discord webhook. The webhook URL is a secret: it is read from a file
+# (mounted from the host), never written here.
+route:
+  receiver: discord
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="critical"]
+      receiver: discord
+      repeat_interval: 1h
+
+receivers:
+  - name: discord
+    discord_configs:
+      - webhook_url_file: /etc/alertmanager/discord_webhook_url
+        send_resolved: true
+
+inhibit_rules:
+  # While Niro is down, don't also report every shard and job.
+  - source_matchers: [alertname="NiroDown"]
+    target_matchers: [severity=~"warning|critical", alertname!="NiroDown"]
+    equal: [instance]

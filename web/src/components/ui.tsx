@@ -2,7 +2,7 @@ import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { clsx } from 'clsx'
 import type {
   AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
+  ComponentProps,
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
@@ -36,7 +36,7 @@ export function Button({
   variant = 'primary',
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+}: ComponentProps<'button'> & { variant?: Variant }) {
   return <button className={clsx(buttonBase, variants[variant], className)} {...props} />
 }
 
@@ -190,7 +190,9 @@ export function RequestError({ error }: { error: unknown }) {
   if (!error) return null
   let message = t('app.genericError')
   if (error instanceof ApiError) {
-    message = error.code === 'bot_unavailable' ? t('errors.botUnavailable') : error.message || message
+    if (error.code === 'bot_unavailable') message = t('errors.botUnavailable')
+    else if (error.code === 'rate_limited') message = t('errors.rateLimited')
+    else message = error.message || message
   }
   return (
     <p role="alert" className="text-sm text-danger">

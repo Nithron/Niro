@@ -1,0 +1,70 @@
+# Unit tests for alerts.yml: `promtool test rules alerts_test.yml`.
+rule_files: [alerts.yml]
+evaluation_interval: 1m
+
+tests:
+  # The bot stops: the scrape fails, then the alert fires after 2 minutes.
+  - interval: 1m
+    input_series:
+      - series: 'up{job="niro", instance="niro:9090"}'
+        values: "1 1 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: NiroDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: NiroDown
+        exp_alerts:
+          - exp_labels: { severity: critical, job: niro, instance: "niro:9090" }
+            exp_annotations:
+              summary: Niro's metrics endpoint is not answering
+              description: "Prometheus cannot scrape niro:9090. The process is down or the ops port is unreachable."
+
+  # One shard drops for good; the other stays up.
+  - interval: 1m
+    input_series:
+      - series: 'niro_bot_shard_up{shard="0"}'
+        values: "1x10"
+      - series: 'niro_bot_shard_up{shard="1"}'
+        values: "1 1 0 0 0 0 0 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: NiroShardDown
+        exp_alerts:
+          - exp_labels: { severity: critical, shard: "1" }
+            exp_annotations:
+              summary: "Shard 1 is not connected to the gateway"
+              description: Servers on this shard get no moderation, protection or logging until it reconnects.
+
+  # The scheduler last succeeded at t=0 and then stops reporting success.
+  - interval: 1m
+    input_series:
+      - series: 'niro_job_last_success_timestamp_seconds{job="niro", name="scheduler"}'
+        values: "0x20"
+      - series: 'niro_job_last_success_timestamp_seconds{job="niro", name="retention"}'
+        values: "0x20"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NiroJobStale
+        exp_alerts: []
+      - eval_time: 15m
+        alertname: NiroJobStale
+        exp_alerts:
+          - exp_labels: { severity: warning, job: niro, name: scheduler }
+            exp_annotations:
+              summary: "Background job scheduler has not succeeded recently"
+              description: "Check the logs for the job's errors. Scheduler: temp-bans are not lifted. Retention: data is not deleted on time."
+
+  # Discord rate-limits Niro steadily (one 429 a second).
+  - interval: 1m
+    input_series:
+      - series: 'niro_discord_rest_requests_total{method="POST", route="/channels/:id/messages", status="429"}'
+        values: "0+60x20"
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: NiroDiscordRateLimited
+        exp_alerts:
+          - exp_labels: { severity: warning }
+            exp_annotations:
+              summary: Discord is rate-limiting Niro
+              description: "More than one 429 every 2 seconds for 10 minutes. Look at niro_discord_rest_requests_total by route."

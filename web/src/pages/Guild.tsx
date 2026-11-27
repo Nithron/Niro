@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type ModuleState } from '../api/client'
 import { useGuild, useModules, useSetModule } from '../api/queries'
+import { DeleteServerData } from '../components/DeleteServerData'
 import { Card, ErrorState, GuildIcon, Spinner, Switch } from '../components/ui'
 import i18n from '../i18n'
 import { InviteButton } from './Servers'
@@ -50,6 +51,7 @@ export function GuildLayout({ guildId }: { guildId: string }) {
           </div>
 
           {!guild.data.botPresent ? (
+            <>
             <Card className="mt-8 max-w-md">
               <h2 className="font-semibold">{t('guild.notInServerTitle')}</h2>
               <p className="mt-1 text-muted">{t('guild.notInServerBody')}</p>
@@ -57,6 +59,8 @@ export function GuildLayout({ guildId }: { guildId: string }) {
                 <InviteButton guildId={guildId} />
               </div>
             </Card>
+            {guild.data.owner && <DeleteServerData guildId={guildId} guildName={guild.data.name} />}
+            </>
           ) : (
             <>
               <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-border" aria-label={guild.data.name}>
@@ -86,6 +90,7 @@ export function GuildLayout({ guildId }: { guildId: string }) {
 export function ModulesPage({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
   const modules = useModules(guildId, true)
+  const guild = useGuild(guildId)
   return (
     <div>
       <h2 className="text-lg font-semibold">{t('guild.modulesTitle')}</h2>
@@ -101,6 +106,7 @@ export function ModulesPage({ guildId }: { guildId: string }) {
           </ul>
         )}
       </div>
+      {guild.data?.owner && <DeleteServerData guildId={guildId} guildName={guild.data.name} />}
     </div>
   )
 }

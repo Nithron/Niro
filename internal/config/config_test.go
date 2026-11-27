@@ -91,3 +91,30 @@ func TestValidateByRole(t *testing.T) {
 		t.Fatalf("production safety checks missing: %v", err)
 	}
 }
+
+func TestTrustedProxies(t *testing.T) {
+	c, err := Load(env(map[string]string{"NIRO_TRUSTED_PROXIES": "10.0.0.0/8, 172.18.0.5 ,::1"}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, p := range c.TrustedProxies {
+		got = append(got, p.String())
+	}
+	if strings.Join(got, " ") != "10.0.0.0/8 172.18.0.5/32 ::1/128" {
+		t.Fatalf("trusted proxies = %v", got)
+	}
+	if _, err := Load(env(map[string]string{"NIRO_TRUSTED_PROXIES": "proxy.local"})); err == nil || !strings.Contains(err.Error(), "NIRO_TRUSTED_PROXIES") {
+		t.Fatalf("a host name should be rejected: %v", err)
+	}
+}
+
+func TestProductionNeedsHTTPS(t *testing.T) {
+	c, _ := Load(env(map[string]string{
+		"NIRO_ENV": "production", "NIRO_PUBLIC_URL": "http://niro.example",
+		"NIRO_DISCORD_CLIENT_ID": "1", "NIRO_DISCORD_CLIENT_SECRET": "s",
+	}))
+	if err := c.Validate(Role{API: true}); err == nil || !strings.Contains(err.Error(), "https") {
+		t.Fatalf("plain http in production: %v", err)
+	}
+}

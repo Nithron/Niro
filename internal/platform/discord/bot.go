@@ -7,7 +7,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo"
@@ -30,6 +32,8 @@ import (
 	"github.com/nithron/niro/internal/modules/roles"
 	"github.com/nithron/niro/internal/modules/tickets"
 	"github.com/nithron/niro/internal/modules/welcome"
+	"github.com/nithron/niro/internal/observability"
+	"github.com/nithron/niro/internal/retention"
 )
 
 // Intents are the gateway intents the bot requests. Each milestone adds only
@@ -50,9 +54,9 @@ const Intents = gateway.IntentGuilds | gateway.IntentGuildMessages | gateway.Int
 // privilegedIntents drops privileged intents the application is not allowed
 // to use, so the bot still connects (with Guardian degraded) instead of
 // being refused by Discord with "disallowed intents".
-func privilegedIntents(token string, log *slog.Logger) gateway.Intents {
+func privilegedIntents(token string, opts []rest.ClientConfigOpt, log *slog.Logger) gateway.Intents {
 	intents := Intents
-	app, err := rest.New(rest.NewClient(token)).GetCurrentApplication()
+	app, err := rest.New(rest.NewClient(token, opts...)).GetCurrentApplication()
 	if err != nil {
 		log.Warn("could not check privileged intents; requesting all", "err", err)
 		return intents
@@ -93,6 +97,30 @@ type Deps struct {
 	}
 	// ScamFeedURLs are the scam-domain lists to download (https only).
 	ScamFeedURLs []string
+	// Lifecycle deletes old data (retention) and a server's data on request.
+	Lifecycle Lifecycle
+	// GuildCache forgets a server's Valkey keys when Niro leaves it.
+	GuildCache GuildCache
+	// Jobs records background job runs for alerts; may be nil.
+	Jobs *observability.Jobs
+	// RestURL replaces Discord's API base URL. Only the load test sets it,
+	// to point the bot at a fake Discord (cmd/niro-soak).
+	RestURL string
+}
+
+// Lifecycle is the store side of data retention.
+type Lifecycle interface {
+	retention.Store
+	DeleteGuild(ctx context.Context, id snowflake.ID) (bool, error)
+	// ReconcileGuilds marks active servers missing from present as left.
+	ReconcileGuilds(ctx context.Context, present []snowflake.ID, maxShare float64) (int64, error)
+}
+
+// GuildCache holds per-server keys outside Postgres.
+type GuildCache interface {
+	ForgetGuild(ctx context.Context, id snowflake.ID) error
+	// ForgetMessages drops cached message text for these channels.
+	ForgetMessages(ctx context.Context, channels []snowflake.ID) error
 }
 
 // Bot is a running Niro Discord client.
@@ -112,11 +140,18 @@ type Bot struct {
 	msgOrder  *orderedRunner
 	blocklist *guardian.DomainSet
 	pending   pendingBans
+	// stopped is closed when Run returns; background work started by
+	// handlers (the second erasure pass) watches it.
+	stopped chan struct{}
+	// present holds every server the gateway reported (READY, joins), for
+	// the startup reconciliation.
+	presentMu sync.Mutex
+	present   map[snowflake.ID]bool
 }
 
 // New builds the client. Nothing connects until Run.
 func New(deps Deps) (*Bot, error) {
-	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute)}
+	b := &Bot{deps: deps, log: deps.Log.With("component", "bot"), msgOrder: newOrderedRunner(1000, time.Minute), stopped: make(chan struct{}), present: map[snowflake.ID]bool{}}
 	var err error
 	if b.metrics, err = newMetrics(deps.Metrics); err != nil {
 		return nil, err
@@ -137,18 +172,32 @@ func New(deps Deps) (*Bot, error) {
 		return nil
 	})
 
+	restOpts := []rest.ClientConfigOpt{rest.WithHTTPClient(&http.Client{Timeout: 20 * time.Second, Transport: b.metrics.restTransport(http.DefaultTransport)})}
+	if deps.RestURL != "" {
+		restOpts = append(restOpts, rest.WithURL(deps.RestURL))
+	}
 	b.client, err = disgo.New(deps.Token,
 		bot.WithLogger(deps.Log.With("component", "disgo")),
 		bot.WithShardManagerConfigOpts(
 			sharding.WithAutoScaling(true), // reshard automatically when Discord asks
-			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, b.log))),
+			sharding.WithGatewayConfigOpts(gateway.WithIntents(privilegedIntents(deps.Token, restOpts[1:], b.log))),
 		),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagGuilds, cache.FlagRoles, cache.FlagChannels, cache.FlagMembers, cache.FlagVoiceStates)),
 		bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(b.gatewayHandlers())),
-		bot.WithEventListeners(router, &events.ListenerAdapter{
+		bot.WithRestClientConfigOpts(restOpts...),
+		bot.WithEventListeners(router, bot.NewListenerFunc(b.metrics.countEvent), &events.ListenerAdapter{
+			OnReady: func(e *events.Ready) {
+				for _, g := range e.Guilds {
+					b.notePresent(g.ID, true)
+				}
+			},
 			OnGuildReady: func(e *events.GuildReady) { b.recordGuild(e.Guild); b.refreshInvites(e.GuildID) },
-			OnGuildJoin:  func(e *events.GuildJoin) { b.recordGuild(e.Guild); b.log.Info("joined guild", "guild_id", e.GuildID) },
-			OnGuildLeave: func(e *events.GuildLeave) { b.forgetGuild(e.GuildID) },
+			OnGuildJoin: func(e *events.GuildJoin) {
+				b.notePresent(e.GuildID, true)
+				b.recordGuild(e.Guild)
+				b.log.Info("joined guild", "guild_id", e.GuildID)
+			},
+			OnGuildLeave: func(e *events.GuildLeave) { b.notePresent(e.GuildID, false); b.forgetGuild(e.GuildID) },
 			OnGuildMessageCreate: func(e *events.GuildMessageCreate) {
 				b.onLogMessageCreate(e)
 				b.onGuildMessage(e)
@@ -298,7 +347,7 @@ func (b *Bot) runScheduler(ctx context.Context) {
 	for {
 		if self, ok := b.client.Caches.SelfUser(); ok {
 			actor := moderation.Actor{Rank: core.Rank{ID: self.ID}, Name: self.Username}
-			b.mod.RunScheduler(ctx, actor, 30*time.Second)
+			b.mod.RunScheduler(ctx, actor, 30*time.Second, b.deps.Jobs.Reporter("scheduler"))
 			return
 		}
 		select {
@@ -322,11 +371,18 @@ func (b *Bot) Run(ctx context.Context) error {
 	if err := b.client.OpenShardManager(ctx); err != nil {
 		return fmt.Errorf("connecting to the gateway: %w", err)
 	}
+	defer close(b.stopped)
 	b.log.Info("bot online", "application_id", b.client.ApplicationID, "version", b.deps.Version)
+	b.deps.Jobs.Expect("scheduler", "guardian_purge", "transcript_purge", "scam_feed")
 	go b.runScheduler(ctx)
-	go b.guard.RunMaintenance(ctx, 15*time.Second)
-	go b.tickets.RunMaintenance(ctx, time.Hour)
-	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian")}
+	go b.guard.RunMaintenance(ctx, 15*time.Second, b.deps.Jobs.Reporter("guardian_purge"))
+	go b.tickets.RunMaintenance(ctx, time.Hour, b.deps.Jobs.Reporter("transcript_purge"))
+	go b.watchShards(ctx, 15*time.Second)
+	if b.deps.Lifecycle != nil {
+		b.deps.Jobs.Expect("retention")
+		go b.runRetention(ctx)
+	}
+	feed := &guardian.FeedUpdater{Store: b.deps.GuardianStore, Set: b.blocklist, URLs: b.deps.ScamFeedURLs, Log: b.log.With("module", "guardian"), Done: b.deps.Jobs.Reporter("scam_feed")}
 	go feed.Run(ctx)
 
 	<-ctx.Done()
@@ -337,14 +393,73 @@ func (b *Bot) Run(ctx context.Context) error {
 	return nil
 }
 
-// Ready reports whether at least one shard is connected (readiness check).
+// Ready reports whether every shard is connected (readiness check). One
+// shard down means a share of servers gets no moderation or protection, so
+// it counts as not ready.
 func (b *Bot) Ready(context.Context) error {
+	total, down := 0, 0
 	for s := range b.client.ShardManager.Shards() {
-		if s.Status() == gateway.StatusReady {
-			return nil
+		total++
+		if s.Status() != gateway.StatusReady {
+			down++
 		}
 	}
-	return fmt.Errorf("no shard is connected")
+	switch {
+	case total == 0:
+		return fmt.Errorf("no shard is running")
+	case down > 0:
+		return fmt.Errorf("%d of %d shards are not connected", down, total)
+	}
+	return nil
+}
+
+// runRetention starts the retention job once every shard is connected and
+// the servers have had time to arrive: a server that re-added Niro while it
+// was down is only marked present again when the gateway delivers it, and the
+// purge must not run before that.
+func (b *Bot) runRetention(ctx context.Context) {
+	for b.Ready(ctx) != nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(10 * time.Second):
+		}
+	}
+	b.reconcileGuilds(ctx)
+	r := retention.Runner{Store: b.deps.Lifecycle, Log: b.log.With("component", "retention"), Done: b.deps.Jobs.Reporter("retention"), Delay: 5 * time.Minute}
+	r.Run(ctx, time.Hour)
+}
+
+func (b *Bot) notePresent(id snowflake.ID, in bool) {
+	b.presentMu.Lock()
+	defer b.presentMu.Unlock()
+	if in {
+		b.present[id] = true
+	} else {
+		delete(b.present, id)
+	}
+}
+
+// reconcileGuilds marks servers that removed Niro while it was offline as
+// left, so their data is purged after the grace period like any other. It
+// runs once every shard has reported its servers.
+func (b *Bot) reconcileGuilds(ctx context.Context) {
+	b.presentMu.Lock()
+	ids := make([]snowflake.ID, 0, len(b.present))
+	for id := range b.present {
+		ids = append(ids, id)
+	}
+	b.presentMu.Unlock()
+	n, err := b.deps.Lifecycle.ReconcileGuilds(ctx, ids, 0.1)
+	if err != nil {
+		b.log.Error("reconciling servers failed", "err", err)
+		b.deps.Jobs.Done("reconcile", err)
+		return
+	}
+	b.deps.Jobs.Done("reconcile", nil)
+	if n > 0 {
+		b.log.Info("servers that removed Niro while it was offline marked as left", "count", n)
+	}
 }
 
 func (b *Bot) syncCommands() error {
@@ -380,8 +495,16 @@ func (b *Bot) recordGuild(g discord.CacheGuild) {
 func (b *Bot) forgetGuild(id snowflake.ID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	// Only a real removal arrives here: disgo reports an outage as
+	// GuildUnavailable instead. The data stays for the 30-day grace period
+	// (retention.LeftGuildGrace); the cached keys go now.
 	if err := b.deps.Guilds.MarkGuildLeft(ctx, id); err != nil {
 		b.log.Error("marking guild as left failed", "guild_id", id, "err", err)
+	}
+	if b.deps.GuildCache != nil {
+		if err := b.deps.GuildCache.ForgetGuild(ctx, id); err != nil {
+			b.log.Warn("clearing the server's cached keys failed", "guild_id", id, "err", err)
+		}
 	}
 	b.metrics.guilds.Set(float64(b.client.Caches.GuildsLen()))
 	b.log.Info("left guild", "guild_id", id)

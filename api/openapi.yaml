@@ -59,6 +59,18 @@ paths:
               schema: { $ref: "#/components/schemas/GuildSummary" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /guilds/{guildId}/data:
+    parameters:
+      - $ref: "#/components/parameters/GuildId"
+    delete:
+      operationId: deleteGuildData
+      summary: Remove Niro from the server and delete all of its data now
+      description: "Owner only. Niro leaves the server, then every setting, case, panel, ticket, transcript and Guardian record of the server is deleted at once, with no 30-day grace period. This cannot be undone."
+      responses:
+        "204": { description: Niro left and the data is deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { $ref: "#/components/responses/BotError" }
   /guilds/{guildId}/modules:
     parameters:
       - $ref: "#/components/parameters/GuildId"
@@ -820,7 +832,7 @@ components:
         code:
           type: string
           description: Stable machine-readable code
-          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, bot_unavailable, discord_error, internal]
+          enum: [bad_request, unauthorized, forbidden, not_found, bot_not_in_guild, module_always_on, bot_unavailable, discord_error, rate_limited, internal]
         message: { type: string }
     User:
       type: object

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"net/url"
 	"strings"
 
@@ -34,6 +35,10 @@ type Config struct {
 	ValkeyPassword string
 
 	Discord Discord
+
+	// TrustedProxies are reverse proxies (NIRO_TRUSTED_PROXIES: IPs or CIDRs,
+	// comma-separated) whose X-Forwarded-For header gives the client's IP.
+	TrustedProxies []netip.Prefix
 
 	// ScamFeeds are scam-domain list URLs (NIRO_SCAM_FEEDS, comma-separated).
 	// nil means "use Niro's default list"; empty (NIRO_SCAM_FEEDS=off) means none.
@@ -113,6 +118,17 @@ func Load(getenv func(string) string) (Config, error) {
 	if c.Discord.DevGuildID, err = optionalSnowflake(get("NIRO_DEV_GUILD_ID", "")); err != nil {
 		errs = append(errs, fmt.Errorf("NIRO_DEV_GUILD_ID: %w", err))
 	}
+	for p := range strings.SplitSeq(get("NIRO_TRUSTED_PROXIES", ""), ",") {
+		if p = strings.TrimSpace(p); p == "" {
+			continue
+		}
+		pfx, err := parsePrefix(p)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("NIRO_TRUSTED_PROXIES: %q is not an IP address or CIDR range", p))
+			continue
+		}
+		c.TrustedProxies = append(c.TrustedProxies, pfx)
+	}
 	switch v := get("NIRO_SCAM_FEEDS", ""); v {
 	case "":
 	case "off", "none":
@@ -167,6 +183,19 @@ func parseBaseURL(s string) (*url.URL, error) {
 	}
 	u.Path = strings.TrimSuffix(u.Path, "/")
 	return u, nil
+}
+
+// parsePrefix accepts a CIDR range or a single address.
+func parsePrefix(s string) (netip.Prefix, error) {
+	if strings.Contains(s, "/") {
+		p, err := netip.ParsePrefix(s)
+		return p.Masked(), err
+	}
+	a, err := netip.ParseAddr(s)
+	if err != nil {
+		return netip.Prefix{}, err
+	}
+	return netip.PrefixFrom(a.Unmap(), a.Unmap().BitLen()), nil
 }
 
 func optionalSnowflake(s string) (snowflake.ID, error) {

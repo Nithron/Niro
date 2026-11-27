@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/builder/MessagePreview.tsx"
+        ],
+        "createdAt": "2026-11-26T10:10:35.635Z",
+        "reason": "assistant: the preview imitates Discord's Components V2 container, whose accent colour is drawn by Discord as a left bar; the bar is the feature being previewed"
+      }
+    ]
+  }
+}

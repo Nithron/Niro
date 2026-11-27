@@ -8,6 +8,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+deploy/backups/
+deploy/hosted/secrets/
 
 # Node
 node_modules/

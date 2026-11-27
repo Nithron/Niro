@@ -1,0 +1,174 @@
+# The hosted Niro (niro.nithron.com) on one server. Differences from the
+# self-host file (deploy/compose.yml):
+#   - migrations run as a release step ("migrate"), then the bot and the API run
+#     as separate processes, so the API can restart without dropping shards;
+#   - Prometheus, Alertmanager, node_exporter and Grafana run alongside;
+#   - optional: restic copies the nightly dumps off the server. Turn it on with
+#     COMPOSE_PROFILES=offsite in deploy/hosted/.env (runbook: "Off-site copies").
+#
+#   docker compose -f deploy/hosted/compose.yml up -d --build
+#
+# Runbook: docs/ops/runbook.md.
+name: niro-hosted
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: 10m, max-file: "5" }
+
+x-niro: &niro
+  build:
+    context: ../..
+    dockerfile: deploy/Dockerfile
+    args:
+      VERSION: ${NIRO_VERSION:?set NIRO_VERSION (the release tag) in deploy/hosted/.env}
+  image: niro:${NIRO_VERSION}
+  restart: unless-stopped
+  logging: *logging
+  env_file: .env
+  environment: &niro-env
+    NIRO_ENV: production
+    NIRO_LOG_FORMAT: json
+    NIRO_DATABASE_URL: postgres://niro:${POSTGRES_PASSWORD:?}@postgres:5432/niro?sslmode=disable
+    NIRO_VALKEY_ADDR: valkey:6379
+    NIRO_VALKEY_PASSWORD: ${VALKEY_PASSWORD:?}
+    NIRO_TRUSTED_PROXIES: 172.31.251.0/24
+  networks: [niro]
+
+services:
+  migrate:
+    <<: *niro
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  bot:
+    <<: *niro
+    command: ["bot"]
+    # One bot process only: it owns every gateway shard.
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      valkey: { condition: service_healthy }
+
+  api:
+    <<: *niro
+    command: ["api"]
+    # For a web server on the host (the shared Nithron VPS); Niro's own Caddy
+    # (profile "tls") reaches it over the compose network instead.
+    ports: ["127.0.0.1:${NIRO_HTTP_PORT:-8080}:8080"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      valkey: { condition: service_healthy }
+
+  postgres:
+    extends: { file: ../compose.yml, service: postgres }
+    networks: [niro]
+
+  valkey:
+    extends: { file: ../compose.yml, service: valkey }
+    networks: [niro]
+
+  backup:
+    extends: { file: ../compose.yml, service: backup }
+    environment:
+      # Hosted dumps are always encrypted (Privacy Policy).
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:?set BACKUP_AGE_RECIPIENT (an age public key) in deploy/hosted/.env}
+    volumes:
+      - ../backup:/backup:ro
+      - backups:/backups
+      - backup-metrics:/metrics
+    networks: [niro]
+
+  offsite:
+    profiles: [offsite]
+    logging: *logging
+    image: restic/restic:0.18.1
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/offsite/offsite.sh"]
+    env_file:
+      - { path: offsite.env, required: false }
+    volumes:
+      - ./offsite.sh:/offsite/offsite.sh:ro
+      - backups:/backups:ro
+      - backup-metrics:/metrics
+    networks: [niro]
+
+  caddy:
+    # Only on a server of Niro's own. Where the host already runs a web server on
+    # 80 and 443, leave the profile off and use deploy/hosted/host-caddy.caddy.
+    profiles: [tls]
+    logging: *logging
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      NIRO_DOMAIN: ${NIRO_DOMAIN:?}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api]
+    networks: [niro]
+
+  prometheus:
+    logging: *logging
+    image: prom/prometheus:v3.16.0
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus:/prometheus
+    networks: [niro]
+
+  alertmanager:
+    logging: *logging
+    image: prom/alertmanager:v0.35.1
+    restart: unless-stopped
+    volumes:
+      - ../monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      # The Discord webhook URL for alerts, one line. Not in git.
+      - ./secrets/discord_webhook_url:/etc/alertmanager/discord_webhook_url:ro
+    networks: [niro]
+
+  node-exporter:
+    logging: *logging
+    image: prom/node-exporter:v1.10.2
+    restart: unless-stopped
+    command: ["--path.rootfs=/host", "--collector.textfile.directory=/metrics"]
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+      - backup-metrics:/metrics:ro
+    networks: [niro]
+
+  grafana:
+    logging: *logging
+    image: grafana/grafana:12.3.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    # Private: reach it through an SSH tunnel (ssh -L 3000:127.0.0.1:3000 …).
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/niro.json:ro
+      - grafana:/var/lib/grafana
+    networks: [niro]
+
+networks:
+  niro:
+    ipam:
+      config:
+        - subnet: 172.31.251.0/24
+
+volumes:
+  postgres:
+  backups:
+  backup-metrics:
+  caddy-data:
+  caddy-config:
+  prometheus:
+  grafana:

@@ -554,14 +554,20 @@ func (s *Service) PurgeExpired(ctx context.Context) (int64, error) {
 }
 
 // RunMaintenance purges expired transcripts every interval until ctx ends.
-func (s *Service) RunMaintenance(ctx context.Context, interval time.Duration) {
+// RunMaintenance purges expired transcripts every interval. done, if set, is
+// told how each run went (job metrics).
+func (s *Service) RunMaintenance(ctx context.Context, interval time.Duration, done func(error)) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
-		if n, err := s.PurgeExpired(ctx); err != nil {
+		n, err := s.PurgeExpired(ctx)
+		if err != nil {
 			s.d.Log.WarnContext(ctx, "purging expired transcripts failed", "err", err)
 		} else if n > 0 {
 			s.d.Log.InfoContext(ctx, "expired transcripts deleted", "count", n)
+		}
+		if done != nil && ctx.Err() == nil {
+			done(err)
 		}
 		select {
 		case <-ctx.Done():

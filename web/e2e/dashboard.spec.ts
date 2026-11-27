@@ -8,6 +8,15 @@ test.beforeEach(async ({ page }) => {
   await mockApi(page, state)
 })
 
+test('shows the Terms and Privacy Policy without a session', async ({ page }) => {
+  await page.goto('/privacy')
+  await expect(page.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeVisible()
+  await expect(page.getByRole('table').first()).toBeVisible()
+  await page.screenshot({ path: 'test-results/privacy.png', fullPage: false })
+  await page.getByRole('link', { name: 'Terms', exact: true }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Terms of Service' })).toBeVisible()
+})
+
 test('shows the Discord login without a session', async ({ page }) => {
   state.loggedIn = false
   await page.goto('/')
