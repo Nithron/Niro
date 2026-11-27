@@ -72,6 +72,28 @@
   --color-failed-tint: var(--failed-tint);
   --radius-ctl: var(--radius-control);
   --radius-chip: var(--radius-small);
+
+  /* The interface's half of the type scale, under names of their own so they never shadow the tokens. */
+  --text-screen: var(--text-h3);
+  --text-screen--line-height: var(--leading-h3);
+  --text-screen--letter-spacing: var(--tracking-h3);
+  --text-screen--font-weight: var(--weight-h3);
+  --text-panel: var(--text-title);
+  --text-panel--line-height: var(--leading-title);
+  --text-panel--letter-spacing: var(--tracking-title);
+  --text-panel--font-weight: var(--weight-title);
+  --text-ui: var(--text-small);
+  --text-ui--line-height: var(--leading-small);
+  --text-help: var(--text-fine);
+  --text-help--line-height: var(--leading-fine);
+  --text-caption: var(--text-label);
+  --text-caption--line-height: var(--leading-label);
+  --text-data: var(--text-mono);
+  --text-data--line-height: var(--leading-mono);
+  --text-big: var(--text-number);
+  --text-big--line-height: var(--leading-number);
+  --text-big--letter-spacing: var(--tracking-number);
+  --text-big--font-weight: var(--weight-number);
 }
 
 html,
@@ -93,6 +115,63 @@ body {
   outline-offset: 2px;
 }
 
+/* The pixel display face, for the product's name, a screen's one large number and the words of an empty or
+   loading screen. The face is issued by the website session; until it arrives the text falls back to mono. */
+.pixel-display {
+  font-family: var(--font-pixel, var(--font-mono));
+  font-synthesis: none;
+}
+
+/* A pixel element is never blurred: whole pixels, no smoothing. */
+.pixelated {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+/* Check boxes are squares on whole pixels: a 1 px edge, an ink square inside when checked. */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--edge);
+  border-radius: 0;
+  background: var(--page);
+}
+
+input[type="checkbox"]::before,
+input[type="radio"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  visibility: hidden;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  border-color: var(--ink);
+}
+
+input[type="checkbox"]:checked::before,
+input[type="radio"]:checked::before {
+  visibility: visible;
+}
+
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.5;
+}
+
+/* List bullets are small squares. */
+ul.list-disc {
+  list-style-type: square;
+}
+
 /* The sites' cursor: it blinks while something loads, and stands still under reduced motion. */
 @keyframes niro-cursor {
   0%,
@@ -107,6 +186,11 @@ body {
 
 .cursor {
   animation: niro-cursor var(--loop-cursor) steps(1) infinite;
+}
+
+/* A lamp for something live (raid mode running): a square that blinks. */
+.lamp {
+  animation: niro-cursor var(--loop-lamp) steps(1) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

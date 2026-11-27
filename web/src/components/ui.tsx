@@ -184,17 +184,17 @@ export function Switch({
       onCheckedChange={onCheckedChange}
       disabled={disabled}
       aria-label={label}
-      className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-ctl border border-edge bg-bg transition-colors duration-150 data-[state=checked]:border-fg data-[state=checked]:bg-fg disabled:cursor-not-allowed disabled:opacity-50"
+      className="relative inline-flex h-6 w-11 shrink-0 items-center border border-edge bg-bg transition-colors duration-150 data-[state=checked]:border-fg data-[state=checked]:bg-fg disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <SwitchPrimitive.Thumb className="block size-4 translate-x-[3px] rounded-chip bg-edge transition-transform duration-150 data-[state=checked]:translate-x-[23px] data-[state=checked]:bg-bg" />
+      <SwitchPrimitive.Thumb className="block size-4 translate-x-[3px] bg-edge transition-transform duration-150 data-[state=checked]:translate-x-[23px] data-[state=checked]:bg-bg" />
     </SwitchPrimitive.Root>
   )
 }
 
-/** Server icon (data from Discord), or its initials when it has none. */
+/** Server icon (data from Discord), small and square, or its initials when it has none. */
 export function GuildIcon({ name, url, size = 48 }: { name: string; url?: string; size?: number }) {
   const style = { width: size, height: size }
-  if (url) return <img src={url} alt="" style={style} className="rounded-ctl" />
+  if (url) return <img src={url} alt="" style={style} />
   const initials = name
     .split(/\s+/)
     .map((w) => w[0])
@@ -204,23 +204,56 @@ export function GuildIcon({ name, url, size = 48 }: { name: string; url?: string
     <span
       style={style}
       aria-hidden
-      className="inline-flex items-center justify-center rounded-ctl border border-border font-mono text-sm text-muted"
+      className="inline-flex items-center justify-center border border-border font-mono text-sm text-muted"
     >
       {initials}
     </span>
   )
 }
 
-/** Loading: words in the mono face with the blinking cursor where the data will stand. */
+/** Loading: words in the pixel display face (mono until it arrives) with the block cursor, where the data will stand. */
 export function Spinner() {
   const { t } = useTranslation()
   return (
-    <div role="status" className="py-16 font-mono text-sm text-muted">
+    <div role="status" className="pixel-display flex items-center py-16 text-sm text-muted">
       {t('app.loading')}
-      <span aria-hidden className="cursor ml-0.5 text-fg">
-        ▍
-      </span>
+      <span aria-hidden className="cursor ml-1 inline-block h-4 w-2 bg-fg" />
     </div>
+  )
+}
+
+/** A lamp for something live, such as raid mode running: an 8 px square that blinks, with its word beside it. */
+export function Lamp({ state }: { state?: State }) {
+  const color = state ? { ok: 'bg-ok', warning: 'bg-warning', failed: 'bg-failed' }[state] : 'bg-fg'
+  return <span aria-hidden className={clsx('lamp inline-block size-2 shrink-0', color)} />
+}
+
+/**
+ * A meter: a row of square blocks on whole pixels that fill one by one, never a smooth bar, with the number
+ * beside it in the mono face. Over the limit every block is filled and the number takes the failure's mark.
+ */
+export function BlockMeter({ value, max, label, children, blocks = 10 }: { value: number; max: number; label: string; children: ReactNode; blocks?: number }) {
+  const over = value > max
+  const filled = over ? blocks : Math.min(blocks, Math.ceil((Math.max(0, value) / Math.max(1, max)) * blocks))
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        className="pixelated inline-flex gap-0.5"
+      >
+        {Array.from({ length: blocks }, (_, i) => (
+          <span
+            key={i}
+            className={clsx('inline-block size-2 border', i < filled ? (over ? 'border-failed bg-failed' : 'border-fg bg-fg') : 'border-edge')}
+          />
+        ))}
+      </span>
+      {over ? <Status state="failed">{children}</Status> : <span className="font-mono text-help text-muted">{children}</span>}
+    </span>
   )
 }
 
@@ -251,7 +284,7 @@ export function Field({ label, help, htmlFor, children }: { label: string; help?
         {label}
       </label>
       {children}
-      {help && <p className="text-xs text-muted">{help}</p>}
+      {help && <p className="text-help text-muted">{help}</p>}
     </div>
   )
 }
@@ -284,7 +317,7 @@ export function SwitchRow({
     <div className="flex items-start justify-between gap-6">
       <div>
         <p className="text-sm font-[560]">{label}</p>
-        {help && <p className="mt-1 text-xs text-muted">{help}</p>}
+        {help && <p className="mt-1 text-help text-muted">{help}</p>}
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} label={label} />
     </div>
@@ -311,7 +344,9 @@ export function RequestError({ error }: { error: unknown }) {
 // ---- confirm dialog ------------------------------------------------------------
 
 export type ConfirmOptions = {
-  /** The question, saying what happens. */
+  /** The subject, first and short ("Start raid mode"). Defaults to the action's words. */
+  title?: string
+  /** The sentence that says the consequence. */
   message: string
   /** The words of the confirming button, saying what is destroyed or started ("Delete case #12"). */
   action: string
@@ -336,6 +371,7 @@ export function useConfirm() {
   )
   const dialog = pending ? (
     <ConfirmDialog
+      title={pending.title ?? pending.action}
       message={pending.message}
       action={pending.action}
       onClose={(ok) => {
@@ -347,10 +383,11 @@ export function useConfirm() {
   return [confirm, dialog] as const
 }
 
-function ConfirmDialog({ message, action, onClose }: ConfirmOptions & { onClose: (ok: boolean) => void }) {
+function ConfirmDialog({ title, message, action, onClose }: Required<Omit<ConfirmOptions, 'title'>> & { title: string; onClose: (ok: boolean) => void }) {
   const { t } = useTranslation()
   const panel = useRef<HTMLDivElement>(null)
   const cancel = useRef<HTMLButtonElement>(null)
+  const titleId = useId()
   const messageId = useId()
 
   useEffect(() => {
@@ -387,11 +424,15 @@ function ConfirmDialog({ message, action, onClose }: ConfirmOptions & { onClose:
         ref={panel}
         role="alertdialog"
         aria-modal="true"
-        aria-labelledby={messageId}
+        aria-labelledby={titleId}
+        aria-describedby={messageId}
         onKeyDown={onKeyDown}
         className="w-full max-w-md border border-edge bg-bg p-6"
       >
-        <p id={messageId} className="text-sm">
+        <h2 id={titleId} className="text-panel">
+          {title}
+        </h2>
+        <p id={messageId} className="mt-2 text-sm text-muted">
           {message}
         </p>
         <div className="mt-6 flex flex-wrap justify-end gap-2">
