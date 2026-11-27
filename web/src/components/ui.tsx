@@ -75,12 +75,14 @@ export function buttonClasses(variant: Variant = 'primary', size: Size = 'defaul
  */
 export function Panel({ title, help, className, children }: { title: string; help?: string; className?: string; children: ReactNode }) {
   return (
-    <section className={clsx('grid gap-5 border-t border-border py-6', className)}>
-      <div>
-        <h3 className="text-panel">{title}</h3>
-        {help && <p className="mt-1 max-w-[var(--measure-fine)] text-help text-muted">{help}</p>}
+    <section className={clsx('border-t border-border py-6', className)}>
+      <div className="grid max-w-2xl gap-5">
+        <div>
+          <h3 className="text-panel">{title}</h3>
+          {help && <p className="mt-1 max-w-[var(--measure-fine)] text-help text-muted">{help}</p>}
+        </div>
+        {children}
       </div>
-      {children}
     </section>
   )
 }
@@ -160,7 +162,13 @@ export function Switch({
   disabled?: boolean
   label: string
 }) {
+  const { t } = useTranslation()
   return (
+    <span className="inline-flex shrink-0 items-center gap-2">
+      {/* The state in words too, so it never rests on the fill alone; the switch itself announces it. */}
+      <span aria-hidden className="w-7 text-right font-mono text-help text-muted">
+        {checked ? t('app.on') : t('app.off')}
+      </span>
     <SwitchPrimitive.Root
       checked={checked}
       onCheckedChange={onCheckedChange}
@@ -170,6 +178,7 @@ export function Switch({
     >
       <SwitchPrimitive.Thumb className="block size-4 translate-x-[3px] bg-edge transition-transform duration-150 data-[state=checked]:translate-x-[23px] data-[state=checked]:bg-bg" />
     </SwitchPrimitive.Root>
+    </span>
   )
 }
 

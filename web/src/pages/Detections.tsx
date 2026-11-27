@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next'
 import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
 import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
 import { Badge, Button, Card, Empty, ErrorState, Field, Lamp, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
+import { formatDateTime } from '../format'
 
-const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const relFmt = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
 
 function relative(iso: string) {
@@ -124,7 +124,7 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
           <h3 className="font-[560]">{t(`detections.titles.${ev.kind}`)}</h3>
           <Badge tone={statusTone[ev.status]}>{t(`detections.statuses.${ev.status}`)}</Badge>
           <span className="text-help text-muted">
-            #{ev.id} · {dateFmt.format(new Date(ev.createdAt))}
+            #{ev.id} · <span className="font-mono">{formatDateTime(ev.createdAt)}</span>
             {ev.resolvedByName && ` · ${t('detections.resolvedBy', { name: ev.resolvedByName })}`}
           </span>
         </div>
@@ -177,7 +177,7 @@ export function DetectionsPage({ guildId }: { guildId: string }) {
   const items = events.data?.pages.flatMap((p) => p.items) ?? []
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h2 className="text-panel">{t('detections.title')}</h2>
       <p className="mt-1 text-muted">{t('detections.subtitle')}</p>
 

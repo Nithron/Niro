@@ -4,6 +4,8 @@
     "tagline": "The security-first community bot",
     "loading": "Loading…",
     "retry": "Try again",
+    "on": "On",
+    "off": "Off",
     "genericError": "Something went wrong. Please try again."
   },
   "login": {

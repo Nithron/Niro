@@ -16,10 +16,10 @@ export function LoginPage() {
       <div className="flex flex-1 items-center justify-center px-4 py-10">
       <main className="w-full max-w-sm">
         <Picture name="signIn" className="mb-8" />
-        <ProductName large />
-        <p className="mt-2 text-muted">{t('app.tagline')}</p>
-        <h1 className="mt-10 text-panel">{t('login.title')}</h1>
-        <p className="mt-2 text-muted">{t('login.body')}</p>
+        <h1>
+          <ProductName large />
+        </h1>
+        <p className="mt-6 text-muted">{t('login.body')}</p>
         {status === 'failed' && (
           <p role="alert" className="mt-4 text-sm">
             <Status state="failed">{t('login.failed')}</Status>

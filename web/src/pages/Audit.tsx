@@ -18,7 +18,7 @@ export function AuditPage({ guildId }: { guildId: string }) {
   const audit = useAudit(guildId)
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-panel">{t('audit.title')}</h2>

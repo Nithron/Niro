@@ -5,6 +5,7 @@ import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
 import { Icon } from '../components/Icon'
 import { Badge, Button, Card, Empty, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
+import { formatDateTime } from '../format'
 
 export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
@@ -14,7 +15,6 @@ export function ActionBadge({ action }: { action: CaseAction }) {
   return <Badge>{t(`cases.actions.${action}`)}</Badge>
 }
 
-const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 export function formatDuration(seconds: number): string {
   const units: [number, string][] = [
@@ -159,7 +159,7 @@ function CaseRow({ guildId, c }: { guildId: string; c: Case }) {
       <td className="max-w-xs truncate px-3 py-2 text-muted" title={c.reason}>
         {c.reason || t('cases.noReason')}
       </td>
-      <td className="px-3 py-2 font-mono text-data whitespace-nowrap text-muted">{dateFmt.format(new Date(c.createdAt))}</td>
+      <td className="px-3 py-2 font-mono text-data whitespace-nowrap text-muted">{formatDateTime(c.createdAt)}</td>
     </tr>
   )
 }
@@ -184,11 +184,11 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   const rows: [string, React.ReactNode][] = [
     [t('cases.user'), c.targetId ? `${c.targetName || '—'} (${c.targetId})` : '—'],
     [t('cases.moderator'), `${c.moderatorName} (${c.moderatorId})`],
-    [t('cases.created'), dateFmt.format(new Date(c.createdAt))],
+    [t('cases.created'), formatDateTime(c.createdAt)],
     [t('cases.source'), t(`cases.sources.${c.source}`)],
   ]
   if (c.durationSeconds) rows.push([t('cases.duration'), formatDuration(c.durationSeconds) + (c.temporary ? ` · ${t('cases.temporary')}` : '')])
-  if (c.expiresAt) rows.push([t('cases.expires'), dateFmt.format(new Date(c.expiresAt))])
+  if (c.expiresAt) rows.push([t('cases.expires'), formatDateTime(c.expiresAt)])
   if (c.action === 'purge') {
     rows.push([t('cases.channel'), c.channelId ?? '—'])
     rows.push([t('cases.deleted'), String(c.deletedMessages ?? 0)])
@@ -196,7 +196,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   if (['warn', 'timeout', 'kick', 'ban'].includes(c.action)) rows.push([t('cases.dm'), c.dmSent ? t('cases.dmSent') : t('cases.dmNotSent')])
 
   return (
-    <div className="max-w-2xl">
+    <div>
       <Link to="/guilds/$guildId/cases" params={{ guildId }} search={{}} className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
         <Icon name="back" />
         {t('cases.title')}

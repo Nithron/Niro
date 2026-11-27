@@ -16,6 +16,7 @@ import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton } from '../components/builder/MessagePreview'
 import { Icon } from '../components/Icon'
 import { Badge, Button, Empty, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
+import { formatDateTime } from '../format'
 
 const MAX_PANELS = 10
 const MAX_CATEGORIES = 5
@@ -53,7 +54,7 @@ export function TicketsPage({ guildId }: { guildId: string }) {
   const channelName = (id: string) => meta.data?.channels.find((c) => c.id === id)?.name ?? id
 
   return (
-    <div className="grid max-w-4xl gap-6">
+    <div className="grid gap-6">
       <div>
         <h2 className="text-panel">{t('tickets.title')}</h2>
         <p className="mt-1 text-muted">{t('tickets.subtitle')}</p>
@@ -197,7 +198,7 @@ function TicketList({ guildId }: { guildId: string }) {
                     <Badge tone={tk.status === 'open' ? 'warning' : 'neutral'}>{t(`tickets.status.${tk.status}`)}</Badge>
                     {tk.claimedByName && <span className="ml-2 text-help text-muted">{tk.claimedByName}</span>}
                   </td>
-                  <td className="px-4 py-2 font-mono text-data text-muted">{new Date(tk.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-2 font-mono text-data text-muted">{formatDateTime(tk.createdAt)}</td>
                   <td className="px-4 py-2">
                     {tk.hasTranscript && (
                       <a className="inline-flex items-center gap-1 underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">

@@ -96,7 +96,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
   }
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h2 className="text-panel">{t('guardianSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('guardianSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('guardianSettings.moduleOff')}</Notice>}

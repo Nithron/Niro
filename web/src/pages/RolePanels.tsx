@@ -46,7 +46,7 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
   if (editing) return <PanelEditor guildId={guildId} initial={editing} onDone={() => setEditing(null)} />
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-panel">{t('rolePanels.title')}</h2>

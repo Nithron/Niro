@@ -58,7 +58,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
   const toggle = (list: string[], id: string) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h2 className="text-panel">{t('loggingSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('loggingSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('loggingSettings.moduleOff')}</Notice>}

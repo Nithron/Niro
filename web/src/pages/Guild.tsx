@@ -65,7 +65,7 @@ export function GuildLayout({ guildId }: { guildId: string }) {
             </>
           ) : (
             <>
-              <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-border" aria-label={guild.data.name}>
+              <nav className="mt-6 flex flex-wrap gap-x-1 border-b border-border" aria-label={guild.data.name}>
                 {tabs.map((tab) => (
                   <Link
                     key={tab.to}

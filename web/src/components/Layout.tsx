@@ -6,6 +6,7 @@ import { logout, logoutEverywhere, type User } from '../api/client'
 import { signedOut } from '../queryClient'
 import { isNithronSite } from '../deployment'
 import { Icon } from './Icon'
+import { GuildIcon } from './ui'
 
 export function Layout({ user, children }: { user: User; children: ReactNode }) {
   const { t } = useTranslation()
@@ -49,7 +50,8 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
               className="flex min-h-11 cursor-pointer list-none items-center gap-3 px-2 py-1 hover:bg-hover [&::-webkit-details-marker]:hidden"
               aria-label={t('nav.account')}
             >
-              <img src={user.avatarUrl} alt="" className="size-8" />
+              {/* Discord's default picture (no avatar of their own) becomes the member's initials, like a server without an icon. */}
+              <GuildIcon name={user.globalName ?? user.username} url={user.avatarUrl?.includes('/embed/avatars/') ? undefined : user.avatarUrl} size={32} />
               <span className="hidden text-sm sm:inline">{user.globalName ?? user.username}</span>
               <Icon name="menu" />
             </summary>
