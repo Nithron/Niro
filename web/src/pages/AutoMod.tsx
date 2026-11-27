@@ -47,12 +47,12 @@ export function AutoModPage({ guildId }: { guildId: string }) {
   return (
     <div className="grid gap-8">
       <div>
-        <h2 className="text-lg font-semibold">{t('automod.title')}</h2>
+        <h2 className="text-panel">{t('automod.title')}</h2>
         <p className="mt-1 max-w-3xl text-muted">{t('automod.subtitle')}</p>
       </div>
 
       <section>
-        <h3 className="font-semibold">{t('automod.presetsTitle')}</h3>
+        <h3 className="font-[560]">{t('automod.presetsTitle')}</h3>
         <p className="mt-1 text-sm text-muted">{t('automod.presetsSubtitle')}</p>
         <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {presets.data?.map((p) => {
@@ -61,7 +61,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
               <li key={p.id}>
                 <Card className="flex h-full flex-col gap-3">
                   <div>
-                    <p className="font-semibold">{t(`automod.presets.${p.id}.name` as never)}</p>
+                    <p className="font-[560]">{t(`automod.presets.${p.id}.name` as never)}</p>
                     <p className="mt-1 text-sm text-muted">{t(`automod.presets.${p.id}.description` as never)}</p>
                   </div>
                   <Button
@@ -85,7 +85,7 @@ export function AutoModPage({ guildId }: { guildId: string }) {
 
       <section>
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold">{t('automod.rulesTitle')}</h3>
+          <h3 className="font-[560]">{t('automod.rulesTitle')}</h3>
           <Button onClick={() => setEditing(emptyRule())}>{t('automod.newRule')}</Button>
         </div>
         <div className="mt-3">
@@ -98,17 +98,12 @@ export function AutoModPage({ guildId }: { guildId: string }) {
               </Button>
             </Card>
           )}
-          {rules.data?.length === 0 && (
-            <Card>
-              <p className="text-muted">{t('automod.empty')}</p>
-            </Card>
-          )}
-          <ul className="grid gap-3">
+          {rules.data?.length === 0 && <p className="border-y border-border py-6 text-muted">{t('automod.empty')}</p>}
+          <ul className="divide-y divide-border border-y border-border">
             {rules.data?.map((r) => (
-              <li key={r.id}>
-                <Card className="flex flex-wrap items-center justify-between gap-4">
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-4 py-3">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold">{r.name}</p>
+                    <p className="truncate font-[560]">{r.name}</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                       <Badge>{t(`automod.triggers.${r.trigger}`)}</Badge>
                       {r.createdByBot && <Badge>{t('automod.createdByNiro')}</Badge>}
@@ -121,11 +116,12 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                       disabled={save.isPending}
                       onCheckedChange={(enabled) => save.mutate({ ...r, enabled })}
                     />
-                    <Button variant="line" onClick={() => setEditing(r)}>
+                    <Button variant="line" size="compact" onClick={() => setEditing(r)}>
                       {t('common.edit')}
                     </Button>
                     <Button
                       variant="line"
+                      size="compact"
                       disabled={del.isPending}
                       onClick={async () => {
                         if (r.id && (await confirm({ message: t('automod.deleteConfirm', { name: r.name }), action: t('automod.deleteAction') }))) del.mutate(r.id)
@@ -134,7 +130,6 @@ export function AutoModPage({ guildId }: { guildId: string }) {
                       {t('common.delete')}
                     </Button>
                   </div>
-                </Card>
               </li>
             ))}
           </ul>
@@ -193,7 +188,7 @@ function RuleEditor({
 
   return (
     <form onSubmit={submit} className="grid max-w-2xl gap-6">
-      <h2 className="text-lg font-semibold">{rule.id ? t('automod.editRule') : t('automod.newRule')}</h2>
+      <h2 className="text-panel">{rule.id ? t('automod.editRule') : t('automod.newRule')}</h2>
       <Card className="grid gap-5">
         <Field label={t('automod.form.name')} htmlFor="rule-name">
           <TextInput id="rule-name" required maxLength={100} value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} />
@@ -265,7 +260,7 @@ function RuleEditor({
       </Card>
 
       <Card className="grid gap-5">
-        <h3 className="font-semibold">{t('automod.form.actions')}</h3>
+        <h3 className="font-[560]">{t('automod.form.actions')}</h3>
         <SwitchRow label={t('automod.form.blockMessage')} checked={r.blockMessage} onCheckedChange={(v) => setR({ ...r, blockMessage: v })} />
         {r.blockMessage && (
           <Field label={t('automod.form.customMessage')} htmlFor="rule-message">
@@ -296,7 +291,7 @@ function RuleEditor({
       </Card>
 
       <Card className="grid gap-4">
-        <p className="text-xs text-muted">{t('automod.form.exemptHelp')}</p>
+        <p className="text-help text-muted">{t('automod.form.exemptHelp')}</p>
         <fieldset>
           <legend className="mb-2 text-sm font-medium">{t('automod.form.exemptRoles')}</legend>
           <div className="grid max-h-48 gap-1 overflow-y-auto sm:grid-cols-2">

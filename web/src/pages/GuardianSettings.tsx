@@ -7,7 +7,7 @@ import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner,
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Card className="grid gap-5">
-      <h3 className="font-semibold">{title}</h3>
+      <h3 className="font-[560]">{title}</h3>
       {children}
     </Card>
   )
@@ -105,7 +105,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-lg font-semibold">{t('guardianSettings.title')}</h2>
+      <h2 className="text-panel">{t('guardianSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('guardianSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('guardianSettings.moduleOff')}</Notice>}
       {meta.isError && (
@@ -222,7 +222,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
         </Section>
 
         <Section title={t('guardianSettings.sections.exempt')}>
-          <p className="text-xs text-muted">{t('guardianSettings.exemptHelp')}</p>
+          <p className="text-help text-muted">{t('guardianSettings.exemptHelp')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {(meta.data?.roles ?? [])
               .filter((r) => r.id !== guildId)

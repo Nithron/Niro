@@ -54,7 +54,7 @@ export function TicketsPage({ guildId }: { guildId: string }) {
   return (
     <div className="grid max-w-4xl gap-6">
       <div>
-        <h2 className="text-lg font-semibold">{t('tickets.title')}</h2>
+        <h2 className="text-panel">{t('tickets.title')}</h2>
         <p className="mt-1 text-muted">{t('tickets.subtitle')}</p>
         {moduleOff && <Notice className="mt-4">{t('tickets.moduleOff')}</Notice>}
       </div>
@@ -63,27 +63,29 @@ export function TicketsPage({ guildId }: { guildId: string }) {
 
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-semibold">{t('tickets.panels')}</h3>
+          <h3 className="font-[560]">{t('tickets.panels')}</h3>
           <Button onClick={() => setEditing(newPanel())} disabled={panels.data.items.length >= MAX_PANELS}>
             {t('tickets.newPanel')}
           </Button>
         </div>
-        {panels.data.items.length === 0 && <Card className="text-muted">{t('tickets.noPanels')}</Card>}
+        {panels.data.items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('tickets.noPanels')}</p>}
+        <ul className="divide-y divide-border border-y border-border">
         {panels.data.items.map((p) => (
-          <Card key={p.id} className="flex flex-wrap items-center justify-between gap-3">
+          <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
-              <p className="font-medium">{p.name}</p>
+              <p className="font-[560]">{p.name}</p>
               <p className="text-sm text-muted">
                 #{channelName(p.channelId)} · {p.categories.map((c) => c.label).join(', ')}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {!p.messageId && <Badge tone="warning">{t('rolePanels.notPosted')}</Badge>}
-              <Button variant="line" onClick={() => setEditing(p)}>
+              <Button variant="line" size="compact" onClick={() => setEditing(p)}>
                 {t('common.edit')}
               </Button>
               <Button
                 variant="line"
+                size="compact"
                 onClick={async () => {
                   if (p.id && (await confirm({ message: t('tickets.confirmDelete', { name: p.name }), action: t('tickets.deleteAction') }))) remove.mutate(p.id)
                 }}
@@ -91,8 +93,9 @@ export function TicketsPage({ guildId }: { guildId: string }) {
                 {t('common.delete')}
               </Button>
             </div>
-          </Card>
+          </li>
         ))}
+        </ul>
         <RequestError error={remove.error} />
         {confirmDialog}
       </section>
@@ -114,8 +117,8 @@ function TicketSettingsCard({ guildId }: { guildId: string }) {
   const textChannels = (meta.data?.channels ?? []).filter((c) => c.type === 'text' || c.type === 'announcement')
   return (
     <Card className="grid gap-4">
-      <h3 className="font-semibold">{t('tickets.transcripts')}</h3>
-      <p className="text-xs text-muted">{t('tickets.transcriptsHelp')}</p>
+      <h3 className="font-[560]">{t('tickets.transcripts')}</h3>
+      <p className="text-help text-muted">{t('tickets.transcriptsHelp')}</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label={t('tickets.retention')} help={t('tickets.retentionHelp')} htmlFor="t-retention">
           <TextInput
@@ -157,7 +160,7 @@ function TicketList({ guildId }: { guildId: string }) {
   return (
     <section className="grid gap-3">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="font-semibold">{t('tickets.list')}</h3>
+        <h3 className="font-[560]">{t('tickets.list')}</h3>
         <Select aria-label={t('tickets.filterStatus')} value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="w-auto">
           <option value="">{t('tickets.allStatuses')}</option>
           <option value="open">{t('tickets.status.open')}</option>
@@ -167,11 +170,11 @@ function TicketList({ guildId }: { guildId: string }) {
       </div>
       {list.isError && <ErrorState onRetry={() => void list.refetch()} />}
       {list.isPending && <Spinner />}
-      {!list.isPending && items.length === 0 && <Card className="text-muted">{t('tickets.noTickets')}</Card>}
+      {!list.isPending && items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('tickets.noTickets')}</p>}
       {items.length > 0 && (
-        <Card className="overflow-x-auto p-0">
+        <div className="overflow-x-auto border-t border-border">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-muted">
+            <thead className="font-mono text-caption text-muted">
               <tr>
                 <th className="px-4 py-2">#</th>
                 <th className="px-4 py-2">{t('tickets.category')}</th>
@@ -191,9 +194,9 @@ function TicketList({ guildId }: { guildId: string }) {
                   <td className="px-4 py-2">{tk.openerName}</td>
                   <td className="px-4 py-2">
                     <Badge tone={tk.status === 'open' ? 'warning' : 'neutral'}>{t(`tickets.status.${tk.status}`)}</Badge>
-                    {tk.claimedByName && <span className="ml-2 text-xs text-muted">{tk.claimedByName}</span>}
+                    {tk.claimedByName && <span className="ml-2 text-help text-muted">{tk.claimedByName}</span>}
                   </td>
-                  <td className="px-4 py-2 text-muted">{new Date(tk.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-2 font-mono text-data text-muted">{new Date(tk.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2">
                     {tk.hasTranscript && (
                       <a className="underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
@@ -205,7 +208,7 @@ function TicketList({ guildId }: { guildId: string }) {
               ))}
             </tbody>
           </table>
-        </Card>
+        </div>
       )}
       {list.hasNextPage && (
         <Button variant="line" onClick={() => void list.fetchNextPage()} disabled={list.isFetchingNextPage}>
@@ -219,7 +222,7 @@ function TicketList({ guildId }: { guildId: string }) {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Card className="grid gap-4">
-      <h3 className="font-semibold">{title}</h3>
+      <h3 className="font-[560]">{title}</h3>
       {children}
     </Card>
   )
@@ -246,7 +249,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
   return (
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="grid gap-4">
-        <h2 className="text-lg font-semibold">{initial.id ? t('tickets.editPanel') : t('tickets.newPanelTitle')}</h2>
+        <h2 className="text-panel">{initial.id ? t('tickets.editPanel') : t('tickets.newPanelTitle')}</h2>
         <Section title={t('tickets.panel')}>
           <Field label={t('rolePanels.name')} help={t('rolePanels.nameHelp')} htmlFor="tp-name">
             <TextInput id="tp-name" value={p.name} maxLength={100} onChange={(e) => set('name', e.target.value)} />

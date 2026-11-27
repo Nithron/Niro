@@ -27,7 +27,7 @@ export function DeleteServerData({ guildId, guildName }: { guildId: string; guil
 
   return (
     <Card className="mt-10">
-      <h2 className="font-semibold">{t('deleteData.title')}</h2>
+      <h2 className="font-[560]">{t('deleteData.title')}</h2>
       <p id={bodyId} className="mt-1 max-w-prose text-sm text-muted">
         {t('deleteData.body')}
       </p>

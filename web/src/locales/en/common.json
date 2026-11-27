@@ -18,7 +18,8 @@
     "servers": "Servers",
     "logout": "Log out",
     "logoutEverywhere": "Log out on all devices",
-    "account": "Account"
+    "account": "Account",
+    "nithronSites": "Nithron sites"
   },
   "servers": {
     "title": "Your servers",
@@ -26,6 +27,8 @@
     "manage": "Manage",
     "add": "Add Niro",
     "owner": "Owner",
+    "present": "Niro is in this server",
+    "notAdded": "Not added",
     "empty": "You don't manage any servers yet. You need Manage Server permission in a server to set up Niro there.",
     "addedHint": "Just added Niro? It can take up to a minute to show up here."
   },
@@ -518,6 +521,8 @@
     "accentColor": "Colour",
     "parts": "{{used}} of {{max}} parts",
     "chars": "{{used}} of {{max}} characters",
+    "partsMeter": "Parts used",
+    "charsMeter": "Characters used",
     "types": {
       "text": "Text",
       "section": "Text with image",
@@ -548,6 +553,7 @@
     "variables": "Variables: {{list}}",
     "unknownVariables": "Unknown variables (shown as typed): {{list}}",
     "preview": "Preview",
+    "previewIn": "Preview in Discord",
     "emptyPreview": "Add a block to see the preview."
   },
   "rolePanels": {

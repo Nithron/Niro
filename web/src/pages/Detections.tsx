@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
 import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
+import { Badge, Button, Card, ErrorState, Field, Lamp, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const relFmt = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
@@ -37,7 +37,10 @@ function RaidCard({ guildId }: { guildId: string }) {
     <Card className={on ? 'border-warning' : undefined}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="font-semibold">{on ? t('detections.raidOn') : t('detections.raidOff')}</p>
+          <p className="flex items-center gap-2 font-[560]">
+            {on && <Lamp state="warning" />}
+            {on ? t('detections.raidOn') : t('detections.raidOff')}
+          </p>
           <p className="mt-1 text-sm text-muted">
             {on && raid.data.endsAt ? t('detections.raidOnBody', { ends: relative(raid.data.endsAt) }) : t('detections.raidOffBody')}
           </p>
@@ -85,7 +88,7 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
         {ev.signals.map((s, i) => (
           <li key={i}>
             {t(`detections.signals.${s.kind}`)}
-            {s.detail && s.kind !== 'manual' && <code className="ml-1 text-xs text-muted">{s.detail}</code>}
+            {s.detail && s.kind !== 'manual' && <code className="ml-1 text-help text-muted">{s.detail}</code>}
           </li>
         ))}
       </ul>,
@@ -116,12 +119,11 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
     ])
 
   return (
-    <li>
-      <Card>
+    <li className="py-5">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="font-semibold">{t(`detections.titles.${ev.kind}`)}</h3>
+          <h3 className="font-[560]">{t(`detections.titles.${ev.kind}`)}</h3>
           <Badge tone={statusTone[ev.status]}>{t(`detections.statuses.${ev.status}`)}</Badge>
-          <span className="text-xs text-muted">
+          <span className="text-help text-muted">
             #{ev.id} · {dateFmt.format(new Date(ev.createdAt))}
             {ev.resolvedByName && ` · ${t('detections.resolvedBy', { name: ev.resolvedByName })}`}
           </span>
@@ -147,14 +149,14 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
         )}
         {reviewable && (
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => void act('restore')} disabled={resolve.isPending}>
+            <Button size="compact" onClick={() => void act('restore')} disabled={resolve.isPending}>
               {t('detections.restore')}
             </Button>
-            <Button variant="line" onClick={() => void act('ban')} disabled={resolve.isPending}>
+            <Button variant="line" size="compact" onClick={() => void act('ban')} disabled={resolve.isPending}>
               {t('detections.ban')}
             </Button>
             {ev.status === 'open' && (
-              <Button variant="ghost" onClick={() => void act('keep')} disabled={resolve.isPending}>
+              <Button variant="ghost" size="compact" onClick={() => void act('keep')} disabled={resolve.isPending}>
                 {t('detections.keep')}
               </Button>
             )}
@@ -164,7 +166,6 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
           <RequestError error={resolve.error} />
           {confirmDialog}
         </div>
-      </Card>
     </li>
   )
 }
@@ -177,7 +178,7 @@ export function DetectionsPage({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-lg font-semibold">{t('detections.title')}</h2>
+      <h2 className="text-panel">{t('detections.title')}</h2>
       <p className="mt-1 text-muted">{t('detections.subtitle')}</p>
 
       <div className="mt-4">
@@ -197,13 +198,9 @@ export function DetectionsPage({ guildId }: { guildId: string }) {
       <div className="mt-4">
         {events.isPending && <Spinner />}
         {events.isError && <ErrorState onRetry={() => void events.refetch()} />}
-        {events.data && items.length === 0 && (
-          <Card>
-            <p className="text-muted">{status ? t('detections.emptyFiltered') : t('detections.empty')}</p>
-          </Card>
-        )}
+        {events.data && items.length === 0 && <p className="border-y border-border py-6 text-muted">{status ? t('detections.emptyFiltered') : t('detections.empty')}</p>}
         {items.length > 0 && (
-          <ul className="grid gap-3">
+          <ul className="divide-y divide-border border-y border-border">
             {items.map((ev) => (
               <EventCard key={ev.id} guildId={guildId} ev={ev} />
             ))}

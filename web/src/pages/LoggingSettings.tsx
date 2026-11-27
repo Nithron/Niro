@@ -24,8 +24,8 @@ function Section({ title, help, children }: { title: string; help?: string; chil
   return (
     <Card className="grid gap-5">
       <div>
-        <h3 className="font-semibold">{title}</h3>
-        {help && <p className="mt-1 text-xs text-muted">{help}</p>}
+        <h3 className="font-[560]">{title}</h3>
+        {help && <p className="mt-1 text-help text-muted">{help}</p>}
       </div>
       {children}
     </Card>
@@ -70,7 +70,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-3xl">
-      <h2 className="text-lg font-semibold">{t('loggingSettings.title')}</h2>
+      <h2 className="text-panel">{t('loggingSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('loggingSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('loggingSettings.moduleOff')}</Notice>}
       {meta.isError && (
@@ -103,7 +103,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
         <Section title={t('loggingSettings.sections.events')} help={t('loggingSettings.eventsHelp')}>
           {categories.map((c) => (
             <div key={c.id} className="grid gap-3">
-              <h4 className="text-sm font-semibold text-muted">{t(`loggingSettings.categories.${c.id}`)}</h4>
+              <h4 className="text-sm font-[560] text-muted">{t(`loggingSettings.categories.${c.id}`)}</h4>
               {c.kinds.map((k) => (
                 <SwitchRow
                   key={k}
@@ -166,7 +166,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
           </fieldset>
         </Section>
 
-        <p className="text-xs text-muted">{t('loggingSettings.permissionsNote')}</p>
+        <p className="text-help text-muted">{t('loggingSettings.permissionsNote')}</p>
       </div>
 
       <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">

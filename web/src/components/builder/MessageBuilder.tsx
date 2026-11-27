@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Icon } from '../Icon'
-import { Button, Field, Select, Status, TextArea, TextInput } from '../ui'
+import { BlockMeter, Button, Field, Select, Status, TextArea, TextInput } from '../ui'
 import {
   componentCount,
   limits,
@@ -81,13 +81,17 @@ export function MessageBuilder({
             onChange={(e) => onChange({ ...value, accentColor: parseInt(e.target.value.slice(1), 16) })}
           />
         )}
-        {used > limits.components ? <Status state="failed">{t('builder.parts', { used, max: limits.components })}</Status> : <span className="text-muted">{t('builder.parts', { used, max: limits.components })}</span>}
-        {chars > limits.text ? <Status state="failed">{t('builder.chars', { used: chars, max: limits.text })}</Status> : <span className="text-muted">{t('builder.chars', { used: chars, max: limits.text })}</span>}
+        <BlockMeter value={used} max={limits.components} label={t('builder.partsMeter')}>
+          {t('builder.parts', { used, max: limits.components })}
+        </BlockMeter>
+        <BlockMeter value={chars} max={limits.text} label={t('builder.charsMeter')}>
+          {t('builder.chars', { used: chars, max: limits.text })}
+        </BlockMeter>
       </div>
 
       {value.blocks.map((b, i) => (
         <fieldset key={i} className="grid gap-3 border border-border p-3">
-          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t(`builder.types.${b.type}`)}</legend>
+          <legend className="px-1 font-mono text-caption text-muted">{t(`builder.types.${b.type}`)}</legend>
           <BlockEditor id={`${id}-${i}`} block={b} onChange={(nb) => update(i, nb)} />
           <div className="flex gap-2">
             <SmallButton onClick={() => move(i, -1)} disabled={i === 0} label={t('builder.moveUp')}>
@@ -122,7 +126,7 @@ export function MessageBuilder({
           ))}
         </Select>
       </div>
-      {variables && <p className="text-xs text-muted">{t('builder.variables', { list: variableNames.map((v) => `{${v}}`).join(' ') })}</p>}
+      {variables && <p className="text-help text-muted">{t('builder.variables', { list: variableNames.map((v) => `{${v}}`).join(' ') })}</p>}
       {unknown.length > 0 && (
         <p className="text-xs">
           <Status state="warning">{t('builder.unknownVariables', { list: unknown.map((v) => `{${v}}`).join(' ') })}</Status>
@@ -169,7 +173,7 @@ function BlockEditor({ id, block, onChange }: { id: string; block: MessageBlock;
               <SmallButton onClick={() => onChange({ ...block, images: images.filter((_, k) => k !== j) })}>{t('builder.remove')}</SmallButton>
             </div>
           ))}
-          <p className="text-xs text-muted">{t('builder.imageHelp')}</p>
+          <p className="text-help text-muted">{t('builder.imageHelp')}</p>
           {images.length < limits.gallery && (
             <SmallButton onClick={() => onChange({ ...block, images: [...images, { url: '' }] })}>{t('builder.addImage')}</SmallButton>
           )}

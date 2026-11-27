@@ -48,7 +48,7 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
     <div className="max-w-3xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">{t('rolePanels.title')}</h2>
+          <h2 className="text-panel">{t('rolePanels.title')}</h2>
           <p className="mt-1 text-muted">{t('rolePanels.subtitle')}</p>
         </div>
         <Button onClick={() => setEditing(newPanel())} disabled={panels.data.items.length >= MAX_PANELS}>
@@ -57,23 +57,25 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
       </div>
       {moduleOff && <Notice className="mt-4">{t('rolePanels.moduleOff')}</Notice>}
       <div className="mt-6 grid gap-3">
-        {panels.data.items.length === 0 && <Card className="text-muted">{t('rolePanels.empty')}</Card>}
+        {panels.data.items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('rolePanels.empty')}</p>}
+        <ul className="divide-y divide-border border-y border-border">
         {panels.data.items.map((p) => (
-          <Card key={p.id} className="flex flex-wrap items-center justify-between gap-3">
+          <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
-              <p className="font-medium">{p.name}</p>
+              <p className="font-[560]">{p.name}</p>
               <p className="text-sm text-muted">
                 #{channelName(p.channelId)} · {t(`rolePanels.styles.${p.style}`)} · {t(`rolePanels.modes.${p.mode}`)} ·{' '}
                 {t('rolePanels.roleCount', { count: p.roles.length })}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {!p.messageId && <Badge tone="warning">{t('rolePanels.notPosted')}</Badge>}
-              <Button variant="line" onClick={() => setEditing(p)}>
+              <Button variant="line" size="compact" onClick={() => setEditing(p)}>
                 {t('common.edit')}
               </Button>
               <Button
                 variant="line"
+                size="compact"
                 onClick={async () => {
                   if (p.id && (await confirm({ message: t('rolePanels.confirmDelete', { name: p.name }), action: t('rolePanels.deleteAction') }))) remove.mutate(p.id)
                 }}
@@ -81,8 +83,9 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
                 {t('common.delete')}
               </Button>
             </div>
-          </Card>
+          </li>
         ))}
+        </ul>
         <RequestError error={remove.error} />
         {confirmDialog}
       </div>
@@ -138,7 +141,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
   return (
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="grid gap-4">
-        <h2 className="text-lg font-semibold">{initial.id ? t('rolePanels.editTitle') : t('rolePanels.newTitle')}</h2>
+        <h2 className="text-panel">{initial.id ? t('rolePanels.editTitle') : t('rolePanels.newTitle')}</h2>
         <Card className="grid gap-4">
           <Field label={t('rolePanels.name')} help={t('rolePanels.nameHelp')} htmlFor="rp-name">
             <TextInput id="rp-name" value={p.name} maxLength={100} onChange={(e) => set('name', e.target.value)} />
@@ -171,7 +174,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
         </Card>
 
         <Card className="grid gap-3">
-          <h3 className="font-semibold">{t('rolePanels.roles')}</h3>
+          <h3 className="font-[560]">{t('rolePanels.roles')}</h3>
           {p.roles.map((r, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-[1.2fr_1fr_4rem_auto]">
               <Select aria-label={t('rolePanels.roleN', { n: i + 1 })} value={r.roleId} onChange={(e) => setRole(i, { roleId: e.target.value })}>
@@ -214,7 +217,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
               <Status state="failed">{t('rolePanels.unsafeRoles', { list: unsafe.map((r) => '@' + roleName(r.roleId)).join(', ') })}</Status>
             </p>
           )}
-          {blocked.length > 0 && <p className="text-xs text-muted">{t('rolePanels.blockedRoles', { list: blocked.map((r) => '@' + r.name).join(', ') })}</p>}
+          {blocked.length > 0 && <p className="text-help text-muted">{t('rolePanels.blockedRoles', { list: blocked.map((r) => '@' + r.name).join(', ') })}</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {p.mode === 'toggle' && (
               <Field label={t('rolePanels.maxRoles')} help={t('rolePanels.maxRolesHelp')} htmlFor="rp-max">
@@ -242,7 +245,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
         </Card>
 
         <Card className="grid gap-3">
-          <h3 className="font-semibold">{t('rolePanels.message')}</h3>
+          <h3 className="font-[560]">{t('rolePanels.message')}</h3>
           <MessageBuilder id="rp-msg" value={p.message} onChange={(m) => set('message', m)} reserved={reserved} />
         </Card>
 

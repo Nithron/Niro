@@ -13,8 +13,8 @@ function Section({ title, help, children }: { title: string; help?: string; chil
   return (
     <Card className="grid gap-4">
       <div>
-        <h3 className="font-semibold">{title}</h3>
-        {help && <p className="mt-1 text-xs text-muted">{help}</p>}
+        <h3 className="font-[560]">{title}</h3>
+        {help && <p className="mt-1 text-help text-muted">{help}</p>}
       </div>
       {children}
     </Card>
@@ -66,7 +66,7 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-5xl">
-      <h2 className="text-lg font-semibold">{t('welcomeSettings.title')}</h2>
+      <h2 className="text-panel">{t('welcomeSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('welcomeSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('welcomeSettings.moduleOff')}</Notice>}
       <p className="mt-4 text-sm text-muted">{t('welcomeSettings.guardianNote')}</p>

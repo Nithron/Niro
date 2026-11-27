@@ -49,7 +49,7 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
 
   return (
     <div>
-      <h2 className="text-lg font-semibold">{t('cases.title')}</h2>
+      <h2 className="text-panel">{t('cases.title')}</h2>
       <p className="mt-1 text-muted">{t('cases.subtitle')}</p>
 
       <form
@@ -104,17 +104,13 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
       <div className="mt-4">
         {cases.isPending && <Spinner />}
         {cases.isError && <ErrorState onRetry={() => void cases.refetch()} />}
-        {cases.data && items.length === 0 && (
-          <Card>
-            <p className="text-muted">{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</p>
-          </Card>
-        )}
+        {cases.data && items.length === 0 && <p className="border-y border-border py-6 text-muted">{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</p>}
         {items.length > 0 && (
           <>
             <p className="mb-2 text-sm text-muted">{t('cases.total', { count: total })}</p>
-            <div className="overflow-x-auto border border-border">
+            <div className="overflow-x-auto border-t border-border">
               <table className="w-full text-left text-sm">
-                <thead className="bg-surface-2 text-xs text-muted uppercase">
+                <thead className="font-mono text-caption text-muted">
                   <tr>
                     <th className="px-3 py-2">{t('cases.col.number')}</th>
                     <th className="px-3 py-2">{t('cases.col.action')}</th>
@@ -160,7 +156,7 @@ function CaseRow({ guildId, c }: { guildId: string; c: Case }) {
       <td className="max-w-xs truncate px-3 py-2 text-muted" title={c.reason}>
         {c.reason || t('cases.noReason')}
       </td>
-      <td className="px-3 py-2 whitespace-nowrap text-muted">{dateFmt.format(new Date(c.createdAt))}</td>
+      <td className="px-3 py-2 font-mono text-data whitespace-nowrap text-muted">{dateFmt.format(new Date(c.createdAt))}</td>
     </tr>
   )
 }
@@ -203,7 +199,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
         {t('cases.title')}
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <h2 className="text-lg font-semibold">{t('cases.detail', { number: c.number })}</h2>
+        <h2 className="text-panel">{t('cases.detail', { number: c.number })}</h2>
         <ActionBadge action={c.action} />
       </div>
 
