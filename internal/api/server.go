@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io/fs"
@@ -35,7 +36,14 @@ type Config struct {
 	TrustedProxies []netip.Prefix
 	// RateLimits override the default request budgets.
 	RateLimits RateLimits
+	// NithronSite marks Nithron's own deployment; the dashboard then shows the
+	// Nithron family bar and Niro's marks (see deploymentMeta).
+	NithronSite bool
 }
+
+// deploymentMeta tells the dashboard it runs as a Nithron site. It is added to
+// index.html at serve time, so one build serves hosted and self-hosted copies.
+const deploymentMeta = `<meta name="niro-deployment" content="nithron">`
 
 // Deps are the server's collaborators.
 type Deps struct {
@@ -253,6 +261,9 @@ func (s *Server) serveSPA(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
+	}
+	if s.cfg.NithronSite {
+		index = bytes.Replace(index, []byte("</head>"), []byte(deploymentMeta+"</head>"), 1)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")

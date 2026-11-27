@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/netip"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -39,6 +40,11 @@ type Config struct {
 	// TrustedProxies are reverse proxies (NIRO_TRUSTED_PROXIES: IPs or CIDRs,
 	// comma-separated) whose X-Forwarded-For header gives the client's IP.
 	TrustedProxies []netip.Prefix
+
+	// NithronSite marks the deployment Nithron runs (NIRO_NITHRON_SITE=true): the
+	// dashboard then shows the Nithron family bar and Niro's marks. Off by default,
+	// since a self-hosted copy may not carry them (TRADEMARK_POLICY.md).
+	NithronSite bool
 
 	// ScamFeeds are scam-domain list URLs (NIRO_SCAM_FEEDS, comma-separated).
 	// nil means "use Niro's default list"; empty (NIRO_SCAM_FEEDS=off) means none.
@@ -128,6 +134,11 @@ func Load(getenv func(string) string) (Config, error) {
 			continue
 		}
 		c.TrustedProxies = append(c.TrustedProxies, pfx)
+	}
+	if v := get("NIRO_NITHRON_SITE", ""); v != "" {
+		if c.NithronSite, err = strconv.ParseBool(v); err != nil {
+			errs = append(errs, fmt.Errorf("NIRO_NITHRON_SITE must be true or false, got %q", v))
+		}
 	}
 	switch v := get("NIRO_SCAM_FEEDS", ""); v {
 	case "":
