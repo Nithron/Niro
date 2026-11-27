@@ -200,14 +200,15 @@ describe('moderation pages', () => {
     }
     renderAt('/guilds/100/cases')
 
-    expect(await screen.findByText('8 cases')).toBeInTheDocument()
+    // The total stands as a large number with its word.
+    expect(await screen.findByText((_, el) => el?.tagName === 'P' && el.textContent === '8cases')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '#8' })).toHaveAttribute('href', '/guilds/100/cases/8')
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }))
     expect(await screen.findByRole('link', { name: '#1' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText('Action'), 'ban')
-    expect(await screen.findByText('1 case')).toBeInTheDocument()
+    expect(await screen.findByText((_, el) => el?.tagName === 'P' && el.textContent === '1case')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '#9' })).toBeInTheDocument()
   })
 
@@ -355,7 +356,6 @@ describe('guardian pages', () => {
       raid = { active: true, problems: [], endsAt: new Date(Date.now() + 30 * 60_000).toISOString() }
       return json(raid)
     }
-    vi.stubGlobal('confirm', () => true)
     renderAt('/guilds/100/guardian/detections')
 
     expect(await screen.findByText('Possible hacked account')).toBeInTheDocument()
@@ -369,6 +369,11 @@ describe('guardian pages', () => {
     expect(screen.queryByRole('button', { name: 'Restore' })).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Start raid mode' }))
+    // Niro's own dialog asks first; Cancel is focused, and Escape or Cancel changes nothing.
+    const dialog = await screen.findByRole('alertdialog')
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Start raid mode' }))
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(await screen.findByText('Raid mode is on')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'End raid mode' })).toBeInTheDocument()
   })

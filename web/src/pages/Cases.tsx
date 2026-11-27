@@ -3,29 +3,29 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput } from '../components/ui'
+import { Icon, type IconName } from '../components/Icon'
+import { Badge, Button, Card, Empty, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
+import { formatDateTime } from '../format'
 
 export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
-const actionTone: Record<CaseAction, 'neutral' | 'brand' | 'success' | 'warning' | 'danger'> = {
-  warn: 'warning',
-  timeout: 'warning',
-  untimeout: 'success',
-  kick: 'danger',
-  ban: 'danger',
-  unban: 'success',
-  note: 'brand',
-  purge: 'neutral',
-  quarantine: 'danger',
-  unquarantine: 'success',
+const actionIcon: Partial<Record<CaseAction, IconName>> = {
+  timeout: 'time',
+  untimeout: 'time',
+  kick: 'kick',
+  ban: 'ban',
+  purge: 'delete',
+  quarantine: 'lock',
+  unquarantine: 'unlock',
 }
 
 export function ActionBadge({ action }: { action: CaseAction }) {
   const { t } = useTranslation()
-  return <Badge tone={actionTone[action]}>{t(`cases.actions.${action}`)}</Badge>
+  // An action is told apart by its word (and its icon where the set has one), never by a colour: a ban is not a failure.
+  // A 16 px slot before every word, filled or not, so the column reads as one edge.
+  return <Badge icon={actionIcon[action]} reserve>{t(`cases.actions.${action}`)}</Badge>
 }
 
-const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 export function formatDuration(seconds: number): string {
   const units: [number, string][] = [
@@ -60,7 +60,7 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
 
   return (
     <div>
-      <h2 className="text-lg font-semibold">{t('cases.title')}</h2>
+      <h2 className="text-panel">{t('cases.title')}</h2>
       <p className="mt-1 text-muted">{t('cases.subtitle')}</p>
 
       <form
@@ -115,17 +115,16 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
       <div className="mt-4">
         {cases.isPending && <Spinner />}
         {cases.isError && <ErrorState onRetry={() => void cases.refetch()} />}
-        {cases.data && items.length === 0 && (
-          <Card>
-            <p className="text-muted">{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</p>
-          </Card>
-        )}
+        {cases.data && items.length === 0 && <Empty>{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</Empty>}
         {items.length > 0 && (
           <>
-            <p className="mb-2 text-sm text-muted">{t('cases.total', { count: total })}</p>
-            <div className="overflow-x-auto rounded-xl border border-border">
+            <p className="mb-4 flex items-baseline gap-3">
+              <span className="pixel pixel-32">{total}</span>
+              <span className="text-muted">{t('cases.totalLabel', { count: total })}</span>
+            </p>
+            <div className="overflow-x-auto border-t border-border">
               <table className="w-full text-left text-sm">
-                <thead className="bg-surface-2 text-xs text-muted uppercase">
+                <thead className="font-mono text-caption text-muted">
                   <tr>
                     <th className="px-3 py-2">{t('cases.col.number')}</th>
                     <th className="px-3 py-2">{t('cases.col.action')}</th>
@@ -143,7 +142,7 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
               </table>
             </div>
             {cases.hasNextPage && (
-              <Button variant="secondary" className="mt-4" onClick={() => void cases.fetchNextPage()} disabled={cases.isFetchingNextPage}>
+              <Button variant="line" className="mt-4" onClick={() => void cases.fetchNextPage()} disabled={cases.isFetchingNextPage}>
                 {t('common.loadMore')}
               </Button>
             )}
@@ -157,9 +156,9 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
 function CaseRow({ guildId, c }: { guildId: string; c: Case }) {
   const { t } = useTranslation()
   return (
-    <tr className="border-t border-border bg-surface hover:bg-surface-2">
+    <tr className="border-t border-border hover:bg-hover">
       <td className="px-3 py-2 font-mono">
-        <Link to="/guilds/$guildId/cases/$number" params={{ guildId, number: String(c.number) }} className="text-brand hover:underline">
+        <Link to="/guilds/$guildId/cases/$number" params={{ guildId, number: String(c.number) }} className="underline underline-offset-2">
           #{c.number}
         </Link>
       </td>
@@ -171,7 +170,7 @@ function CaseRow({ guildId, c }: { guildId: string; c: Case }) {
       <td className="max-w-xs truncate px-3 py-2 text-muted" title={c.reason}>
         {c.reason || t('cases.noReason')}
       </td>
-      <td className="px-3 py-2 whitespace-nowrap text-muted">{dateFmt.format(new Date(c.createdAt))}</td>
+      <td className="px-3 py-2 font-mono text-data whitespace-nowrap text-muted">{formatDateTime(c.createdAt)}</td>
     </tr>
   )
 }
@@ -182,6 +181,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   const kase = useCase(guildId, number)
   const update = useUpdateCaseReason(guildId, number)
   const del = useDeleteCase(guildId, number)
+  const [confirm, confirmDialog] = useConfirm()
   const [editing, setEditing] = useState(false)
   const [reason, setReason] = useState('')
 
@@ -195,11 +195,11 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   const rows: [string, React.ReactNode][] = [
     [t('cases.user'), c.targetId ? `${c.targetName || '—'} (${c.targetId})` : '—'],
     [t('cases.moderator'), `${c.moderatorName} (${c.moderatorId})`],
-    [t('cases.created'), dateFmt.format(new Date(c.createdAt))],
+    [t('cases.created'), formatDateTime(c.createdAt)],
     [t('cases.source'), t(`cases.sources.${c.source}`)],
   ]
   if (c.durationSeconds) rows.push([t('cases.duration'), formatDuration(c.durationSeconds) + (c.temporary ? ` · ${t('cases.temporary')}` : '')])
-  if (c.expiresAt) rows.push([t('cases.expires'), dateFmt.format(new Date(c.expiresAt))])
+  if (c.expiresAt) rows.push([t('cases.expires'), formatDateTime(c.expiresAt)])
   if (c.action === 'purge') {
     rows.push([t('cases.channel'), c.channelId ?? '—'])
     rows.push([t('cases.deleted'), String(c.deletedMessages ?? 0)])
@@ -207,12 +207,13 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
   if (['warn', 'timeout', 'kick', 'ban'].includes(c.action)) rows.push([t('cases.dm'), c.dmSent ? t('cases.dmSent') : t('cases.dmNotSent')])
 
   return (
-    <div className="max-w-2xl">
-      <Link to="/guilds/$guildId/cases" params={{ guildId }} search={{}} className="text-sm text-muted hover:text-fg">
-        ← {t('cases.title')}
+    <div>
+      <Link to="/guilds/$guildId/cases" params={{ guildId }} search={{}} className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <Icon name="back" />
+        {t('cases.title')}
       </Link>
       <div className="mt-3 flex items-center gap-3">
-        <h2 className="text-lg font-semibold">{t('cases.detail', { number: c.number })}</h2>
+        <h2 className="text-panel">{t('cases.detail', { number: c.number })}</h2>
         <ActionBadge action={c.action} />
       </div>
 
@@ -233,7 +234,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
               <p className="mt-1 text-sm whitespace-pre-wrap">{c.reason || <span className="text-muted">{t('cases.noReason')}</span>}</p>
               <div className="mt-4 flex gap-2">
                 <Button
-                  variant="secondary"
+                  variant="line"
                   onClick={() => {
                     setReason(c.reason)
                     setEditing(true)
@@ -242,10 +243,9 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
                   {t('cases.editReason')}
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="text-danger hover:text-danger"
-                  onClick={() => {
-                    if (window.confirm(t('cases.deleteConfirm', { number: c.number }))) {
+                  variant="line"
+                  onClick={async () => {
+                    if (await confirm({ message: t('cases.deleteConfirm', { number: c.number }), action: t('cases.deleteAction', { number: c.number }) })) {
                       del.mutate(undefined, { onSuccess: () => void navigate({ to: '/guilds/$guildId/cases', params: { guildId }, search: {} }) })
                     }
                   }}
@@ -255,6 +255,7 @@ export function CaseDetailPage({ guildId, number }: { guildId: string; number: n
                 </Button>
               </div>
               <RequestError error={del.error} />
+              {confirmDialog}
             </>
           ) : (
             <form

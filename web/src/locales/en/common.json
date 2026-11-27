@@ -4,6 +4,8 @@
     "tagline": "The security-first community bot",
     "loading": "Loading…",
     "retry": "Try again",
+    "on": "On",
+    "off": "Off",
     "genericError": "Something went wrong. Please try again."
   },
   "login": {
@@ -18,7 +20,8 @@
     "servers": "Servers",
     "logout": "Log out",
     "logoutEverywhere": "Log out on all devices",
-    "account": "Account"
+    "account": "Account",
+    "nithronSites": "Nithron sites"
   },
   "servers": {
     "title": "Your servers",
@@ -26,6 +29,9 @@
     "manage": "Manage",
     "add": "Add Niro",
     "owner": "Owner",
+    "present": "Niro is in this server",
+    "notAdded": "Not added",
+    "withNiro": "with Niro, of {{total}} you manage",
     "empty": "You don't manage any servers yet. You need Manage Server permission in a server to set up Niro there.",
     "addedHint": "Just added Niro? It can take up to a minute to show up here."
   },
@@ -33,6 +39,7 @@
     "back": "All servers",
     "modulesTitle": "Modules",
     "modulesSubtitle": "Turn features on or off. Changes apply in Discord immediately.",
+    "modulesOn": "of {{total}} modules on",
     "alwaysOn": "Always on",
     "saved": "Saved",
     "saveFailed": "Couldn't save that change. It was undone.",
@@ -121,6 +128,8 @@
     "emptyFiltered": "No cases match these filters.",
     "total_one": "{{count}} case",
     "total_other": "{{count}} cases",
+    "totalLabel_one": "case",
+    "totalLabel_other": "cases",
     "col": {
       "number": "#",
       "action": "Action",
@@ -147,6 +156,7 @@
     "editReason": "Edit reason",
     "deleteCase": "Delete case",
     "deleteConfirm": "Delete case #{{number}} from the history? It is kept in the audit trail and marked as deleted in the log channel.",
+    "deleteAction": "Delete case #{{number}}",
     "deletedDone": "Case deleted.",
     "notFound": "This case doesn't exist (or was deleted).",
     "actions": {
@@ -205,6 +215,7 @@
     "enabled": "Enabled",
     "createdByNiro": "Created by Niro",
     "deleteConfirm": "Delete the rule \"{{name}}\"?",
+    "deleteAction": "Delete rule",
     "triggers": {
       "keyword": "Keywords",
       "spam": "Suspected spam",
@@ -363,6 +374,7 @@
     "ban": "Ban",
     "keep": "Keep quarantined",
     "banConfirm": "Ban {{user}}? Their messages from the last day are deleted too.",
+    "banAction": "Ban {{user}}",
     "resolvedBy": "by {{name}}",
     "titles": {
       "compromised": "Possible hacked account",
@@ -515,6 +527,8 @@
     "accentColor": "Colour",
     "parts": "{{used}} of {{max}} parts",
     "chars": "{{used}} of {{max}} characters",
+    "partsMeter": "Parts used",
+    "charsMeter": "Characters used",
     "types": {
       "text": "Text",
       "section": "Text with image",
@@ -545,6 +559,7 @@
     "variables": "Variables: {{list}}",
     "unknownVariables": "Unknown variables (shown as typed): {{list}}",
     "preview": "Preview",
+    "previewIn": "Preview in Discord",
     "emptyPreview": "Add a block to see the preview."
   },
   "rolePanels": {
@@ -555,6 +570,7 @@
     "empty": "No role panels yet.",
     "notPosted": "Not posted",
     "confirmDelete": "Delete \"{{name}}\" and its message in Discord?",
+    "deleteAction": "Delete panel and message",
     "roleCount_one": "{{count}} role",
     "roleCount_other": "{{count}} roles",
     "newTitle": "New role panel",
@@ -634,6 +650,7 @@
     "newPanel": "New panel",
     "noPanels": "No ticket panels yet.",
     "confirmDelete": "Delete \"{{name}}\" and its message? Open tickets stay.",
+    "deleteAction": "Delete panel and message",
     "list": "Tickets",
     "filterStatus": "Status",
     "allStatuses": "All",

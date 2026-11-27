@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ModerationSettings } from '../api/client'
 import { useGuildMeta, useModerationSettings, useModules, useSaveModerationSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow } from '../components/ui'
+import { Button, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 export function ModerationSettingsPage({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
@@ -22,12 +22,13 @@ export function ModerationSettingsPage({ guildId }: { guildId: string }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings.data)
 
   return (
-    <div className="max-w-2xl">
-      <h2 className="text-lg font-semibold">{t('modSettings.title')}</h2>
+    <div>
+      <h2 className="text-panel">{t('modSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('modSettings.subtitle')}</p>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('modSettings.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('modSettings.moduleOff')}</Notice>}
 
-      <Card className="mt-6 grid gap-6">
+      <div className="mt-6 border-t border-border pt-6">
+      <div className="grid max-w-2xl gap-6">
         <Field label={t('modSettings.logChannel')} help={t('modSettings.logChannelHelp')} htmlFor="log-channel">
           <Select
             id="log-channel"
@@ -64,10 +65,11 @@ export function ModerationSettingsPage({ guildId }: { guildId: string }) {
           <Button onClick={() => save.mutate(draft, { onSuccess: () => setDraft(null) })} disabled={!dirty || save.isPending}>
             {save.isPending ? t('common.saving') : t('common.save')}
           </Button>
-          {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+          {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
           <RequestError error={save.error} />
         </div>
-      </Card>
+      </div>
+      </div>
     </div>
   )
 }

@@ -2,7 +2,8 @@ import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useEffect } from 'react'
 import privacy from '../legal/privacy.md?raw'
 import terms from '../legal/terms.md?raw'
-import { Logo } from '../components/ui'
+import { FamilyBar, ProductName } from '../components/Layout'
+import { isNithronSite } from '../deployment'
 
 const docs = { privacy, terms } as const
 
@@ -20,10 +21,11 @@ export function LegalPage({ doc }: { doc: keyof typeof docs }) {
   }, [title])
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-border bg-surface/60">
+      {isNithronSite() && <FamilyBar />}
+      <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <Link to="/" aria-label="Niro">
-            <Logo className="h-7" />
+            <ProductName />
           </Link>
           <nav className="flex gap-4 text-sm text-muted">
             <Link to="/terms" className="hover:text-fg data-[status=active]:text-fg">
@@ -80,9 +82,9 @@ function parse(md: string): BlockNode[] {
 function Block({ block }: { block: BlockNode }) {
   switch (block.kind) {
     case 'h1':
-      return <h1 className="text-3xl font-semibold">{inline(block.text)}</h1>
+      return <h1 className="text-screen">{inline(block.text)}</h1>
     case 'h2':
-      return <h2 className="mt-10 text-xl font-semibold">{inline(block.text)}</h2>
+      return <h2 className="mt-10 text-panel">{inline(block.text)}</h2>
     case 'p':
       return <p className="mt-4 text-fg/90">{inline(block.text)}</p>
     case 'ul':
@@ -100,7 +102,7 @@ function Block({ block }: { block: BlockNode }) {
             <thead>
               <tr>
                 {block.head.map((h, i) => (
-                  <th key={i} scope="col" className="border-b border-border px-3 py-2 font-semibold">
+                  <th key={i} scope="col" className="border-b border-border px-3 py-2 font-[560]">
                     {inline(h)}
                   </th>
                 ))}

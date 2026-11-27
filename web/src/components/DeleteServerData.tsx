@@ -26,13 +26,13 @@ export function DeleteServerData({ guildId, guildName }: { guildId: string; guil
   }
 
   return (
-    <Card className="mt-10 border-danger/40">
-      <h2 className="font-semibold">{t('deleteData.title')}</h2>
+    <Card className="mt-10">
+      <h2 className="font-[560]">{t('deleteData.title')}</h2>
       <p id={bodyId} className="mt-1 max-w-prose text-sm text-muted">
         {t('deleteData.body')}
       </p>
       {!open ? (
-        <Button ref={trigger} variant="secondary" className="mt-4" onClick={() => setOpen(true)}>
+        <Button ref={trigger} variant="line" className="mt-4" onClick={() => setOpen(true)}>
           {t('deleteData.start')}
         </Button>
       ) : (
@@ -57,7 +57,7 @@ export function DeleteServerData({ guildId, guildName }: { guildId: string; guil
             <Button
               type="submit"
               aria-describedby={bodyId}
-              className="bg-none bg-danger text-white"
+              variant="line"
               disabled={typed.trim() !== guildName.trim() || del.isPending}
             >
               {del.isPending ? t('deleteData.deleting') : t('deleteData.confirm')}

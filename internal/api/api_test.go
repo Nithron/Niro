@@ -453,6 +453,17 @@ func TestInviteIsPublic(t *testing.T) {
 	}
 }
 
+func TestSPAMarksTheNithronDeployment(t *testing.T) {
+	spa := fstest.MapFS{"index.html": {Data: []byte("<html><head><title>Niro</title></head><body></body></html>")}}
+	for _, site := range []bool{false, true} {
+		h := newHarnessWith(t, func(d *Deps) { d.Dashboard = spa; d.Config.NithronSite = site })
+		body := h.do("GET", "/guilds/100", "", "", nil).Body.String()
+		if got := strings.Contains(body, deploymentMeta); got != site {
+			t.Fatalf("NithronSite=%v: deployment meta present = %v in %s", site, got, body)
+		}
+	}
+}
+
 func TestSPAAndSecurityHeaders(t *testing.T) {
 	h := newHarness(t)
 	rec := h.do("GET", "/guilds/100", "", "", nil)

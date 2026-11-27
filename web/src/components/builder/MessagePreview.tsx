@@ -12,6 +12,9 @@ export function MessagePreview({ doc, controls }: { doc: MessageDocument; contro
   const { t } = useTranslation()
   const accent = doc.accentColor !== undefined ? '#' + doc.accentColor.toString(16).padStart(6, '0') : 'transparent'
   return (
+    // Framed by a hairline and labelled: inside the frame is Discord's look, not Niro's.
+    <div className="border border-border p-3">
+      <p className="mb-2 font-mono text-caption text-muted">{t('builder.previewIn')}</p>
     <figure aria-label={t('builder.preview')} className="rounded-lg bg-[#313338] p-4 text-sm text-[#dbdee1]">
       <figcaption className="mb-2 flex items-center gap-2 text-xs">
         <span className="font-semibold text-white">Niro</span>
@@ -57,6 +60,7 @@ export function MessagePreview({ doc, controls }: { doc: MessageDocument; contro
         {controls}
       </div>
     </figure>
+    </div>
   )
 }
 

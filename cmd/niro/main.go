@@ -206,7 +206,7 @@ func start(ctx context.Context, cmd string, role config.Role, cfg config.Config,
 			Config: api.Config{
 				PublicURL: cfg.PublicURL, DashboardURL: cfg.DashboardURL,
 				SecureCookies: cfg.SecureCookies(), ClientID: cfg.Discord.ClientID,
-				TrustedProxies: cfg.TrustedProxies,
+				TrustedProxies: cfg.TrustedProxies, NithronSite: cfg.NithronSite,
 			},
 			Log:        log,
 			OAuth:      api.NewDiscordOAuth(cfg.Discord.ClientID, cfg.Discord.ClientSecret, cfg.OAuthRedirectURI()),

@@ -1,6 +1,6 @@
 # Security policy
 
-Niro is a security bot, so we treat its own security seriously. If you think you've found a vulnerability,
+Niro is a security bot, so its own security comes first. If you think you've found a vulnerability,
 **do not open a public issue**.
 
 ## Reporting a vulnerability
@@ -11,9 +11,9 @@ Report it privately, either way:
 - email **security@nithron.com**.
 
 Please include what is affected (bot, API, dashboard, a specific command or endpoint), the impact, steps to
-reproduce, and the version or commit. We acknowledge reports within 5 business days.
+reproduce, and the version or commit. I acknowledge reports within 5 business days.
 
-## What we especially want to hear about
+## What I most want to hear about
 
 - Ways to make Niro act with its permissions on someone's behalf: bypassing role-hierarchy or permission
   checks, acting in a server you don't manage, or abusing a dashboard endpoint (authorization, CSRF, sessions).
@@ -23,8 +23,8 @@ reproduce, and the version or commit. We acknowledge reports within 5 business d
 
 ## Disclosure
 
-- We follow coordinated disclosure with a **90-day** default embargo; critical issues are fixed faster.
-- We credit reporters in the release notes if they want.
+- Nithron follows coordinated disclosure with a **90-day** default embargo; critical issues are fixed faster.
+- Reporters are credited in the release notes if they want.
 
 ## Scope
 

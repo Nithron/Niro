@@ -60,7 +60,7 @@ The message-cache TTL is the approved 7-day retention, set per deployment and no
 
 None of the new intents is privileged. `privilegedIntents` keeps degrading gracefully, and the logging page shows which categories are affected when Message Content or Server Members is missing.
 
-**Bulk deletes:** disgo v0.20 has no bulk-delete event. Its `MESSAGE_DELETE_BULK` handler (`bot/handlers/message_handler.go:111`) fans out one `MessageDelete` per ID. **Recommendation:** override that one gateway handler with `bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(...))`, passing disgo's default map with that key replaced. Our handler then sees the whole batch as one event. This is exact; the alternative, a debounce that groups nearby deletes, is a guess. `/purge` (M1) and Guardian's multi-channel delete both go through it.
+**Bulk deletes:** disgo v0.20 has no bulk-delete event. Its `MESSAGE_DELETE_BULK` handler (`bot/handlers/message_handler.go:111`) fans out one `MessageDelete` per ID. **Recommendation:** override that one gateway handler with `bot.WithEventManagerConfigOpts(bot.WithGatewayHandlers(...))`, passing disgo's default map with that key replaced. Niro's handler then sees the whole batch as one event. This is exact; the alternative, a debounce that groups nearby deletes, is a guess. `/purge` (M1) and Guardian's multi-channel delete both go through it.
 
 **Executors:** audit-log entries can arrive before or after the event they explain. A short correlation buffer, keyed by action and target with about a 2-second wait, joins them. With no match, the entry says "executor unknown".
 

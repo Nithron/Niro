@@ -4,7 +4,9 @@ import { type ReactNode, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { logout, logoutEverywhere, type User } from '../api/client'
 import { signedOut } from '../queryClient'
-import { Logo } from './ui'
+import { isNithronSite } from '../deployment'
+import { Icon } from './Icon'
+import { GuildIcon } from './ui'
 
 export function Layout({ user, children }: { user: User; children: ReactNode }) {
   const { t } = useTranslation()
@@ -34,23 +36,26 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
     await signedOut(qc)
   }
 
-  const item = 'block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-border/40 focus-visible:bg-border/40'
+  const item = 'block w-full px-3 py-2 text-left text-sm hover:bg-hover focus-visible:bg-hover'
   return (
     <div className="min-h-dvh">
-      <header className="border-b border-border bg-surface/60 backdrop-blur">
+      {isNithronSite() && <FamilyBar />}
+      <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
           <Link to="/" aria-label={t('nav.servers')}>
-            <Logo className="h-7" />
+            <ProductName />
           </Link>
           <details ref={menu} className="relative">
             <summary
-              className="flex cursor-pointer list-none items-center gap-3 rounded-md px-2 py-1 hover:bg-border/40 [&::-webkit-details-marker]:hidden"
+              className="flex min-h-11 cursor-pointer list-none items-center gap-3 px-2 py-1 hover:bg-hover [&::-webkit-details-marker]:hidden"
               aria-label={t('nav.account')}
             >
-              <img src={user.avatarUrl} alt="" className="size-8 rounded-full" />
+              {/* Discord's default picture (no avatar of their own) becomes the member's initials, like a server without an icon. */}
+              <GuildIcon name={user.globalName ?? user.username} url={user.avatarUrl?.includes('/embed/avatars/') ? undefined : user.avatarUrl} size={32} />
               <span className="hidden text-sm sm:inline">{user.globalName ?? user.username}</span>
+              <Icon name="menu" />
             </summary>
-            <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border bg-surface p-1 shadow-lg">
+            <div className="absolute right-0 z-20 mt-2 w-56 border border-edge bg-bg p-1">
               <button type="button" className={item} onClick={() => void signOut(false)}>
                 {t('nav.logout')}
               </button>
@@ -62,7 +67,7 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
-      <footer className="mx-auto flex max-w-5xl gap-4 px-4 pb-8 text-xs text-muted">
+      <footer className="mx-auto flex max-w-5xl gap-4 px-4 pb-8 text-help text-muted">
         <Link to="/terms" className="hover:text-fg">
           {t('legal.terms')}
         </Link>
@@ -72,4 +77,40 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
       </footer>
     </div>
   )
+}
+
+/** Nithron's family bar: the Nithron sites by name, Niro marked as the current one. Only on Nithron's own deployment. */
+export function FamilyBar() {
+  const { t } = useTranslation()
+  // Brand names: the same in every language.
+  const sites = [
+    { name: 'Studio', href: 'https://nithron.com' },
+    { name: 'Intelligence', href: 'https://ai.nithron.com' },
+  ]
+  return (
+    <nav aria-label={t('nav.nithronSites')} className="border-b border-border">
+      <div className="mx-auto flex h-[var(--family-bar)] max-w-5xl items-stretch gap-5 overflow-x-auto px-4 text-[length:var(--text-label)] whitespace-nowrap">
+        <span className="flex items-center font-[560]">Nithron</span>
+        <ul className="flex items-stretch gap-5">
+          {sites.map((s) => (
+            <li key={s.name} className="flex">
+              <a href={s.href} className="flex items-center text-muted hover:text-fg">
+                {s.name}
+              </a>
+            </li>
+          ))}
+          <li className="flex">
+            <span aria-current="page" className="-mb-px flex items-center border-b-2 border-fg font-[560]">
+              Niro
+            </span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  )
+}
+
+/** The product's name at the head of the page, in the pixel face: 24 px in the header, 48 px on sign-in. */
+export function ProductName({ large = false }: { large?: boolean }) {
+  return <span className={large ? 'pixel pixel-48 block' : 'pixel pixel-24 block'}>Niro</span>
 }

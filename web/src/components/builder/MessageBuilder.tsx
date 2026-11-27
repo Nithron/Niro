@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button, Field, Select, TextArea, TextInput } from '../ui'
+import { Icon } from '../Icon'
+import { BlockMeter, Button, Field, Select, Status, TextArea, TextInput } from '../ui'
 import {
   componentCount,
   limits,
@@ -14,9 +16,9 @@ import {
 
 const blockTypes: BlockType[] = ['text', 'section', 'gallery', 'separator', 'links']
 
-function SmallButton(props: { onClick: () => void; disabled?: boolean; label?: string; children: string }) {
+function SmallButton(props: { onClick: () => void; disabled?: boolean; label?: string; children: ReactNode }) {
   return (
-    <Button type="button" variant="secondary" className="px-2 py-1 text-xs" onClick={props.onClick} disabled={props.disabled} aria-label={props.label}>
+    <Button type="button" variant="line" size="compact" className="text-xs" onClick={props.onClick} disabled={props.disabled} aria-label={props.label}>
       {props.children}
     </Button>
   )
@@ -69,6 +71,7 @@ export function MessageBuilder({
               else onChange({ version: value.version, blocks: value.blocks })
             }}
           />
+          <Icon name="colour" />
           {t('builder.accent')}
         </label>
         {hasColor && (
@@ -79,22 +82,29 @@ export function MessageBuilder({
             onChange={(e) => onChange({ ...value, accentColor: parseInt(e.target.value.slice(1), 16) })}
           />
         )}
-        <span className={used > limits.components ? 'text-danger' : 'text-muted'}>{t('builder.parts', { used, max: limits.components })}</span>
-        <span className={chars > limits.text ? 'text-danger' : 'text-muted'}>{t('builder.chars', { used: chars, max: limits.text })}</span>
+        <BlockMeter value={used} max={limits.components} label={t('builder.partsMeter')}>
+          {t('builder.parts', { used, max: limits.components })}
+        </BlockMeter>
+        <BlockMeter value={chars} max={limits.text} label={t('builder.charsMeter')}>
+          {t('builder.chars', { used: chars, max: limits.text })}
+        </BlockMeter>
       </div>
 
       {value.blocks.map((b, i) => (
-        <fieldset key={i} className="grid gap-3 rounded-lg border border-border p-3">
-          <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-muted">{t(`builder.types.${b.type}`)}</legend>
+        <fieldset key={i} className="grid gap-3 border border-border p-3">
+          <legend className="px-1 font-mono text-caption text-muted">{t(`builder.types.${b.type}`)}</legend>
           <BlockEditor id={`${id}-${i}`} block={b} onChange={(nb) => update(i, nb)} />
           <div className="flex gap-2">
             <SmallButton onClick={() => move(i, -1)} disabled={i === 0} label={t('builder.moveUp')}>
-              ↑
+              <Icon name="up" />
             </SmallButton>
             <SmallButton onClick={() => move(i, 1)} disabled={i === value.blocks.length - 1} label={t('builder.moveDown')}>
-              ↓
+              <Icon name="down" />
             </SmallButton>
-            <SmallButton onClick={() => setBlocks(value.blocks.filter((_, j) => j !== i))}>{t('builder.removeBlock')}</SmallButton>
+            <SmallButton onClick={() => setBlocks(value.blocks.filter((_, j) => j !== i))}>
+                <Icon name="remove" />
+                {t('builder.removeBlock')}
+              </SmallButton>
           </div>
         </fieldset>
       ))}
@@ -120,8 +130,12 @@ export function MessageBuilder({
           ))}
         </Select>
       </div>
-      {variables && <p className="text-xs text-muted">{t('builder.variables', { list: variableNames.map((v) => `{${v}}`).join(' ') })}</p>}
-      {unknown.length > 0 && <p className="text-xs text-warning">{t('builder.unknownVariables', { list: unknown.map((v) => `{${v}}`).join(' ') })}</p>}
+      {variables && <p className="text-help text-muted">{t('builder.variables', { list: variableNames.map((v) => `{${v}}`).join(' ') })}</p>}
+      {unknown.length > 0 && (
+        <p className="text-xs">
+          <Status state="warning">{t('builder.unknownVariables', { list: unknown.map((v) => `{${v}}`).join(' ') })}</Status>
+        </p>
+      )}
     </div>
   )
 }
@@ -160,12 +174,18 @@ function BlockEditor({ id, block, onChange }: { id: string; block: MessageBlock;
                 placeholder={t('builder.alt')}
                 onChange={(e) => set(j, { description: e.target.value })}
               />
-              <SmallButton onClick={() => onChange({ ...block, images: images.filter((_, k) => k !== j) })}>{t('builder.remove')}</SmallButton>
+              <SmallButton onClick={() => onChange({ ...block, images: images.filter((_, k) => k !== j) })}>
+                <Icon name="remove" />
+                {t('builder.remove')}
+              </SmallButton>
             </div>
           ))}
-          <p className="text-xs text-muted">{t('builder.imageHelp')}</p>
+          <p className="text-help text-muted">{t('builder.imageHelp')}</p>
           {images.length < limits.gallery && (
-            <SmallButton onClick={() => onChange({ ...block, images: [...images, { url: '' }] })}>{t('builder.addImage')}</SmallButton>
+            <SmallButton onClick={() => onChange({ ...block, images: [...images, { url: '' }] })}>
+                <Icon name="add" />
+                {t('builder.addImage')}
+              </SmallButton>
           )}
         </div>
       )
@@ -194,11 +214,17 @@ function BlockEditor({ id, block, onChange }: { id: string; block: MessageBlock;
               <TextInput aria-label={t('builder.linkLabel', { n: j + 1 })} value={l.label} placeholder={t('builder.label')} maxLength={80} onChange={(e) => set(j, { label: e.target.value })} />
               <TextInput aria-label={t('builder.linkUrl', { n: j + 1 })} value={l.url} onChange={(e) => set(j, { url: e.target.value })} />
               <TextInput aria-label={t('builder.linkEmoji', { n: j + 1 })} value={l.emoji ?? ''} placeholder="🙂" onChange={(e) => set(j, { emoji: e.target.value })} />
-              <SmallButton onClick={() => onChange({ ...block, links: links.filter((_, k) => k !== j) })}>{t('builder.remove')}</SmallButton>
+              <SmallButton onClick={() => onChange({ ...block, links: links.filter((_, k) => k !== j) })}>
+                <Icon name="remove" />
+                {t('builder.remove')}
+              </SmallButton>
             </div>
           ))}
           {links.length < limits.links && (
-            <SmallButton onClick={() => onChange({ ...block, links: [...links, { label: '', url: 'https://' }] })}>{t('builder.addLink')}</SmallButton>
+            <SmallButton onClick={() => onChange({ ...block, links: [...links, { label: '', url: 'https://' }] })}>
+                <Icon name="add" />
+                {t('builder.addLink')}
+              </SmallButton>
           )}
         </div>
       )

@@ -92,6 +92,18 @@ func TestValidateByRole(t *testing.T) {
 	}
 }
 
+func TestNithronSite(t *testing.T) {
+	for v, want := range map[string]bool{"": false, "false": false, "true": true, "1": true} {
+		c, err := Load(env(map[string]string{"NIRO_NITHRON_SITE": v}))
+		if err != nil || c.NithronSite != want {
+			t.Fatalf("NIRO_NITHRON_SITE=%q: %v, %v", v, c.NithronSite, err)
+		}
+	}
+	if _, err := Load(env(map[string]string{"NIRO_NITHRON_SITE": "yes please"})); err == nil {
+		t.Fatal("a value that is not a boolean should fail")
+	}
+}
+
 func TestTrustedProxies(t *testing.T) {
 	c, err := Load(env(map[string]string{"NIRO_TRUSTED_PROXIES": "10.0.0.0/8, 172.18.0.5 ,::1"}))
 	if err != nil {

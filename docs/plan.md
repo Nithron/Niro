@@ -22,7 +22,7 @@
 2. **Platform-agnostic core.** Domain packages never import disgo. Discord is one adapter, which keeps a Fluxer adapter or a library swap cheap.
 3. **One codebase for hosted and self-hosted.** `niro all` runs everything in one process for self-hosters. The hosted service runs `niro bot` and `niro api` separately so they can scale.
 4. **Configuration is data.** Every setting is editable in the dashboard and applies live (pub/sub) without a restart. Every change is audited.
-5. **The free core stays free.** Only features that cost us money to run (AI, long retention, higher limits) are premium.
+5. **The free core stays free.** Only features that cost money to run (AI, long retention, higher limits) are premium.
 6. **Tests first for domain logic,** especially the detection heuristics. Integration tests run against real Postgres and Valkey.
 
 ## 2. Architecture
@@ -213,7 +213,7 @@ Sizes are relative (S/M/L), not calendar promises.
 | Later | Reach | Fluxer adapter, more languages, public API and webhooks, server analytics |
 | **Final** | UI and brand polish | A dedicated pass after all feature milestones: dashboard design and UX refinement (layout, motion, empty states, accessibility audit, responsive and mobile pass), consistent Discord message styling across all modules, and a refresh of the logo, banners, social images and App Directory assets. Until then, UI work aims for clean and functional rather than final |
 
-## 9. How we'll work
+## 9. How the work runs
 
 - A branch and PR per feature into `main`; CI must pass. Commits are authored as you, with no AI trailers.
 - Tests first for domain logic. Integration tests use real Postgres and Valkey. Playwright covers the dashboard's critical flows.
