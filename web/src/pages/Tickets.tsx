@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TicketCategory, TicketPanel, TicketSettings } from '../api/client'
 import {
@@ -14,7 +14,7 @@ import {
 import { emptyDocument } from '../components/builder/document'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton } from '../components/builder/MessagePreview'
-import { Badge, Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
+import { Badge, Button, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
 
 const MAX_PANELS = 10
 const MAX_CATEGORIES = 5
@@ -116,10 +116,9 @@ function TicketSettingsCard({ guildId }: { guildId: string }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings.data)
   const textChannels = (meta.data?.channels ?? []).filter((c) => c.type === 'text' || c.type === 'announcement')
   return (
-    <Card className="grid gap-4">
-      <h3 className="font-[560]">{t('tickets.transcripts')}</h3>
+    <Panel title={t('tickets.transcripts')}>
       <p className="text-help text-muted">{t('tickets.transcriptsHelp')}</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid max-w-md gap-4">
         <Field label={t('tickets.retention')} help={t('tickets.retentionHelp')} htmlFor="t-retention">
           <TextInput
             id="t-retention"
@@ -148,7 +147,7 @@ function TicketSettingsCard({ guildId }: { guildId: string }) {
         {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
-    </Card>
+    </Panel>
   )
 }
 
@@ -219,14 +218,6 @@ function TicketList({ guildId }: { guildId: string }) {
   )
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Card className="grid gap-4">
-      <h3 className="font-[560]">{title}</h3>
-      {children}
-    </Card>
-  )
-}
 
 function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; initial: TicketPanel; onDone: () => void }) {
   const { t } = useTranslation()
@@ -250,7 +241,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="grid gap-4">
         <h2 className="text-panel">{initial.id ? t('tickets.editPanel') : t('tickets.newPanelTitle')}</h2>
-        <Section title={t('tickets.panel')}>
+        <Panel title={t('tickets.panel')}>
           <Field label={t('rolePanels.name')} help={t('rolePanels.nameHelp')} htmlFor="tp-name">
             <TextInput id="tp-name" value={p.name} maxLength={100} onChange={(e) => set('name', e.target.value)} />
           </Field>
@@ -265,11 +256,11 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
             </Select>
           </Field>
           <MessageBuilder id="tp-msg" value={p.message} onChange={(m) => set('message', m)} reserved={1 + p.categories.length} />
-        </Section>
+        </Panel>
 
         {p.categories.map((c, i) => (
-          <Section key={i} title={t('tickets.categoryN', { n: i + 1 })}>
-            <div className="grid gap-4 sm:grid-cols-[1fr_5rem]">
+          <Panel key={i} title={t('tickets.categoryN', { n: i + 1 })}>
+            <div className="grid max-w-md gap-4">
               <Field label={t('tickets.buttonLabel')} htmlFor={`tc-${i}-label`}>
                 <TextInput id={`tc-${i}-label`} value={c.label} maxLength={80} onChange={(e) => setCat(i, { label: e.target.value })} />
               </Field>
@@ -277,7 +268,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
                 <TextInput id={`tc-${i}-emoji`} value={c.emoji ?? ''} placeholder="🎫" onChange={(e) => setCat(i, { emoji: e.target.value || undefined })} />
               </Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid max-w-md gap-4">
               <Field label={t('tickets.mode')} help={t(`tickets.modeHelp.${c.mode}`)} htmlFor={`tc-${i}-mode`}>
                 <Select id={`tc-${i}-mode`} value={c.mode} onChange={(e) => setCat(i, { mode: e.target.value as TicketCategory['mode'] })}>
                   <option value="thread">{t('tickets.modes.thread')}</option>
@@ -358,7 +349,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
                 {t('tickets.removeCategory')}
               </Button>
             )}
-          </Section>
+          </Panel>
         ))}
         {p.categories.length < MAX_CATEGORIES && (
           <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, categories: [...prev.categories, newCategory()] }))}>

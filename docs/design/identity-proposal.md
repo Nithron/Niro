@@ -82,3 +82,13 @@ Every step is checked at AA in both themes. Playwright and Vitest keep running. 
 3. Whether the message preview stays in Discord's look (proposed: yes).
 4. Whether the emojis and avatar change in the same release as the dashboard (proposed: just after).
 5. Niro last, or as a small pilot.
+
+## Questions held for Thiago
+
+Collected while he was away on 2026-11-27. The safe default was taken for each and is noted; nothing below is pushed, merged or deployed.
+
+1. **Push and merge `ui/identity`.** It is local only, branched from `m5-hardening` (PR #10, not merged). Default: it stays local until you have seen it. Once M5 is approved, do you want it as its own PR after #10?
+2. **The ESLint colour rule.** A config-protection hook in the coding session blocks edits to `web/eslint.config.js`. The Vitest test in `src/test/identity.test.ts` does the same check in CI. Default: the test only. Allow the edit if you want the lint rule too.
+3. **Monaspace Neon at 511 KB.** It is the complete upstream variable font, kept whole because of the reserved name. It loads on first use and is then cached for good. Default: keep it whole until the pixel display face takes over some of its uses.
+4. **A self-hosted copy's name.** With `NIRO_NITHRON_SITE` off, the dashboard shows no family bar and no logo, but still says "Niro" in type and in its texts. TRADEMARK_POLICY.md asks self-hosters to use their own brand. Default: unchanged. Should a self-hoster be able to set their own name (a setting), or is that their fork's job?
+5. **`.impeccable/config.json`.** A design-check plugin wrote it when its "overused font" finding on Mona Sans was suppressed, since Mona Sans is the face the tokens name. Default: not committed.

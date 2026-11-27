@@ -1,8 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LoggingSettings } from '../api/client'
 import { useGuildMeta, useLoggingSettings, useModules, useSaveLoggingSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
+import { Button, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 type Category = keyof LoggingSettings['channels']
 
@@ -20,17 +20,6 @@ const categories = [
   { id: 'guardian', kinds: ['guardian_action'] },
 ] as const satisfies readonly { id: Category; kinds: readonly string[] }[]
 
-function Section({ title, help, children }: { title: string; help?: string; children: ReactNode }) {
-  return (
-    <Card className="grid gap-5">
-      <div>
-        <h3 className="font-[560]">{title}</h3>
-        {help && <p className="mt-1 text-help text-muted">{help}</p>}
-      </div>
-      {children}
-    </Card>
-  )
-}
 
 export function LoggingSettingsPage({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
@@ -80,7 +69,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
       )}
 
       <div className="mt-6 grid gap-4">
-        <Section title={t('loggingSettings.sections.channels')} help={t('loggingSettings.channelsHelp')}>
+        <Panel title={t('loggingSettings.sections.channels')} help={t('loggingSettings.channelsHelp')}>
           <Field label={t('loggingSettings.defaultChannel')} help={t('loggingSettings.defaultChannelHelp')} htmlFor="l-default">
             {channelSelect('l-default', draft.defaultChannelId, t('loggingSettings.off'), (v) => set('defaultChannelId', v))}
           </Field>
@@ -89,7 +78,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
               <Status state="warning">{t('loggingSettings.nothingRouted')}</Status>
             </p>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-md gap-4">
             {categories.map((c) => (
               <Field key={c.id} label={t(`loggingSettings.categories.${c.id}`)} htmlFor={`l-ch-${c.id}`}>
                 {channelSelect(`l-ch-${c.id}`, draft.channels[c.id], t('loggingSettings.useDefault'), (v) =>
@@ -98,9 +87,9 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
               </Field>
             ))}
           </div>
-        </Section>
+        </Panel>
 
-        <Section title={t('loggingSettings.sections.events')} help={t('loggingSettings.eventsHelp')}>
+        <Panel title={t('loggingSettings.sections.events')} help={t('loggingSettings.eventsHelp')}>
           {categories.map((c) => (
             <div key={c.id} className="grid gap-3">
               <h4 className="text-sm font-[560] text-muted">{t(`loggingSettings.categories.${c.id}`)}</h4>
@@ -114,18 +103,18 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
               ))}
             </div>
           ))}
-        </Section>
+        </Panel>
 
-        <Section title={t('loggingSettings.sections.privacy')}>
+        <Panel title={t('loggingSettings.sections.privacy')}>
           <SwitchRow
             label={t('loggingSettings.noMessageContent')}
             help={t('loggingSettings.noMessageContentHelp')}
             checked={draft.noMessageContent}
             onCheckedChange={(v) => set('noMessageContent', v)}
           />
-        </Section>
+        </Panel>
 
-        <Section title={t('loggingSettings.sections.ignore')} help={t('loggingSettings.ignoreHelp')}>
+        <Panel title={t('loggingSettings.sections.ignore')} help={t('loggingSettings.ignoreHelp')}>
           <SwitchRow
             label={t('loggingSettings.ignoreBots')}
             help={t('loggingSettings.ignoreBotsHelp')}
@@ -164,7 +153,7 @@ export function LoggingSettingsPage({ guildId }: { guildId: string }) {
               ))}
             </div>
           </fieldset>
-        </Section>
+        </Panel>
 
         <p className="text-help text-muted">{t('loggingSettings.permissionsNote')}</p>
       </div>

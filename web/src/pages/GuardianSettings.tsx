@@ -1,17 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianSettings } from '../api/client'
 import { useGuardianSettings, useGuildMeta, useModules, useSaveGuardianSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow, TextArea, TextInput } from '../components/ui'
+import { Button, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextArea, TextInput } from '../components/ui'
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Card className="grid gap-5">
-      <h3 className="font-[560]">{title}</h3>
-      {children}
-    </Card>
-  )
-}
 
 /** A number input that keeps typing smooth and reports integers. */
 function NumberField({
@@ -115,7 +107,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
       )}
 
       <div className="mt-6 grid gap-4">
-        <Section title={t('guardianSettings.sections.general')}>
+        <Panel title={t('guardianSettings.sections.general')}>
           <Field label={t('guardianSettings.mode')} help={t('guardianSettings.modeHelp')} htmlFor="g-mode">
             <Select id="g-mode" value={draft.mode} onChange={(e) => set('mode', e.target.value as GuardianSettings['mode'])}>
               <option value="enforce">{t('guardianSettings.modes.enforce')}</option>
@@ -135,9 +127,9 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
               )}
             </Select>
           </Field>
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.compromised')}>
+        <Panel title={t('guardianSettings.sections.compromised')}>
           <SwitchRow
             label={t('guardianSettings.burstEnabled')}
             help={t('guardianSettings.burstEnabledHelp')}
@@ -145,22 +137,22 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
             onCheckedChange={(v) => set('burstEnabled', v)}
           />
           {draft.burstEnabled && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid max-w-md gap-4">
               <NumberField id="g-burst-ch" label={t('guardianSettings.burstChannels')} value={draft.burstChannels} min={2} max={10} onChange={(v) => set('burstChannels', v)} />
               <NumberField id="g-burst-win" label={t('guardianSettings.burstWindow')} value={draft.burstWindowSeconds} min={10} max={600} onChange={(v) => set('burstWindowSeconds', v)} />
             </div>
           )}
           <NumberField id="g-quiet" label={t('guardianSettings.quietDays')} help={t('guardianSettings.quietDaysHelp')} value={draft.quietDays} min={0} max={365} onChange={(v) => set('quietDays', v)} />
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.scam')}>
+        <Panel title={t('guardianSettings.sections.scam')}>
           <SwitchRow
             label={t('guardianSettings.scamEnabled')}
             help={t('guardianSettings.scamEnabledHelp')}
             checked={draft.scamLinksEnabled}
             onCheckedChange={(v) => set('scamLinksEnabled', v)}
           />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid max-w-md gap-4">
             <Field label={t('guardianSettings.allowDomains')} help={t('guardianSettings.domainsHelp')} htmlFor="g-allow">
               <TextArea id="g-allow" value={allow} onChange={(e) => setAllowText(e.target.value)} placeholder="partner.example" />
             </Field>
@@ -168,9 +160,9 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
               <TextArea id="g-deny" value={deny} onChange={(e) => setDenyText(e.target.value)} placeholder="grabify.link" />
             </Field>
           </div>
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.quarantine')}>
+        <Panel title={t('guardianSettings.sections.quarantine')}>
           <Field label={t('guardianSettings.quarantineMode')} htmlFor="g-qmode">
             <Select id="g-qmode" value={draft.quarantineMode} onChange={(e) => set('quarantineMode', e.target.value as GuardianSettings['quarantineMode'])}>
               <option value="timeout">{t('guardianSettings.quarantineModes.timeout')}</option>
@@ -185,12 +177,12 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
             <NumberField id="g-qhours" label={t('guardianSettings.quarantineHours')} value={draft.quarantineHours} min={1} max={672} onChange={(v) => set('quarantineHours', v)} />
           )}
           <SwitchRow label={t('guardianSettings.dmUser')} help={t('guardianSettings.dmUserHelp')} checked={draft.dmUser} onCheckedChange={(v) => set('dmUser', v)} />
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.raid')}>
+        <Panel title={t('guardianSettings.sections.raid')}>
           <SwitchRow label={t('guardianSettings.raidEnabled')} checked={draft.raidEnabled} onCheckedChange={(v) => set('raidEnabled', v)} />
           {draft.raidEnabled && (
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid max-w-md gap-4">
               <NumberField id="g-rjoins" label={t('guardianSettings.raidJoins')} value={draft.raidJoins} min={3} max={200} onChange={(v) => set('raidJoins', v)} />
               <NumberField id="g-rwin" label={t('guardianSettings.raidWindow')} value={draft.raidWindowSeconds} min={5} max={600} onChange={(v) => set('raidWindowSeconds', v)} />
               <NumberField id="g-rdur" label={t('guardianSettings.raidDuration')} value={draft.raidDurationMinutes} min={5} max={1440} onChange={(v) => set('raidDurationMinutes', v)} />
@@ -199,10 +191,10 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
           <SwitchRow label={t('guardianSettings.raidPauseInvites')} checked={draft.raidPauseInvites} onCheckedChange={(v) => set('raidPauseInvites', v)} />
           <SwitchRow label={t('guardianSettings.raidRaiseVerification')} checked={draft.raidRaiseVerification} onCheckedChange={(v) => set('raidRaiseVerification', v)} />
           <NumberField id="g-rslow" label={t('guardianSettings.raidSlowmode')} help={t('guardianSettings.raidSlowmodeHelp')} value={draft.raidSlowmodeSeconds} min={0} max={21600} onChange={(v) => set('raidSlowmodeSeconds', v)} />
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.age')}>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <Panel title={t('guardianSettings.sections.age')}>
+          <div className="grid max-w-md gap-4">
             <NumberField id="g-age" label={t('guardianSettings.minAge')} help={t('guardianSettings.minAgeHelp')} value={draft.minAccountAgeHours} min={0} max={8760} onChange={(v) => set('minAccountAgeHours', v)} />
             <Field label={t('guardianSettings.ageAction')} htmlFor="g-age-action">
               <Select id="g-age-action" value={draft.accountAgeAction} onChange={(e) => set('accountAgeAction', e.target.value as GuardianSettings['accountAgeAction'])}>
@@ -212,16 +204,16 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
               </Select>
             </Field>
           </div>
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.verify')}>
+        <Panel title={t('guardianSettings.sections.verify')}>
           <Field label={t('guardianSettings.verifyRole')} help={t('guardianSettings.verifyRoleHelp')} htmlFor="g-vrole">
             {roleSelect('g-vrole', draft.verifyRoleId, (v) => set('verifyRoleId', v))}
           </Field>
           <NumberField id="g-vage" label={t('guardianSettings.verifyMinAge')} value={draft.verifyMinAccountAgeHours} min={0} max={8760} onChange={(v) => set('verifyMinAccountAgeHours', v)} />
-        </Section>
+        </Panel>
 
-        <Section title={t('guardianSettings.sections.exempt')}>
+        <Panel title={t('guardianSettings.sections.exempt')}>
           <p className="text-help text-muted">{t('guardianSettings.exemptHelp')}</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {(meta.data?.roles ?? [])
@@ -243,7 +235,7 @@ export function GuardianSettingsPage({ guildId }: { guildId: string }) {
                 )
               })}
           </div>
-        </Section>
+        </Panel>
       </div>
 
       <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">

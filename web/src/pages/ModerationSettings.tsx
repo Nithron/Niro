@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ModerationSettings } from '../api/client'
 import { useGuildMeta, useModerationSettings, useModules, useSaveModerationSettings } from '../api/queries'
-import { Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
+import { Button, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 export function ModerationSettingsPage({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
@@ -27,7 +27,7 @@ export function ModerationSettingsPage({ guildId }: { guildId: string }) {
       <p className="mt-1 text-muted">{t('modSettings.subtitle')}</p>
       {moduleOff && <Notice className="mt-4">{t('modSettings.moduleOff')}</Notice>}
 
-      <Card className="mt-6 grid gap-6">
+      <div className="mt-6 grid gap-6 border-t border-border pt-6">
         <Field label={t('modSettings.logChannel')} help={t('modSettings.logChannelHelp')} htmlFor="log-channel">
           <Select
             id="log-channel"
@@ -67,7 +67,7 @@ export function ModerationSettingsPage({ guildId }: { guildId: string }) {
           {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
           <RequestError error={save.error} />
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

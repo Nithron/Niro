@@ -93,6 +93,22 @@ export function buttonClasses(variant: Variant = 'primary', size: Size = 'defaul
 
 // ---- surfaces -----------------------------------------------------------------
 
+/**
+ * A panel of a form: a hairline above, its title, an optional line of help in the fine size, then one column
+ * of fields. Panels follow one another down the page, parted by their hairlines.
+ */
+export function Panel({ title, help, className, children }: { title: string; help?: string; className?: string; children: ReactNode }) {
+  return (
+    <section className={clsx('grid gap-5 border-t border-border py-6', className)}>
+      <div>
+        <h3 className="text-panel">{title}</h3>
+        {help && <p className="mt-1 max-w-[var(--measure-fine)] text-help text-muted">{help}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 /** A panel: square, on the page's ground, parted by a hairline. No fill, no shadow. */
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={clsx('border border-border p-5', className)}>{children}</div>
