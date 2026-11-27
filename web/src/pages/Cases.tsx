@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
 import { Icon } from '../components/Icon'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
+import { Badge, Button, Card, Empty, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
 
 export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
@@ -104,10 +104,13 @@ export function CasesPage({ guildId, filters }: { guildId: string; filters: Case
       <div className="mt-4">
         {cases.isPending && <Spinner />}
         {cases.isError && <ErrorState onRetry={() => void cases.refetch()} />}
-        {cases.data && items.length === 0 && <p className="border-y border-border py-6 text-muted">{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</p>}
+        {cases.data && items.length === 0 && <Empty>{filtered ? t('cases.emptyFiltered') : t('cases.empty')}</Empty>}
         {items.length > 0 && (
           <>
-            <p className="mb-2 text-sm text-muted">{t('cases.total', { count: total })}</p>
+            <p className="mb-4 flex items-baseline gap-3">
+              <span className="pixel pixel-32">{total}</span>
+              <span className="text-muted">{t('cases.totalLabel', { count: total })}</span>
+            </p>
             <div className="overflow-x-auto border-t border-border">
               <table className="w-full text-left text-sm">
                 <thead className="font-mono text-caption text-muted">

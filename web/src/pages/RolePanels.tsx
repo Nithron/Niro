@@ -5,7 +5,8 @@ import { useDeleteRolePanel, useGuildMeta, useModules, useRolePanels, useSaveRol
 import { componentCount, emptyDocument, limits } from '../components/builder/document'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton, PreviewSelect } from '../components/builder/MessagePreview'
-import { Badge, Button, Card, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, TextInput, useConfirm } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Badge, Button, Card, Empty, ErrorState, Field, Notice, RequestError, Select, Spinner, Status, TextInput, useConfirm } from '../components/ui'
 
 const MAX_PANELS = 25
 const MAX_ROLES = 25
@@ -52,13 +53,14 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
           <p className="mt-1 text-muted">{t('rolePanels.subtitle')}</p>
         </div>
         <Button onClick={() => setEditing(newPanel())} disabled={panels.data.items.length >= MAX_PANELS}>
-          {t('rolePanels.new')}
+          <Icon name="add" />
+            {t('rolePanels.new')}
         </Button>
       </div>
       {moduleOff && <Notice className="mt-4">{t('rolePanels.moduleOff')}</Notice>}
       <div className="mt-6 grid gap-3">
-        {panels.data.items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('rolePanels.empty')}</p>}
-        <ul className="divide-y divide-border border-y border-border">
+        {panels.data.items.length === 0 && <Empty>{t('rolePanels.empty')}</Empty>}
+        <ul className="divide-y divide-border border-y border-border empty:hidden">
         {panels.data.items.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
@@ -193,6 +195,7 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
               <TextInput aria-label={t('rolePanels.labelN', { n: i + 1 })} placeholder={t('rolePanels.label')} value={r.label} maxLength={80} onChange={(e) => setRole(i, { label: e.target.value })} />
               <TextInput aria-label={t('rolePanels.emojiN', { n: i + 1 })} placeholder="🎨" value={r.emoji ?? ''} onChange={(e) => setRole(i, { emoji: e.target.value || undefined })} />
               <Button type="button" variant="line" onClick={() => removeRole(i)}>
+                <Icon name="remove" />
                 {t('builder.remove')}
               </Button>
               {p.style === 'select' && (
@@ -209,7 +212,8 @@ function PanelEditor({ guildId, initial, onDone }: { guildId: string; initial: R
           ))}
           {p.roles.length < MAX_ROLES && (
             <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, roles: [...prev.roles, { roleId: '0', label: '' }] }))}>
-              {t('rolePanels.addRole')}
+              <Icon name="add" />
+            {t('rolePanels.addRole')}
             </Button>
           )}
           {unsafe.length > 0 && (

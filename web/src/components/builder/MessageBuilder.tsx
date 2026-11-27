@@ -100,7 +100,10 @@ export function MessageBuilder({
             <SmallButton onClick={() => move(i, 1)} disabled={i === value.blocks.length - 1} label={t('builder.moveDown')}>
               <Icon name="down" />
             </SmallButton>
-            <SmallButton onClick={() => setBlocks(value.blocks.filter((_, j) => j !== i))}>{t('builder.removeBlock')}</SmallButton>
+            <SmallButton onClick={() => setBlocks(value.blocks.filter((_, j) => j !== i))}>
+                <Icon name="remove" />
+                {t('builder.removeBlock')}
+              </SmallButton>
           </div>
         </fieldset>
       ))}
@@ -170,12 +173,18 @@ function BlockEditor({ id, block, onChange }: { id: string; block: MessageBlock;
                 placeholder={t('builder.alt')}
                 onChange={(e) => set(j, { description: e.target.value })}
               />
-              <SmallButton onClick={() => onChange({ ...block, images: images.filter((_, k) => k !== j) })}>{t('builder.remove')}</SmallButton>
+              <SmallButton onClick={() => onChange({ ...block, images: images.filter((_, k) => k !== j) })}>
+                <Icon name="remove" />
+                {t('builder.remove')}
+              </SmallButton>
             </div>
           ))}
           <p className="text-help text-muted">{t('builder.imageHelp')}</p>
           {images.length < limits.gallery && (
-            <SmallButton onClick={() => onChange({ ...block, images: [...images, { url: '' }] })}>{t('builder.addImage')}</SmallButton>
+            <SmallButton onClick={() => onChange({ ...block, images: [...images, { url: '' }] })}>
+                <Icon name="add" />
+                {t('builder.addImage')}
+              </SmallButton>
           )}
         </div>
       )
@@ -204,11 +213,17 @@ function BlockEditor({ id, block, onChange }: { id: string; block: MessageBlock;
               <TextInput aria-label={t('builder.linkLabel', { n: j + 1 })} value={l.label} placeholder={t('builder.label')} maxLength={80} onChange={(e) => set(j, { label: e.target.value })} />
               <TextInput aria-label={t('builder.linkUrl', { n: j + 1 })} value={l.url} onChange={(e) => set(j, { url: e.target.value })} />
               <TextInput aria-label={t('builder.linkEmoji', { n: j + 1 })} value={l.emoji ?? ''} placeholder="🙂" onChange={(e) => set(j, { emoji: e.target.value })} />
-              <SmallButton onClick={() => onChange({ ...block, links: links.filter((_, k) => k !== j) })}>{t('builder.remove')}</SmallButton>
+              <SmallButton onClick={() => onChange({ ...block, links: links.filter((_, k) => k !== j) })}>
+                <Icon name="remove" />
+                {t('builder.remove')}
+              </SmallButton>
             </div>
           ))}
           {links.length < limits.links && (
-            <SmallButton onClick={() => onChange({ ...block, links: [...links, { label: '', url: 'https://' }] })}>{t('builder.addLink')}</SmallButton>
+            <SmallButton onClick={() => onChange({ ...block, links: [...links, { label: '', url: 'https://' }] })}>
+                <Icon name="add" />
+                {t('builder.addLink')}
+              </SmallButton>
           )}
         </div>
       )

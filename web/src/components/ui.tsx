@@ -17,35 +17,11 @@ import {
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api/client'
+import { Icon } from './Icon'
 
 // The parts of the dashboard in the Nithron identity (DESIGN-APPS.md in nithron-site): one ground parted by
 // hairlines, square panels, controls with 8 px corners, ink for the first action, no hue in the interface,
 // and a status as a mark and a word. Colours come only from the names in styles.css.
-
-/** The Niro lockup, the <N> mark and the name, drawn in the text colour. */
-export function Logo({ className }: { className?: string }) {
-  return (
-    <svg role="img" aria-label="Niro" viewBox="0 0 972 216" className={clsx('inline-block w-auto', className)}>
-      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-        <svg x="0" y="0" width="400" height="216" viewBox="56 148 400 216">
-          <g strokeWidth="44">
-            <path d="M144 180 L88 256 L144 332" />
-            <path d="M368 180 L424 256 L368 332" />
-            <path d="M214 336 V176 L298 336 V176" />
-          </g>
-        </svg>
-        <svg x="460" y="8" width="512" height="200" viewBox="0 0 512 200">
-          <g strokeWidth="40">
-            <path d="M20 160 V40 L100 160 V40" />
-            <path d="M172 160 V40" />
-            <path d="M244 160 V40 H284 A30 30 0 0 1 284 100 H244 M282 100 L329 160" />
-            <rect x="401" y="40" width="90" height="120" rx="45" />
-          </g>
-        </svg>
-      </g>
-    </svg>
-  )
-}
 
 // ---- buttons ------------------------------------------------------------------
 
@@ -119,19 +95,13 @@ export function Card({ className, children }: { className?: string; children: Re
 export type State = 'ok' | 'warning' | 'failed'
 
 /**
- * The mark of a state, a pixel shape on a 5 by 5 grid shown at 10 px: a filled square for ok, an open
- * square for a warning, a cross for a failure. Its colour is the state's line colour; the word beside it
- * carries the meaning, so the colour never stands alone.
+ * The mark of a state: the pixel set's state icon at 16 px (ok the filled square, warning the open square,
+ * failed the cross), in the state's line colour. The word beside it carries the meaning, so the colour never
+ * stands alone.
  */
 export function Mark({ state }: { state: State }) {
   const color = { ok: 'text-ok', warning: 'text-warning', failed: 'text-failed' }[state]
-  return (
-    <svg aria-hidden viewBox="0 0 5 5" width="10" height="10" shapeRendering="crispEdges" className={clsx('shrink-0', color)} fill="currentColor">
-      {state === 'ok' && <rect width="5" height="5" />}
-      {state === 'warning' && <path fillRule="evenodd" d="M0 0H5V5H0ZM1 1V4H4V1Z" />}
-      {state === 'failed' && <path d="M0 0H1V1H0ZM1 1H2V2H1ZM2 2H3V3H2ZM3 3H4V4H3ZM4 4H5V5H4ZM4 0H5V1H4ZM3 1H4V2H3ZM1 3H2V4H1ZM0 4H1V5H0Z" />}
-    </svg>
-  )
+  return <Icon name={state} className={color} />
 }
 
 const stateText = { ok: 'text-ok-text', warning: 'text-warning-text', failed: 'text-failed-text' }
@@ -139,10 +109,8 @@ const stateText = { ok: 'text-ok-text', warning: 'text-warning-text', failed: 't
 /** A state as a mark and a word (or a sentence). */
 export function Status({ state, className, children }: { state: State; className?: string; children: ReactNode }) {
   return (
-    <span className={clsx('inline-flex items-baseline gap-2', stateText[state], className)}>
-      <span className="self-center">
-        <Mark state={state} />
-      </span>
+    <span className={clsx('inline-flex items-center gap-2', stateText[state], className)}>
+      <Mark state={state} />
       <span>{children}</span>
     </span>
   )
@@ -170,9 +138,7 @@ export function Badge({ tone = 'neutral', children }: { tone?: State | 'neutral'
 export function Notice({ state, className, children }: { state?: State; className?: string; children: ReactNode }) {
   return (
     <div className={clsx('flex items-start gap-3 border border-border p-3 text-sm text-fg', className)}>
-      <span aria-hidden className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center font-mono text-muted">
-        {state ? <Mark state={state} /> : 'i'}
-      </span>
+      <span className="mt-0.5">{state ? <Mark state={state} /> : <Icon name="notice" className="text-muted" />}</span>
       <div className="min-w-0">{children}</div>
     </div>
   )
@@ -227,21 +193,31 @@ export function GuildIcon({ name, url, size = 48 }: { name: string; url?: string
   )
 }
 
-/** Loading: words in the pixel display face (mono until it arrives) with the block cursor, where the data will stand. */
+/** Loading: words in the pixel face with the block cursor, where the data will stand. */
 export function Spinner() {
   const { t } = useTranslation()
   return (
-    <div role="status" className="pixel-display flex items-center py-16 text-sm text-muted">
+    <div role="status" className="pixel flex items-center py-16 text-muted">
       {t('app.loading')}
       <span aria-hidden className="cursor ml-1 inline-block h-4 w-2 bg-fg" />
     </div>
   )
 }
 
-/** A lamp for something live, such as raid mode running: an 8 px square that blinks, with its word beside it. */
+/** A lamp for something live, such as raid mode running: the set's running mark, blinking, with its word beside it. */
 export function Lamp({ state }: { state?: State }) {
-  const color = state ? { ok: 'bg-ok', warning: 'bg-warning', failed: 'bg-failed' }[state] : 'bg-fg'
-  return <span aria-hidden className={clsx('lamp inline-block size-2 shrink-0', color)} />
+  const color = state ? { ok: 'text-ok', warning: 'text-warning', failed: 'text-failed' }[state] : 'text-fg'
+  return <Icon name="running" className={clsx('lamp', color)} />
+}
+
+/** An empty screen or list: its words in the pixel face, and its one action when it has one. */
+export function Empty({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="grid justify-items-start gap-4 border-y border-border py-8">
+      <p className="pixel text-muted">{children}</p>
+      {action}
+    </div>
+  )
 }
 
 /**
@@ -268,7 +244,14 @@ export function BlockMeter({ value, max, label, children, blocks = 10 }: { value
           />
         ))}
       </span>
-      {over ? <Status state="failed">{children}</Status> : <span className="font-mono text-help text-muted">{children}</span>}
+      {over ? (
+        <span className="inline-flex items-center gap-2 text-failed-text">
+          <Mark state="failed" />
+          <span className="pixel">{children}</span>
+        </span>
+      ) : (
+        <span className="pixel text-muted">{children}</span>
+      )}
     </span>
   )
 }

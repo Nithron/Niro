@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutoModRule, GuildMeta } from '../api/client'
 import { useAutoModPresets, useAutoModRules, useDeleteAutoModRule, useGuildMeta, useSaveAutoModRule } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, Switch, SwitchRow, TextArea, TextInput, useConfirm } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Badge, Button, Card, Empty, ErrorState, Field, RequestError, Select, Spinner, Switch, SwitchRow, TextArea, TextInput, useConfirm } from '../components/ui'
 
 type Trigger = AutoModRule['trigger']
 type WordList = NonNullable<AutoModRule['presets']>[number]
@@ -86,7 +87,10 @@ export function AutoModPage({ guildId }: { guildId: string }) {
       <section>
         <div className="flex items-center justify-between">
           <h3 className="font-[560]">{t('automod.rulesTitle')}</h3>
-          <Button onClick={() => setEditing(emptyRule())}>{t('automod.newRule')}</Button>
+          <Button onClick={() => setEditing(emptyRule())}>
+            <Icon name="add" />
+            {t('automod.newRule')}
+          </Button>
         </div>
         <div className="mt-3">
           {rules.isPending && <Spinner />}
@@ -98,8 +102,8 @@ export function AutoModPage({ guildId }: { guildId: string }) {
               </Button>
             </Card>
           )}
-          {rules.data?.length === 0 && <p className="border-y border-border py-6 text-muted">{t('automod.empty')}</p>}
-          <ul className="divide-y divide-border border-y border-border">
+          {rules.data?.length === 0 && <Empty>{t('automod.empty')}</Empty>}
+          <ul className="divide-y divide-border border-y border-border empty:hidden">
             {rules.data?.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-4 py-3">
                   <div className="min-w-0">

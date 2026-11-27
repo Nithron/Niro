@@ -200,14 +200,15 @@ describe('moderation pages', () => {
     }
     renderAt('/guilds/100/cases')
 
-    expect(await screen.findByText('8 cases')).toBeInTheDocument()
+    // The total stands as a large number with its word.
+    expect(await screen.findByText((_, el) => el?.tagName === 'P' && el.textContent === '8cases')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '#8' })).toHaveAttribute('href', '/guilds/100/cases/8')
     await userEvent.click(screen.getByRole('button', { name: 'Load more' }))
     expect(await screen.findByRole('link', { name: '#1' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument()
 
     await userEvent.selectOptions(screen.getByLabelText('Action'), 'ban')
-    expect(await screen.findByText('1 case')).toBeInTheDocument()
+    expect(await screen.findByText((_, el) => el?.tagName === 'P' && el.textContent === '1case')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '#9' })).toBeInTheDocument()
   })
 

@@ -2,7 +2,8 @@ import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import type { GuildSummary } from '../api/client'
 import { useGuilds, useInvite } from '../api/queries'
-import { buttonClasses, ErrorState, GuildIcon, LinkButton, Spinner } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { buttonClasses, Empty, ErrorState, GuildIcon, LinkButton, Spinner } from '../components/ui'
 
 export function ServersPage() {
   const { t } = useTranslation()
@@ -15,9 +16,13 @@ export function ServersPage() {
       <div className="mt-6">
         {guilds.isPending && <Spinner />}
         {guilds.isError && <ErrorState onRetry={() => void guilds.refetch()} />}
-        {guilds.data?.length === 0 && <p className="border-y border-border py-6 text-muted">{t('servers.empty')}</p>}
+        {guilds.data?.length === 0 && <Empty>{t('servers.empty')}</Empty>}
         {guilds.data && guilds.data.length > 0 && (
           <>
+            <p className="mb-4 flex items-baseline gap-3">
+              <span className="pixel pixel-32">{guilds.data.filter((g) => g.botPresent).length}</span>
+              <span className="text-muted">{t('servers.withNiro', { total: guilds.data.length })}</span>
+            </p>
             <ul className="divide-y divide-border border-y border-border">
               {guilds.data.map((g) => (
                 <ServerRow key={g.id} guild={g} />
@@ -68,6 +73,7 @@ export function InviteButton({ guildId, compact = false }: { guildId: string; co
       aria-disabled={!invite.data}
     >
       {t('servers.add')}
+      <Icon name="external-link" />
     </LinkButton>
   )
 }

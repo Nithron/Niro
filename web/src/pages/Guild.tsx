@@ -107,11 +107,17 @@ export function ModulesPage({ guildId }: { guildId: string }) {
         {modules.isPending && <Spinner />}
         {modules.isError && <ErrorState onRetry={() => void modules.refetch()} />}
         {modules.data && (
+          <>
+          <p className="mb-4 flex items-baseline gap-3">
+              <span className="pixel pixel-32">{modules.data.filter((m) => m.enabled).length}</span>
+              <span className="text-muted">{t('guild.modulesOn', { total: modules.data.length })}</span>
+            </p>
           <ul className="divide-y divide-border border-y border-border">
             {modules.data.map((m) => (
               <ModuleRow key={m.id} guildId={guildId} module={m} />
             ))}
           </ul>
+          </>
         )}
       </div>
       {guild.data?.owner && <DeleteServerData guildId={guildId} guildName={guild.data.name} />}

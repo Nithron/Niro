@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { logout, logoutEverywhere, type User } from '../api/client'
 import { signedOut } from '../queryClient'
 import { isNithronSite } from '../deployment'
-import { Logo } from './ui'
+import { Icon } from './Icon'
 
 export function Layout({ user, children }: { user: User; children: ReactNode }) {
   const { t } = useTranslation()
@@ -51,6 +51,7 @@ export function Layout({ user, children }: { user: User; children: ReactNode }) 
             >
               <img src={user.avatarUrl} alt="" className="size-8" />
               <span className="hidden text-sm sm:inline">{user.globalName ?? user.username}</span>
+              <Icon name="menu" />
             </summary>
             <div className="absolute right-0 z-20 mt-2 w-56 border border-edge bg-bg p-1">
               <button type="button" className={item} onClick={() => void signOut(false)}>
@@ -107,8 +108,7 @@ export function FamilyBar() {
   )
 }
 
-/** The product at the head of the page: Niro's lockup on Nithron's deployment, otherwise the name set in type. */
+/** The product's name at the head of the page, in the pixel face: 24 px in the header, 48 px on sign-in. */
 export function ProductName({ large = false }: { large?: boolean }) {
-  if (isNithronSite()) return <Logo className={large ? 'h-10' : 'h-7'} />
-  return <span className={large ? 'pixel-display text-screen' : 'pixel-display text-panel'}>Niro</span>
+  return <span className={large ? 'pixel pixel-48 block' : 'pixel pixel-24 block'}>Niro</span>
 }

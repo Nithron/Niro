@@ -1,34 +1,31 @@
 import { clsx } from 'clsx'
+import { icons, type IconName, type IconSize } from '../vendor/nithron-icons/index.js'
+
+export type { IconName, IconSize }
 
 /**
- * The one place for icons. Every icon in the dashboard goes through this component, so the day the shared
- * Nithron pixel set arrives (16 by 16 grid, drawn once for nOS, nAI and Niro) the swap is this file alone.
- * Until then the icons are the text characters the dashboard used before. Do not draw pixel icons here.
+ * The one place for icons. Every icon in the dashboard is a Nithron pixel icon (@nithron/icons, vendored in
+ * src/vendor/nithron-icons): ink on a 16 by 16 grid, in currentColor, at 16 px or 32 px and no other size,
+ * crisp, never scaled, rotated or smoothed. Where the set has no icon for a meaning, the control has words
+ * only. Do not draw icons here.
  *
- * Two sizes only, because a pixel icon cannot be scaled by a fraction: 16 px in rows, buttons and
- * navigation; 32 px for a screen title or an empty screen.
+ * Leave `label` out when the icon stands beside its word; a button that holds only an icon needs its own name.
  */
-const glyphs = {
-  back: '←',
-  up: '↑',
-  down: '↓',
-  /** The mark of a notice that is no state: none of the three status marks. */
-  note: 'i',
-} as const
-
-export type IconName = keyof typeof glyphs
-export type IconSize = 16 | 32
-
 export function Icon({ name, size = 16, label, className }: { name: IconName; size?: IconSize; label?: string; className?: string }) {
   return (
-    <span
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      shapeRendering="crispEdges"
       role={label ? 'img' : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      style={{ width: size, height: size, fontSize: size * 0.875 }}
-      className={clsx('inline-flex shrink-0 items-center justify-center leading-none', className)}
+      focusable="false"
+      className={clsx('block flex-none', className)}
     >
-      {glyphs[name]}
-    </span>
+      <path d={icons[name].path} />
+    </svg>
   )
 }

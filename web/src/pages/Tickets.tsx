@@ -14,7 +14,8 @@ import {
 import { emptyDocument } from '../components/builder/document'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton } from '../components/builder/MessagePreview'
-import { Badge, Button, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Badge, Button, Empty, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
 
 const MAX_PANELS = 10
 const MAX_CATEGORIES = 5
@@ -65,11 +66,12 @@ export function TicketsPage({ guildId }: { guildId: string }) {
         <div className="flex items-center justify-between gap-4">
           <h3 className="font-[560]">{t('tickets.panels')}</h3>
           <Button onClick={() => setEditing(newPanel())} disabled={panels.data.items.length >= MAX_PANELS}>
+            <Icon name="add" />
             {t('tickets.newPanel')}
           </Button>
         </div>
-        {panels.data.items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('tickets.noPanels')}</p>}
-        <ul className="divide-y divide-border border-y border-border">
+        {panels.data.items.length === 0 && <Empty>{t('tickets.noPanels')}</Empty>}
+        <ul className="divide-y divide-border border-y border-border empty:hidden">
         {panels.data.items.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
@@ -169,7 +171,7 @@ function TicketList({ guildId }: { guildId: string }) {
       </div>
       {list.isError && <ErrorState onRetry={() => void list.refetch()} />}
       {list.isPending && <Spinner />}
-      {!list.isPending && items.length === 0 && <p className="border-y border-border py-6 text-muted">{t('tickets.noTickets')}</p>}
+      {!list.isPending && items.length === 0 && <Empty>{t('tickets.noTickets')}</Empty>}
       {items.length > 0 && (
         <div className="overflow-x-auto border-t border-border">
           <table className="w-full text-left text-sm">
@@ -198,8 +200,9 @@ function TicketList({ guildId }: { guildId: string }) {
                   <td className="px-4 py-2 font-mono text-data text-muted">{new Date(tk.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2">
                     {tk.hasTranscript && (
-                      <a className="underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
+                      <a className="inline-flex items-center gap-1 underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
                         {t('tickets.transcript')}
+                        <Icon name="external-link" />
                       </a>
                     )}
                   </td>
@@ -328,7 +331,8 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
                       <SwitchRow label={t('tickets.long')} checked={q.long} onCheckedChange={(v) => setQ({ long: v })} />
                       <SwitchRow label={t('tickets.required')} checked={q.required} onCheckedChange={(v) => setQ({ required: v })} />
                       <Button type="button" variant="line" onClick={() => setCat(i, { questions: c.questions.filter((_, k) => k !== j) })}>
-                        {t('builder.remove')}
+                        <Icon name="remove" />
+                {t('builder.remove')}
                       </Button>
                     </div>
                   </div>
@@ -336,7 +340,8 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
               })}
               {c.questions.length < MAX_QUESTIONS && (
                 <Button type="button" variant="line" onClick={() => setCat(i, { questions: [...c.questions, { label: '', long: false, required: true }] })}>
-                  {t('tickets.addQuestion')}
+                  <Icon name="add" />
+            {t('tickets.addQuestion')}
                 </Button>
               )}
             </fieldset>
@@ -346,6 +351,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
             </div>
             {p.categories.length > 1 && (
               <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, categories: prev.categories.filter((_, j) => j !== i) }))}>
+                <Icon name="remove" />
                 {t('tickets.removeCategory')}
               </Button>
             )}
@@ -353,6 +359,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
         ))}
         {p.categories.length < MAX_CATEGORIES && (
           <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, categories: [...prev.categories, newCategory()] }))}>
+            <Icon name="add" />
             {t('tickets.addCategory')}
           </Button>
         )}

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
 import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Field, Lamp, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
+import { Badge, Button, Card, Empty, ErrorState, Field, Lamp, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
 
 const dateFmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 const relFmt = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
@@ -198,7 +198,7 @@ export function DetectionsPage({ guildId }: { guildId: string }) {
       <div className="mt-4">
         {events.isPending && <Spinner />}
         {events.isError && <ErrorState onRetry={() => void events.refetch()} />}
-        {events.data && items.length === 0 && <p className="border-y border-border py-6 text-muted">{status ? t('detections.emptyFiltered') : t('detections.empty')}</p>}
+        {events.data && items.length === 0 && <Empty>{status ? t('detections.emptyFiltered') : t('detections.empty')}</Empty>}
         {items.length > 0 && (
           <ul className="divide-y divide-border border-y border-border">
             {items.map((ev) => (
