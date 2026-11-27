@@ -4,7 +4,7 @@
 
 ## Short answer
 
-The lag I flagged in the discovery report is real for **discordgo** and **arikawa**. It is **not** real for **disgo**, which adds new Discord API features about as fast as discord.js and sometimes faster. If we pick Go, we pick **disgo**.
+The lag I flagged in the discovery report is real for **discordgo** and **arikawa**. It is **not** real for **disgo**, which adds new Discord API features about as fast as discord.js and sometimes faster. If Niro is built in Go, the library is **disgo**.
 
 ## Feature landing dates
 
@@ -30,10 +30,10 @@ Days are counted from the date Discord documented the feature (commit in `discor
 
 ## The real trade-offs of Go + disgo
 
-1. **Releases are infrequent, not features.** Features land on `master` quickly, but tagged releases can be months apart (v0.19.6 in June, then v0.20.0 in November). Go modules can pin a specific commit, so this doesn't block us.
+1. **Releases are infrequent, not features.** Features land on `master` quickly, but tagged releases can be months apart (v0.19.6 in June, then v0.20.0 in November). Go modules can pin a specific commit, so this doesn't block anything.
 2. **Small community and a small core team (bus factor).** There are far fewer tutorials and Stack Overflow answers than for discord.js. *Mitigations:* the planned platform-agnostic core (`domain` doesn't import disgo), a thin adapter layer, and willingness to contribute upstream (the project accepts outside PRs actively).
-3. **The dashboard is still TypeScript** (Next.js) whichever bot language we choose. With Go, that's two languages, which is exactly how Flow is built (Go backend + Next.js).
-4. **Brand-new endpoints may need a raw REST call** for a few days. disgo's REST client lets us call custom routes, so this is minor.
+3. **The dashboard is still TypeScript** (Next.js) whichever bot language is chosen. With Go, that's two languages, which is exactly how Flow is built (Go backend + Next.js).
+4. **Brand-new endpoints may need a raw REST call** for a few days. disgo's REST client can call custom routes, so this is minor.
 
 ## Music (planned for later)
 

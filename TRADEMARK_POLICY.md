@@ -23,4 +23,4 @@ This policy governs use of Nithron’s trademarks: “Nithron”, “NithronOS�
 Any commercial use of the Trademarks (services, support, merchandise, events) requires written permission.
 
 ## Reporting misuse / Requests
-Email **legal@nithron.com**. We may update this policy at any time.
+Email **legal@nithron.com**. Nithron may update this policy at any time.

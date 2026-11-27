@@ -49,7 +49,7 @@ For Thiago's approval. Nothing changes in Niro until this proposal is approved. 
 
 ## Inside Discord
 
-The chapter covers the dashboard. Discord shows Niro's messages on its own grey grounds, in its own dark and light themes, with no way to follow ours. Proposal:
+The chapter covers the dashboard. Discord shows Niro's messages on its own grey grounds, in its own dark and light themes, with no way to follow Nithron's. Proposal:
 
 - **Colour bars** follow the roles, never a hue name in code:
   - `main` for neutral replies and panels;

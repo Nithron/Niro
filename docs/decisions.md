@@ -43,4 +43,4 @@
 - **NCL is source-available, not OSI "open source".** Public marketing should say *source-available* or *open code*, not "open source".
 - **NCL + self-hosting:** individuals and non-commercial communities can self-host for free. Under NCL §1/§3, a company or brand self-hosting Niro for its own server counts as *Commercial Use* and needs a commercial licence (`COMMERCIAL.md`). This is consistent with NithronOS/nAI, but it should be stated clearly on the self-host docs page.
 - **Self-hosted instances run under the operator's own Discord application.** They can't use the Niro name or brand assets (Trademark Policy).
-- **Before public launch, the hosted bot needs** a Terms of Service and Privacy Policy (Discord also requires these for App Directory listing and verification), plus GDPR handling, since we store message logs and moderation cases.
+- **Before public launch, the hosted bot needs** a Terms of Service and Privacy Policy (Discord also requires these for App Directory listing and verification), plus GDPR handling, since Niro stores message logs and moderation cases.

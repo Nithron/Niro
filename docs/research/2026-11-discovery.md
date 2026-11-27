@@ -29,19 +29,19 @@
 | **AI bots** (Tenka, Modcord, GPTDiscord…) | KB Q&A, summaries, context-aware moderation | AI usually paywalled; data sent to third-party LLMs; generic answers when there's no KB |
 
 **Takeaways**
-1. "All-in-one" is already a pitch other bots make, so it can't be the main differentiator. What would set us apart is being **open, trustworthy, generous, and secure**.
+1. "All-in-one" is already a pitch other bots make, so it can't be the main differentiator. What would set Niro apart is being **open, trustworthy, generous, and secure**.
 2. AI features are spreading, but they are usually **cloud-only, opaque and paywalled**. A bot that lets a server bring its own model or run one locally would stand out.
 3. Security is still **reactive**. Compromised accounts post "MrBeast giveaway" or crypto links across every channel within seconds, and RaidProtect reported *tens of thousands* of compromised accounts in 2026.
 
 ## 2. Discord platform realities (they shape scope)
 
-- **Bot verification at 100 servers** requires identity verification of the owner. **Privileged intents** (Message Content, Server Members, Presence) then need approval with a justification. *Any feature that reads message text (automod beyond Discord's native AutoMod, leveling, AI) depends on that approval.* We should design for it: use Discord's native **AutoMod API** where possible, and have a written use-case justification ready.
+- **Bot verification at 100 servers** requires identity verification of the owner. **Privileged intents** (Message Content, Server Members, Presence) then need approval with a justification. *Any feature that reads message text (automod beyond Discord's native AutoMod, leveling, AI) depends on that approval.* Niro should be designed for it: use Discord's native **AutoMod API** where possible, and have a written use-case justification ready.
 - **Components V2** (containers, sections, media galleries, separators) lets bots build rich, app-like messages. It is supported in discord.js, discord.py, JDA and Discord.Net, and it is a real UX advantage over bots that still use legacy embeds.
 - **User-installable apps** are GA, so commands can work in DMs or any server where the user is a member. This fits personal utilities and personal AI.
 - **New endpoints (Oct 2026)** return the computed permissions of a member or role, and the audit log now covers channel and role position changes. Both make **permission audits and anti-nuke checks** much easier to build.
-- **Monetization:** Discord's Premium Apps/SKUs (in-client subscriptions, one-time purchases) or our own Stripe billing. We can pick later.
-- **Sharding** is mandatory at 2,500 guilds. Every library we're considering handles it, but we'd need to plan clustering if we grow large.
-- **Platform risk:** the 2026 age-verification rollout caused a visible (if probably small) move to **Stoat** (formerly Revolt), **Fluxer** and TeamSpeak. Fluxer's API is deliberately Discord-like. Keeping our core **platform-agnostic** is a cheap hedge.
+- **Monetization:** Discord's Premium Apps/SKUs (in-client subscriptions, one-time purchases) or Nithron's own Stripe billing, to be picked later.
+- **Sharding** is mandatory at 2,500 guilds. Every library under consideration handles it, but clustering needs a plan if Niro grows large.
+- **Platform risk:** the 2026 age-verification rollout caused a visible (if probably small) move to **Stoat** (formerly Revolt), **Fluxer** and TeamSpeak. Fluxer's API is deliberately Discord-like. Keeping Niro's core **platform-agnostic** is a cheap hedge.
 
 ## 3. Product directions (pick one, or a combination)
 
@@ -63,7 +63,7 @@ Moderation (cases, warns, timeouts, appeals), automod, rich logging with before/
 - **Bring your own model:** Ollama locally, any OpenAI-compatible server, or a cloud API. Privacy is the default.
 
 ### D. Nithron ecosystem bridge
-NithronOS alerts in Discord (disk SMART, pool health, backup results, updates), nAI search from Discord, and an official bot for the Nithron community server. The market is niche, but it supports the brand and lets us test Nithro on our own products first.
+NithronOS alerts in Discord (disk SMART, pool health, backup results, updates), nAI search from Discord, and an official bot for the Nithron community server. The market is niche, but it supports the brand and lets Nithron test Nithro on its own products first.
 
 ### E. Cross-platform core (architecture choice, not a product)
 Discord adapter first, with the domain logic kept free of discord.js types. Fluxer and Stoat adapters could come later.
@@ -85,7 +85,7 @@ Later: leveling, forms, anti-nuke auto-revert, the AI layer, NithronOS bridge, p
 
 | Model | Notes |
 |---|---|
-| **Generous free hosted tier + paid Premium** (recommended) | Premium covers features that cost us money to run: AI usage, long log retention, higher limits, priority support. The core protection features stay free. |
+| **Generous free hosted tier + paid Premium** (recommended) | Premium covers features that cost money to run: AI usage, long log retention, higher limits, priority support. The core protection features stay free. |
 | **Open source + self-host for free** | Matches NithronOS/nAI. A license like the Nithron Community License keeps commercial rights. Builds trust and contributors. |
 | Discord Premium Apps vs Stripe | Discord SKUs mean less friction inside the client. Stripe keeps more control and can be used outside Discord. Can offer both. |
 
@@ -110,7 +110,7 @@ Later: leveling, forms, anti-nuke auto-revert, the AI layer, NithronOS bridge, p
 | ORM / migrations | **Drizzle** | Type-safe, SQL-first, light |
 | Analytics (later, only if needed) | TimescaleDB or ClickHouse | Message/member stats at scale |
 
-Not recommended: MongoDB. It's common in hobby bots, but our data is relational, and Postgres with JSONB covers the flexible parts.
+Not recommended: MongoDB. It's common in hobby bots, but Niro's data is relational, and Postgres with JSONB covers the flexible parts.
 
 ### Admin panel / dashboard
 - **Next.js (App Router) + Tailwind + shadcn/ui**, with **Discord OAuth2** login (Auth.js or Better Auth). Access is limited to users with *Manage Server* in that guild.

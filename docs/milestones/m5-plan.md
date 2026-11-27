@@ -6,7 +6,7 @@
 
 **Done when** (plan §7): `v0.1.0` is tagged, the hosted bot is verified and live, and the self-host guide works from scratch.
 
-## 1. Where we stand
+## 1. Where things stand
 
 **Already solid** (from the audits):
 - Every guild-scoped API handler checks that the session user can manage that guild, and the checks fail closed. No missing check or cross-guild lookup was found in the API.
@@ -201,7 +201,7 @@
 
 Slices 1 to 5 don't depend on the questions below, except question 4 (retention) for slice 2. Each slice gets an ECC review before it is merged into the branch.
 
-**Timing:** Discord's verification and intent review is outside our control and can take days or weeks. Until it is approved, the hosted bot works in up to 100 servers, which is enough for a soft launch. The `v0.1.0` tag waits for the approval, as the done-when line says.
+**Timing:** Discord's verification and intent review is outside Nithron's control and can take days or weeks. Until it is approved, the hosted bot works in up to 100 servers, which is enough for a soft launch. The `v0.1.0` tag waits for the approval, as the done-when line says.
 
 ## 4. PM answers (decision 28)
 
@@ -224,7 +224,7 @@ Slices 1 to 5 don't depend on the questions below, except question 4 (retention)
 2. **Monitoring:**
    - Recommended: Prometheus, Alertmanager and Grafana on the same server.
    - Alerts go to a private channel in the support server, plus a free external uptime check so a dead server still alerts.
-   - The alternative is Grafana Cloud's free tier: less to run, but metrics leave our server.
+   - The alternative is Grafana Cloud's free tier: less to run, but metrics leave Nithron's server.
 3. **Legal details for the ToS and Privacy Policy:**
    - the legal entity's name and country (the data controller);
    - the contact addresses, for example `privacy@nithron.com` and `support@nithron.com`.
