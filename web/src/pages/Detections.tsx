@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GuardianEvent, GuardianResolve, GuardianStatus } from '../api/client'
 import { useGuardianEvents, useRaidStatus, useResolveEvent, useSetRaidMode } from '../api/queries'
+import { Icon } from '../components/Icon'
 import { Badge, Button, Card, Empty, ErrorState, Field, Lamp, Notice, RequestError, Select, Spinner, Status, useConfirm } from '../components/ui'
 import { formatDateTime } from '../format'
 
@@ -38,6 +39,7 @@ function RaidCard({ guildId }: { guildId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="flex items-center gap-2 font-[560]">
+            <Icon name="shield" />
             {on && <Lamp state="warning" />}
             {on ? t('detections.raidOn') : t('detections.raidOff')}
           </p>
@@ -101,7 +103,8 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
   if (!ev.monitor)
     rows.push([
       t('detections.action'),
-      <span key="a">
+      <span key="a" className="inline-flex flex-wrap items-center gap-x-1">
+        {ev.response === 'quarantine' && <Icon name="lock" />}
         {t(`detections.responses.${ev.response}`)}
         {ev.caseNumber && (
           <>
@@ -109,8 +112,9 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
             <Link
               to="/guilds/$guildId/cases/$number"
               params={{ guildId, number: String(ev.caseNumber) }}
-              className="underline underline-offset-2"
+              className="inline-flex items-center gap-1 underline underline-offset-2"
             >
+              <Icon name="case" />
               {t('detections.case', { number: ev.caseNumber })}
             </Link>
           </>
@@ -153,6 +157,7 @@ function EventCard({ guildId, ev }: { guildId: string; ev: GuardianEvent }) {
               {t('detections.restore')}
             </Button>
             <Button variant="line" size="compact" onClick={() => void act('ban')} disabled={resolve.isPending}>
+              <Icon name="ban" />
               {t('detections.ban')}
             </Button>
             {ev.status === 'open' && (

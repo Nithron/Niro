@@ -10,17 +10,17 @@ import i18n from '../i18n'
 import { InviteButton } from './Servers'
 
 const tabs = [
-  { to: '/guilds/$guildId', key: 'tabs.modules', exact: true },
-  { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', exact: false },
-  { to: '/guilds/$guildId/cases', key: 'tabs.cases', exact: false },
-  { to: '/guilds/$guildId/automod', key: 'tabs.automod', exact: false },
-  { to: '/guilds/$guildId/guardian', key: 'tabs.guardian', exact: true },
-  { to: '/guilds/$guildId/guardian/detections', key: 'tabs.detections', exact: false },
-  { to: '/guilds/$guildId/guardian/audit', key: 'tabs.audit', exact: false },
-  { to: '/guilds/$guildId/logging', key: 'tabs.logging', exact: false },
-  { to: '/guilds/$guildId/roles', key: 'tabs.roles', exact: false },
-  { to: '/guilds/$guildId/welcome', key: 'tabs.welcome', exact: false },
-  { to: '/guilds/$guildId/tickets', key: 'tabs.tickets', exact: false },
+  { to: '/guilds/$guildId', key: 'tabs.modules', icon: 'app', exact: true },
+  { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', icon: 'moderation', exact: false },
+  { to: '/guilds/$guildId/cases', key: 'tabs.cases', icon: 'case', exact: false },
+  { to: '/guilds/$guildId/automod', key: 'tabs.automod', icon: 'filter', exact: false },
+  { to: '/guilds/$guildId/guardian', key: 'tabs.guardian', icon: 'shield', exact: true },
+  { to: '/guilds/$guildId/guardian/detections', key: 'tabs.detections', icon: 'detections', exact: false },
+  { to: '/guilds/$guildId/guardian/audit', key: 'tabs.audit', icon: 'checklist', exact: false },
+  { to: '/guilds/$guildId/logging', key: 'tabs.logging', icon: 'history', exact: false },
+  { to: '/guilds/$guildId/roles', key: 'tabs.roles', icon: 'role', exact: false },
+  { to: '/guilds/$guildId/welcome', key: 'tabs.welcome', icon: 'welcome', exact: false },
+  { to: '/guilds/$guildId/tickets', key: 'tabs.tickets', icon: 'ticket', exact: false },
 ] as const
 
 /** Server header, tabs, and the active tab (or an invite if Niro isn't there). */
@@ -75,11 +75,14 @@ export function GuildLayout({ guildId }: { guildId: string }) {
                     className="group -mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-fg data-[status=active]:text-fg"
                   >
                     {/* A hidden copy at the heavier weight holds the width, so the row does not shift when the current tab changes. */}
+                    <span className="inline-flex items-center gap-2">
+                    <Icon name={tab.icon} />
                     <span className="inline-grid justify-items-center">
                       <span aria-hidden className="invisible col-start-1 row-start-1 font-[560]">
                         {t(tab.key)}
                       </span>
                       <span className="col-start-1 row-start-1 group-data-[status=active]:font-[560]">{t(tab.key)}</span>
+                    </span>
                     </span>
                   </Link>
                 ))}

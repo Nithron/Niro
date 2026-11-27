@@ -17,7 +17,7 @@ import {
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api/client'
-import { Icon } from './Icon'
+import { Icon, type IconName } from './Icon'
 
 // The parts of the dashboard in the Nithron identity (DESIGN-APPS.md in nithron-site): one ground parted by
 // hairlines, square panels, controls with 8 px corners, ink for the first action, no hue in the interface,
@@ -124,10 +124,10 @@ const badgeText = { neutral: 'text-muted', ok: 'text-ok-text', warning: 'text-wa
  * A short status beside a thing: a mark and a word. "neutral" is a word with no mark and no colour, for
  * anything that is not a state (a case's action, a rule's trigger, a closed ticket).
  */
-export function Badge({ tone = 'neutral', children }: { tone?: State | 'neutral'; children: ReactNode }) {
+export function Badge({ tone = 'neutral', icon, children }: { tone?: State | 'neutral'; icon?: IconName; children: ReactNode }) {
   return (
     <span className={clsx('inline-flex items-center gap-1.5 text-xs font-[560] whitespace-nowrap', badgeText[tone])}>
-      {tone !== 'neutral' && <Mark state={tone} />}
+      {tone !== 'neutral' ? <Mark state={tone} /> : icon && <Icon name={icon} />}
       {children}
     </span>
   )

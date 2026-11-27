@@ -77,8 +77,9 @@ export function TicketsPage({ guildId }: { guildId: string }) {
           <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
               <p className="font-[560]">{p.name}</p>
-              <p className="text-sm text-muted">
-                #{channelName(p.channelId)} · {p.categories.map((c) => c.label).join(', ')}
+              <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
+                <Icon name="channel" />
+                {channelName(p.channelId)} · {p.categories.map((c) => c.label).join(', ')}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -202,6 +203,7 @@ function TicketList({ guildId }: { guildId: string }) {
                   <td className="px-4 py-2">
                     {tk.hasTranscript && (
                       <a className="inline-flex items-center gap-1 underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
+                        <Icon name="transcript" />
                         {t('tickets.transcript')}
                         <Icon name="external-link" />
                       </a>

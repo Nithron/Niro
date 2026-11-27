@@ -65,8 +65,10 @@ export function RolePanelsPage({ guildId }: { guildId: string }) {
           <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
               <p className="font-[560]">{p.name}</p>
-              <p className="text-sm text-muted">
-                #{channelName(p.channelId)} · {t(`rolePanels.styles.${p.style}`)} · {t(`rolePanels.modes.${p.mode}`)} ·{' '}
+              <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
+                <Icon name="channel" />
+                {channelName(p.channelId)} · {t(`rolePanels.styles.${p.style}`)} · {t(`rolePanels.modes.${p.mode}`)} ·
+                <Icon name="role" />
                 {t('rolePanels.roleCount', { count: p.roles.length })}
               </p>
             </div>

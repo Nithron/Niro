@@ -71,6 +71,7 @@ export function MessageBuilder({
               else onChange({ version: value.version, blocks: value.blocks })
             }}
           />
+          <Icon name="colour" />
           {t('builder.accent')}
         </label>
         {hasColor && (

@@ -3,16 +3,26 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError, type Case, type CaseAction } from '../api/client'
 import { useCase, useCases, useDeleteCase, useUpdateCaseReason, type CaseFilters } from '../api/queries'
-import { Icon } from '../components/Icon'
+import { Icon, type IconName } from '../components/Icon'
 import { Badge, Button, Card, Empty, ErrorState, Field, RequestError, Select, Spinner, TextArea, TextInput, useConfirm } from '../components/ui'
 import { formatDateTime } from '../format'
 
 export const caseActions: CaseAction[] = ['warn', 'timeout', 'untimeout', 'kick', 'ban', 'unban', 'note', 'purge', 'quarantine', 'unquarantine']
 
+const actionIcon: Partial<Record<CaseAction, IconName>> = {
+  timeout: 'time',
+  untimeout: 'time',
+  kick: 'kick',
+  ban: 'ban',
+  purge: 'delete',
+  quarantine: 'lock',
+  unquarantine: 'unlock',
+}
+
 export function ActionBadge({ action }: { action: CaseAction }) {
   const { t } = useTranslation()
-  // An action is told apart by its word, never by a colour: a ban is not a failure.
-  return <Badge>{t(`cases.actions.${action}`)}</Badge>
+  // An action is told apart by its word (and its icon where the set has one), never by a colour: a ban is not a failure.
+  return <Badge icon={actionIcon[action]}>{t(`cases.actions.${action}`)}</Badge>
 }
 
 
