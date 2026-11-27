@@ -4,6 +4,13 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### Dashboard in the Nithron identity (foundations)
+
+- **Look:** the dashboard takes on the Nithron identity. It has one ground with hairlines between panels, square panels, ink for the main action and line buttons for the rest. There is no brand colour, gradient, shadow or glass. It follows the system's light or dark theme.
+- **Status:** a state is a mark and a word: a filled square for ok, an open square for a warning, a cross for a failure. A case's action (warn, timeout, kick, ban) is a word with no colour.
+- **Fonts:** Mona Sans and Monaspace Neon now ship with the dashboard, so nothing is loaded from another server.
+- **Confirming:** deleting a case, a rule or a panel, banning from Detections and starting raid mode now ask in Niro's own dialog instead of the browser's.
+
 ### M5: Hardening and launch
 
 - **Rate limits:** the dashboard API limits requests per user and per IP, and the login flow per IP. Over the limit, the dashboard says to wait a moment. Behind a reverse proxy, set `NIRO_TRUSTED_PROXIES`.
