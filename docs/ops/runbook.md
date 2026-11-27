@@ -152,3 +152,4 @@ To turn them on:
 | Date | What | Result |
 |---|---|---|
 | 2026-11-26 | First setup on the Nithron VPS: Docker 29.10.1 installed (no other service touched), `/opt/niro` at `39154b0`, Postgres, Valkey, migrations, backup, Prometheus, node_exporter and Grafana started. Bot, API and Alertmanager wait for the production credentials and the webhook | First encrypted dump taken and decrypted off the server (18 tables). Website, ai.nithron.com and Minecraft checked before and after |
+| 2026-11-27 | The website's Caddyfile imports `/etc/caddy/sites.d/*.caddy`; production credentials saved; `bot` and `api` started | Certificate for `niro.nithron.com` obtained, dashboard and Discord login redirect work, bot online with 17 global commands, all Prometheus targets up. Website and Minecraft unaffected |
