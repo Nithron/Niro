@@ -12,7 +12,8 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 - **Confirming:** deleting a case, a rule or a panel, banning from Detections and starting raid mode now ask in Niro's own dialog instead of the browser's. The dialog's title names what happens, and its sentence says what follows.
 - **Screens:** Servers, Modules, Detections, the security audit, AutoMod rules, role and ticket panels are ruled lists instead of separate cards, and Cases and Tickets are ruled tables. Sign-in is words and one button. The screens use one type scale, with values in the mono face.
 - **Pixel details:** check boxes, list bullets, switches, server icons and avatars are square. The message builder's limits show as a row of blocks. Raid mode shows a blinking square while it is on. Loading shows a block cursor.
-- **Grounds:** the dashboard uses the soft near-black and near-white of the Nithron tokens 0.3.0.
+- **Grounds:** the dashboard uses the soft near-black and near-white of the Nithron tokens (0.4.0).
+- **Pixel identity:** icons come from the shared Nithron pixel set, at 16 px. They mark back, move up and down, add, remove, external links and the account menu. States use the set's marks: the filled square, the open square, the cross, and the running mark for raid mode. "Niro" at the top left, the large numbers (servers with Niro, modules on, cases), empty screens, loading words and the meters' numbers are set in Nithron Pixel, the shared pixel face.
 - **Self-hosted copies:** the Nithron family bar and Niro's logo appear only where `NIRO_NITHRON_SITE=true` (Nithron's own deployment). Other copies show the name in type.
 
 ### M5: Hardening and launch
