@@ -124,10 +124,10 @@ const badgeText = { neutral: 'text-muted', ok: 'text-ok-text', warning: 'text-wa
  * A short status beside a thing: a mark and a word. "neutral" is a word with no mark and no colour, for
  * anything that is not a state (a case's action, a rule's trigger, a closed ticket).
  */
-export function Badge({ tone = 'neutral', icon, children }: { tone?: State | 'neutral'; icon?: IconName; children: ReactNode }) {
+export function Badge({ tone = 'neutral', icon, reserve = false, children }: { tone?: State | 'neutral'; icon?: IconName; reserve?: boolean; children: ReactNode }) {
   return (
     <span className={clsx('inline-flex items-center gap-1.5 text-xs font-[560] whitespace-nowrap', badgeText[tone])}>
-      {tone !== 'neutral' ? <Mark state={tone} /> : icon && <Icon name={icon} />}
+      {tone !== 'neutral' ? <Mark state={tone} /> : icon ? <Icon name={icon} /> : reserve && <span aria-hidden className="block size-4 flex-none" />}
       {children}
     </span>
   )

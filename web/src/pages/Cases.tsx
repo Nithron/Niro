@@ -22,7 +22,8 @@ const actionIcon: Partial<Record<CaseAction, IconName>> = {
 export function ActionBadge({ action }: { action: CaseAction }) {
   const { t } = useTranslation()
   // An action is told apart by its word (and its icon where the set has one), never by a colour: a ban is not a failure.
-  return <Badge icon={actionIcon[action]}>{t(`cases.actions.${action}`)}</Badge>
+  // A 16 px slot before every word, filled or not, so the column reads as one edge.
+  return <Badge icon={actionIcon[action]} reserve>{t(`cases.actions.${action}`)}</Badge>
 }
 
 
