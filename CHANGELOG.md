@@ -9,7 +9,11 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 - **Look:** the dashboard takes on the Nithron identity. It has one ground with hairlines between panels, square panels, ink for the main action and line buttons for the rest. There is no brand colour, gradient, shadow or glass. It follows the system's light or dark theme.
 - **Status:** a state is a mark and a word: a filled square for ok, an open square for a warning, a cross for a failure. A case's action (warn, timeout, kick, ban) is a word with no colour.
 - **Fonts:** Mona Sans and Monaspace Neon now ship with the dashboard, so nothing is loaded from another server.
-- **Confirming:** deleting a case, a rule or a panel, banning from Detections and starting raid mode now ask in Niro's own dialog instead of the browser's.
+- **Confirming:** deleting a case, a rule or a panel, banning from Detections and starting raid mode now ask in Niro's own dialog instead of the browser's. The dialog's title names what happens, and its sentence says what follows.
+- **Screens:** Servers, Modules, Detections, the security audit, AutoMod rules, role and ticket panels are ruled lists instead of separate cards, and Cases and Tickets are ruled tables. Sign-in is words and one button. The screens use one type scale, with values in the mono face.
+- **Pixel details:** check boxes, list bullets, switches, server icons and avatars are square. The message builder's limits show as a row of blocks. Raid mode shows a blinking square while it is on. Loading shows a block cursor.
+- **Grounds:** the dashboard uses the soft near-black and near-white of the Nithron tokens 0.3.0.
+- **Self-hosted copies:** the Nithron family bar and Niro's logo appear only where `NIRO_NITHRON_SITE=true` (Nithron's own deployment). Other copies show the name in type.
 
 ### M5: Hardening and launch
 
