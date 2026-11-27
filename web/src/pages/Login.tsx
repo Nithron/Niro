@@ -1,8 +1,9 @@
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { ProductName } from '../components/Layout'
+import { FamilyBar, ProductName } from '../components/Layout'
 import { Picture } from '../components/Picture'
 import { LinkButton, Status } from '../components/ui'
+import { isNithronSite } from '../deployment'
 
 /** Sign-in: words and one action. The sign-in picture slot stays empty until the shared pixel set is issued. */
 export function LoginPage() {
@@ -10,7 +11,9 @@ export function LoginPage() {
   const status = new URLSearchParams(window.location.search).get('login')
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-4">
+    <div className="flex min-h-dvh flex-col">
+      {isNithronSite() && <FamilyBar />}
+      <div className="flex flex-1 items-center justify-center px-4 py-10">
       <main className="w-full max-w-sm">
         <Picture name="signIn" className="mb-8" />
         <ProductName large />
@@ -36,6 +39,7 @@ export function LoginPage() {
           </Link>
         </p>
       </main>
+      </div>
     </div>
   )
 }

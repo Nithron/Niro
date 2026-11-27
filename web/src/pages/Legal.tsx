@@ -2,7 +2,8 @@ import { Link } from '@tanstack/react-router'
 import { Fragment, type ReactNode, useEffect } from 'react'
 import privacy from '../legal/privacy.md?raw'
 import terms from '../legal/terms.md?raw'
-import { ProductName } from '../components/Layout'
+import { FamilyBar, ProductName } from '../components/Layout'
+import { isNithronSite } from '../deployment'
 
 const docs = { privacy, terms } as const
 
@@ -20,6 +21,7 @@ export function LegalPage({ doc }: { doc: keyof typeof docs }) {
   }, [title])
   return (
     <div className="min-h-dvh">
+      {isNithronSite() && <FamilyBar />}
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
           <Link to="/" aria-label="Niro">

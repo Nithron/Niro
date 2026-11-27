@@ -72,9 +72,15 @@ export function GuildLayout({ guildId }: { guildId: string }) {
                     to={tab.to}
                     params={{ guildId }}
                     activeOptions={{ exact: tab.exact }}
-                    className="-mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-fg data-[status=active]:font-[560] data-[status=active]:text-fg"
+                    className="group -mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-fg data-[status=active]:text-fg"
                   >
-                    {t(tab.key)}
+                    {/* A hidden copy at the heavier weight holds the width, so the row does not shift when the current tab changes. */}
+                    <span className="inline-grid justify-items-center">
+                      <span aria-hidden className="invisible col-start-1 row-start-1 font-[560]">
+                        {t(tab.key)}
+                      </span>
+                      <span className="col-start-1 row-start-1 group-data-[status=active]:font-[560]">{t(tab.key)}</span>
+                    </span>
                   </Link>
                 ))}
               </nav>
