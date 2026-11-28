@@ -59,7 +59,7 @@ func newWelcomePlatform(client *bot.Client, p presenter, locale func(snowflake.I
 // raidJoinSummary posts one line for the joins Niro didn't greet during a raid.
 func (b *Bot) raidJoinSummary(ctx context.Context, channelID, guildID snowflake.ID, joins int) error {
 	text := b.deps.Catalog.T(b.guildLocale(guildID), i18n.WelcomeRaidSummary, map[string]any{"Count": joins})
-	_, err := b.client.Rest.CreateMessage(channelID, documentMessage(b.infoCard("", EmojiShield, text, colorWarning), nil), rest.WithCtx(ctx))
+	_, err := b.client.Rest.CreateMessage(channelID, documentMessage(b.infoCard("", EmojiShield, text, barEarlier), nil), rest.WithCtx(ctx))
 	return err
 }
 

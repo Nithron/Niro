@@ -14,6 +14,9 @@ import {
   type MessageDocument,
 } from './document'
 
+// A new colour bar starts at the neutral mid grey of Niro's Discord emoji, which holds 3:1 on Discord's dark and light grounds. The colour itself is the user's choice (data, not the product's palette).
+const newBarColour = 0x84888e
+
 const blockTypes: BlockType[] = ['text', 'section', 'gallery', 'separator', 'links']
 
 function SmallButton(props: { onClick: () => void; disabled?: boolean; label?: string; children: ReactNode }) {
@@ -57,7 +60,7 @@ export function MessageBuilder({
   const chars = textLength(value)
   const unknown = variables ? unknownVariables(value) : []
   const hasColor = value.accentColor !== undefined
-  const hex = '#' + (value.accentColor ?? 0x4cb8ff).toString(16).padStart(6, '0')
+  const hex = '#' + (value.accentColor ?? newBarColour).toString(16).padStart(6, '0')
 
   return (
     <div className="grid gap-4">
@@ -67,7 +70,7 @@ export function MessageBuilder({
             type="checkbox"
             checked={hasColor}
             onChange={(e) => {
-              if (e.target.checked) onChange({ ...value, accentColor: 0x4cb8ff })
+              if (e.target.checked) onChange({ ...value, accentColor: newBarColour })
               else onChange({ version: value.version, blocks: value.blocks })
             }}
           />

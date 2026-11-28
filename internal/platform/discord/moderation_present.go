@@ -15,26 +15,6 @@ import (
 	"github.com/nithron/niro/internal/modules/moderation"
 )
 
-const (
-	colorWarning = 0xF5B83D
-	colorOrange  = 0xFF8A4C
-)
-
-// actionColor is the accent colour of a case card.
-func actionColor(a moderation.Action) int {
-	switch a {
-	case moderation.ActionWarn, moderation.ActionTimeout:
-		return colorWarning
-	case moderation.ActionKick:
-		return colorOrange
-	case moderation.ActionBan, moderation.ActionQuarantine:
-		return colorDanger
-	case moderation.ActionUntimeout, moderation.ActionUnban, moderation.ActionUnquarantine:
-		return colorSuccess
-	}
-	return colorBrand
-}
-
 func actionEmoji(e *Emojis, a moderation.Action) string {
 	switch a {
 	case moderation.ActionWarn, moderation.ActionTimeout:
@@ -124,15 +104,12 @@ func (p presenter) caseCard(locale string, c moderation.Case) discord.ContainerC
 		}
 	}
 
-	color := actionColor(c.Action)
-	if c.Deleted {
-		color = 0x5B6576
-	}
+	// No bar: a moderation action is a word, not a colour.
 	return discord.NewContainer(
 		discord.NewTextDisplay(head+"\n"+strings.Join(lines, "\n")),
 		discord.NewSmallSeparator(),
 		discord.NewTextDisplay("-# "+strings.Join(footer, " · ")),
-	).WithAccentColor(color)
+	)
 }
 
 func notifiable(a moderation.Action) bool {
@@ -165,7 +142,7 @@ func (p presenter) dmCard(locale string, c moderation.Case, guildName string) di
 		discord.NewTextDisplay(strings.Join(lines, "\n")),
 		discord.NewSmallSeparator(),
 		discord.NewTextDisplay("-# "+p.t(locale, i18n.ModDmFooter, nil)),
-	).WithAccentColor(actionColor(c.Action))
+	)
 }
 
 var mdEscaper = strings.NewReplacer(`\`, `\\`, `*`, `\*`, `_`, `\_`, "`", "\\`", `~`, `\~`, `|`, `\|`, `>`, `\>`, `#`, `\#`, `[`, `\[`, `]`, `\]`)

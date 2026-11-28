@@ -187,17 +187,17 @@ func (b *Bot) pickReply(l discord.Locale, res roles.Result, err error) discord.C
 	var tooNew *roles.TooNewError
 	switch {
 	case errors.As(err, &tooNew):
-		return card(EmojiWarn, b.t(l, i18n.RolesTooNew, map[string]any{"When": ts(tooNew.When, "R")}), colorWarning)
+		return card(EmojiWarn, b.t(l, i18n.RolesTooNew, map[string]any{"When": ts(tooNew.When, "R")}), barEarlier)
 	case errors.Is(err, roles.ErrModuleOff):
-		return card(EmojiInfo, b.t(l, i18n.RolesDisabled, nil), colorBrand)
+		return card(EmojiInfo, b.t(l, i18n.RolesDisabled, nil), barNone)
 	case errors.Is(err, roles.ErrNotFound):
-		return card(EmojiInfo, b.t(l, i18n.RolesPanelGone, nil), colorBrand)
+		return card(EmojiInfo, b.t(l, i18n.RolesPanelGone, nil), barNone)
 	case errors.Is(err, roles.ErrNotOnPanel):
-		return card(EmojiWarn, b.t(l, i18n.RolesNotOnPanel, nil), colorWarning)
+		return card(EmojiWarn, b.t(l, i18n.RolesNotOnPanel, nil), barEarlier)
 	case errors.Is(err, roles.ErrLimitReached), errors.Is(err, roles.ErrTooManyPicked):
-		return card(EmojiWarn, b.t(l, i18n.RolesTooMany, nil), colorWarning)
+		return card(EmojiWarn, b.t(l, i18n.RolesTooMany, nil), barEarlier)
 	case err != nil:
-		return card(EmojiError, b.errorText(l.Code(), err, ""), colorDanger)
+		return card(EmojiError, b.errorText(l.Code(), err, ""), barFailed)
 	}
 	var lines []string
 	if len(res.Added) > 0 {
@@ -214,11 +214,11 @@ func (b *Bot) pickReply(l discord.Locale, res roles.Result, err error) discord.C
 		lines = append(lines, b.t(l, i18n.RolesFailed, map[string]any{"Roles": roleList(ids)}))
 	}
 	if len(lines) == 0 {
-		return card(EmojiInfo, b.t(l, i18n.RolesNothing, nil), colorBrand)
+		return card(EmojiInfo, b.t(l, i18n.RolesNothing, nil), barNone)
 	}
-	color := colorSuccess
+	color := barPass
 	if len(res.Failed) > 0 {
-		color = colorWarning
+		color = barEarlier
 	}
 	return card(EmojiOK, strings.Join(lines, "\n"), color)
 }
@@ -270,7 +270,7 @@ func (b *Bot) finishPick(e *handler.ComponentEvent, res roles.Result, err error)
 	if errors.Is(err, roles.ErrNeedsRole) {
 		if p, gerr := b.deps.RolePanels.GetPanel(e.Ctx, *e.GuildID(), mustPanelID(e)); gerr == nil {
 			return replyDeferred(e.UpdateInteractionResponse, b.infoCard(e.Locale().Code(), EmojiWarn,
-				b.t(e.Locale(), i18n.RolesNeedsRole, map[string]any{"Role": "<@&" + p.RequiredRoleID.String() + ">"}), colorWarning))
+				b.t(e.Locale(), i18n.RolesNeedsRole, map[string]any{"Role": "<@&" + p.RequiredRoleID.String() + ">"}), barEarlier))
 		}
 	}
 	if err != nil && !isPickError(err) {

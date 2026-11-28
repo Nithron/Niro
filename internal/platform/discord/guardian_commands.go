@@ -100,7 +100,7 @@ func (b *Bot) guardianOn(e *handler.CommandEvent, mc modContext) (bool, error) {
 		return false, err
 	}
 	if !on {
-		return false, b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(discord.Locale(mc.locale), i18n.GuardianDisabled, nil), colorBrand))
+		return false, b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(discord.Locale(mc.locale), i18n.GuardianDisabled, nil), barNone))
 	}
 	return true, nil
 }
@@ -219,9 +219,9 @@ func (b *Bot) handleRaidStart(_ discord.SlashCommandInteractionData, e *handler.
 	r, err := b.guard.StartRaid(e.Ctx, mc.guildID, mc.actor)
 	switch {
 	case errors.Is(err, guardian.ErrModuleOff):
-		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianDisabled, nil), colorBrand))
+		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianDisabled, nil), barNone))
 	case errors.Is(err, guardian.ErrRaidActive):
-		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianRaidAlready, map[string]any{"Ends": ts(r.EndsAt, "R")}), colorBrand))
+		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianRaidAlready, map[string]any{"Ends": ts(r.EndsAt, "R")}), barNone))
 	case err != nil:
 		return err
 	}
@@ -232,7 +232,7 @@ func (b *Bot) handleRaidStart(_ discord.SlashCommandInteractionData, e *handler.
 			text += "\n- " + b.t(l, i18n.GuardianProblem(p), nil)
 		}
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiWarn, text, colorWarning))
+	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiWarn, text, barEarlier))
 }
 
 func (b *Bot) handleRaidEnd(_ discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -245,11 +245,11 @@ func (b *Bot) handleRaidEnd(_ discord.SlashCommandInteractionData, e *handler.Co
 		return err
 	}
 	if _, err := b.guard.EndRaid(e.Ctx, mc.guildID, mc.actor); errors.Is(err, guardian.ErrNoRaid) {
-		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianRaidNone, nil), colorBrand))
+		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianRaidNone, nil), barNone))
 	} else if err != nil {
 		return err
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianRaidEnded, nil), colorSuccess))
+	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianRaidEnded, nil), barPass))
 }
 
 func (b *Bot) handleRaidStatus(_ discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -260,13 +260,13 @@ func (b *Bot) handleRaidStatus(_ discord.SlashCommandInteractionData, e *handler
 	l := discord.Locale(mc.locale)
 	r, err := b.guard.ActiveRaid(e.Ctx, mc.guildID)
 	if errors.Is(err, guardian.ErrNoRaid) {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianRaidNone, nil), colorSuccess))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianRaidNone, nil), barPass))
 	}
 	if err != nil {
 		return err
 	}
 	return b.replyNow(e, b.infoCard(mc.locale, EmojiWarn,
-		b.t(l, i18n.GuardianRaidStatus, map[string]any{"Since": ts(r.StartedAt, "R"), "Ends": ts(r.EndsAt, "R")}), colorWarning))
+		b.t(l, i18n.GuardianRaidStatus, map[string]any{"Since": ts(r.StartedAt, "R"), "Ends": ts(r.EndsAt, "R")}), barEarlier))
 }
 
 func (b *Bot) handleVerifyPanel(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -283,27 +283,27 @@ func (b *Bot) handleVerifyPanel(data discord.SlashCommandInteractionData, e *han
 		return err
 	}
 	if s.VerifyRoleID == 0 {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianVerifyNotSetUp, nil), colorBrand))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.GuardianVerifyNotSetUp, nil), barNone))
 	}
 	ch := data.Channel("channel")
 	gl := b.guildLocale(mc.guildID)
 	card := discord.NewContainer(
 		discord.NewTextDisplay("### "+b.deps.Catalog.T(gl, i18n.GuardianVerifyPanelTitle, nil)+"\n"+b.deps.Catalog.T(gl, i18n.GuardianVerifyPanelBody, nil)),
 		discord.NewActionRow(discord.NewSuccessButton(b.deps.Catalog.T(gl, i18n.GuardianButtonVerify, nil), "/guardian/verify")),
-	).WithAccentColor(colorBrand)
+	)
 	if _, err := b.client.Rest.CreateMessage(ch.ID, discord.MessageCreate{
 		Flags: discord.MessageFlagIsComponentsV2, Components: []discord.LayoutComponent{card}, AllowedMentions: noPings,
 	}, rest.WithCtx(e.Ctx)); err != nil {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.errorText(mc.locale, &moderation.ActionError{Action: "verify", Err: err}, ""), colorDanger))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.errorText(mc.locale, &moderation.ActionError{Action: "verify", Err: err}, ""), barFailed))
 	}
-	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianVerifyPosted, map[string]any{"Channel": "<#" + ch.ID.String() + ">"}), colorSuccess))
+	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.GuardianVerifyPosted, map[string]any{"Channel": "<#" + ch.ID.String() + ">"}), barPass))
 }
 
 // ---- buttons ----------------------------------------------------------------
 
 func (b *Bot) ephemeralError(e *handler.ComponentEvent, text string) error {
 	return e.CreateMessage(discord.MessageCreate{Flags: ephemeralV2(), AllowedMentions: noPings, Components: []discord.LayoutComponent{
-		b.infoCard(e.Locale().Code(), EmojiError, text, colorDanger)}})
+		b.infoCard(e.Locale().Code(), EmojiError, text, barFailed)}})
 }
 
 func (b *Bot) componentActor(e *handler.ComponentEvent) (moderation.Actor, discord.Permissions, bool) {
@@ -353,7 +353,7 @@ func (b *Bot) handleResolveButton(_ discord.ButtonInteractionData, e *handler.Co
 			_ = replyDeferred(e.UpdateInteractionResponse, b.presenter().guardianCard(b.guildLocale(ev.GuildID), ev))
 		}
 		_, ferr := e.CreateFollowupMessage(discord.MessageCreate{Flags: ephemeralV2(), AllowedMentions: noPings,
-			Components: []discord.LayoutComponent{b.infoCard(l.Code(), EmojiError, text, colorDanger)}})
+			Components: []discord.LayoutComponent{b.infoCard(l.Code(), EmojiError, text, barFailed)}})
 		return ferr
 	}
 	return replyDeferred(e.UpdateInteractionResponse, b.presenter().guardianCard(b.guildLocale(ev.GuildID), ev))
@@ -374,7 +374,7 @@ func (b *Bot) handleRaidEndButton(_ discord.ButtonInteractionData, e *handler.Co
 	r, err := b.guard.EndRaid(e.Ctx, *e.GuildID(), actor)
 	if errors.Is(err, guardian.ErrNoRaid) {
 		_, ferr := e.CreateFollowupMessage(discord.MessageCreate{Flags: ephemeralV2(), AllowedMentions: noPings,
-			Components: []discord.LayoutComponent{b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.GuardianRaidNone, nil), colorBrand)}})
+			Components: []discord.LayoutComponent{b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.GuardianRaidNone, nil), barNone)}})
 		return ferr
 	}
 	if err != nil {
@@ -402,21 +402,21 @@ func (b *Bot) handleVerifyButton(_ discord.ButtonInteractionData, e *handler.Com
 		return err
 	}
 	if s.VerifyRoleID == 0 {
-		return reply(EmojiInfo, b.t(l, i18n.GuardianVerifyNotSetUp, nil), colorBrand)
+		return reply(EmojiInfo, b.t(l, i18n.GuardianVerifyNotSetUp, nil), barNone)
 	}
 	for _, r := range m.RoleIDs {
 		if r == s.VerifyRoleID {
-			return reply(EmojiOK, b.t(l, i18n.GuardianVerifyAlready, nil), colorSuccess)
+			return reply(EmojiOK, b.t(l, i18n.GuardianVerifyAlready, nil), barPass)
 		}
 	}
 	if ok, when := guardian.CanVerify(s, m.User.ID, time.Now()); !ok {
-		return reply(EmojiWarn, b.t(l, i18n.GuardianVerifyTooNew, map[string]any{"When": ts(when, "R")}), colorWarning)
+		return reply(EmojiWarn, b.t(l, i18n.GuardianVerifyTooNew, map[string]any{"When": ts(when, "R")}), barEarlier)
 	}
 	if err := b.client.Rest.AddMemberRole(*gid, m.User.ID, s.VerifyRoleID, rest.WithCtx(e.Ctx), rest.WithReason("Guardian verification gate")); err != nil {
 		b.log.Warn("verification role failed", "guild_id", *gid, "err", err)
-		return reply(EmojiError, b.t(l, i18n.GuardianVerifyFailed, nil), colorDanger)
+		return reply(EmojiError, b.t(l, i18n.GuardianVerifyFailed, nil), barFailed)
 	}
 	guildID, userID := *gid, m.User.ID
 	b.logRun("welcome auto-roles", func(ctx context.Context) error { return b.welcome.HandleVerified(ctx, guildID, userID) })
-	return reply(EmojiOK, b.t(l, i18n.GuardianVerifyOK, nil), colorSuccess)
+	return reply(EmojiOK, b.t(l, i18n.GuardianVerifyOK, nil), barPass)
 }

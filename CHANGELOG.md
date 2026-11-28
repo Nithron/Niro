@@ -4,6 +4,14 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### Discord messages in the Nithron identity
+
+- **Colour bars mean a state, not a category:** green-ish for done, gold for waiting, a warning or a lockdown, red for an error. Each is one value that reads on Discord's dark and light themes.
+- **No bar:** ordinary replies, panels, case cards and log entries no longer have a colour bar. A moderation action, such as warn, kick or ban, is a word, not a colour. The ban confirmation has no bar; its button stays Discord's red.
+- **Guardian alerts:** an alert waiting for a moderator, or a raid in progress, has the gold bar. Restored or ended has the done bar. Banned and kept have none.
+- **Emoji:** the seven emoji are the new pixel symbols.
+- **Message builder:** a new colour bar starts at a neutral grey instead of the old brand blue.
+
 ### Niro's mark: "In view"
 
 - **The mark:** Niro has a new mark: four corners holding a square in view, drawn on a 16 by 16 pixel grid in ink. It replaces the `<N>` brackets.

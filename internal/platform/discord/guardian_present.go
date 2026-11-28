@@ -33,7 +33,7 @@ func (a guardianAlerts) RecoveryDM(ctx context.Context, ev guardian.Event, guild
 	card := discord.NewContainer(discord.NewTextDisplay(
 		"### " + strings.TrimSpace(a.p.emojis.Get(EmojiShield)+" "+a.p.t(l, i18n.GuardianDmTitle, nil)) + "\n" +
 			a.p.t(l, i18n.GuardianDmBody, map[string]any{"Server": escapeMarkdown(guildName)}),
-	)).WithAccentColor(colorWarning)
+	)).WithAccentColor(barEarlier)
 	_, err = a.client.Rest.CreateMessage(ch.ID(), discord.MessageCreate{
 		Flags: discord.MessageFlagIsComponentsV2, Components: []discord.LayoutComponent{card}, AllowedMentions: noPings,
 	}, rest.WithCtx(ctx))
@@ -58,19 +58,22 @@ func (a guardianAlerts) EditAlert(ctx context.Context, channelID, messageID snow
 	return err
 }
 
+// guardianColor is the bar of an alert: waiting for a moderator or a raid in
+// progress is "earlier", restored or ended is "pass". Banned, kept and the
+// alerts Niro already acted on have no bar; their word says it.
 func guardianColor(ev guardian.Event) int {
 	switch ev.Status {
-	case guardian.StatusOpen, guardian.StatusActive, guardian.StatusBanned:
-		return colorDanger
-	case guardian.StatusKept:
-		return colorOrange
+	case guardian.StatusOpen, guardian.StatusActive:
+		return barEarlier
 	case guardian.StatusRestored, guardian.StatusEnded:
-		return colorSuccess
+		return barPass
+	case guardian.StatusBanned, guardian.StatusKept:
+		return barNone
 	}
 	if ev.Response == guardian.ResponseDelete || ev.Response == guardian.ResponseKick {
-		return colorOrange
+		return barNone
 	}
-	return colorWarning
+	return barEarlier
 }
 
 // signalList renders signals as "Label (`detail`) · Label".
@@ -242,11 +245,11 @@ func (p presenter) auditCard(l, server string, findings []guardian.Finding, webh
 		lines = append(lines, "🔵 "+p.t(l, i18n.GuardianAuditWebhooksSkip, nil))
 	}
 	lines = append(lines, "-# "+p.t(l, i18n.GuardianAuditFooter, nil))
-	color := colorSuccess
+	color := barPass
 	if len(findings) > 0 {
-		color = colorWarning
+		color = barEarlier
 		if findings[0].Severity == guardian.SeverityCritical || findings[0].Severity == guardian.SeverityHigh {
-			color = colorDanger
+			color = barFailed
 		}
 	}
 	text := strings.Join(lines, "\n")
