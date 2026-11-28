@@ -139,7 +139,7 @@ func (b *Bot) moduleOn(ctx context.Context, e *handler.CommandEvent, mc modConte
 		return false, err
 	}
 	if !on {
-		return false, b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(discord.Locale(mc.locale), i18n.ModDisabled, nil), colorBrand))
+		return false, b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(discord.Locale(mc.locale), i18n.ModDisabled, nil), barNone))
 	}
 	return true, nil
 }
@@ -204,7 +204,7 @@ func (b *Bot) errorText(locale string, err error, target string) string {
 }
 
 func (b *Bot) errorCard(mc modContext, err error, target string) discord.ContainerComponent {
-	return b.infoCard(mc.locale, EmojiError, b.errorText(mc.locale, err, target), colorDanger)
+	return b.infoCard(mc.locale, EmojiError, b.errorText(mc.locale, err, target), barFailed)
 }
 
 // resultCard summarises a finished action for the moderator.
@@ -251,7 +251,7 @@ func (b *Bot) resultCard(mc modContext, out moderation.Outcome) discord.Containe
 	} else {
 		lines = append(lines, "-# "+b.t(l, i18n.ModReplyNoLog, nil))
 	}
-	return discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiOK) + " " + strings.Join(lines, "\n"))).WithAccentColor(colorSuccess)
+	return discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiOK) + " " + strings.Join(lines, "\n"))).WithAccentColor(barPass)
 }
 
 func targetLabel(u discord.User) string { return "**" + escapeMarkdown(u.EffectiveName()) + "**" }
@@ -382,7 +382,7 @@ func (b *Bot) handleBan(data discord.SlashCommandInteractionData, e *handler.Com
 			discord.NewDangerButton(b.t(l, i18n.ModConfirmBanButton, nil), "/mod/ban/"+token+"/yes"),
 			discord.NewSecondaryButton(b.t(l, i18n.ModConfirmCancelButton, nil), "/mod/ban/"+token+"/no"),
 		),
-	).WithAccentColor(colorDanger)
+	) // no bar: a question, not an error; Discord's own red is on the button
 	return b.replyNow(e, card)
 }
 
@@ -394,15 +394,15 @@ func (b *Bot) handleBanConfirm(_ discord.ButtonInteractionData, e *handler.Compo
 	}
 	pb, ok := b.pending.take(e.Vars["token"])
 	if !ok {
-		return done(b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.ModConfirmExpired, nil), colorBrand))
+		return done(b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.ModConfirmExpired, nil), barNone))
 	}
 	if e.User().ID != pb.req.Actor.ID {
 		b.pending.put(pb) // keep it for the right moderator
 		return e.CreateMessage(discord.MessageCreate{Flags: ephemeralV2(), Components: []discord.LayoutComponent{
-			b.infoCard(l.Code(), EmojiError, b.t(l, i18n.ModConfirmNotYours, nil), colorDanger)}})
+			b.infoCard(l.Code(), EmojiError, b.t(l, i18n.ModConfirmNotYours, nil), barFailed)}})
 	}
 	if e.Vars["choice"] != "yes" {
-		return done(b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.ModConfirmCancelled, nil), colorBrand))
+		return done(b.infoCard(l.Code(), EmojiInfo, b.t(l, i18n.ModConfirmCancelled, nil), barNone))
 	}
 	if err := e.DeferUpdateMessage(); err != nil {
 		return err
@@ -457,7 +457,7 @@ func (b *Bot) handleHistory(data discord.SlashCommandInteractionData, e *handler
 	}
 	label := targetLabel(target)
 	if total == 0 {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.ModHistoryEmpty, map[string]any{"User": label}), colorBrand))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.ModHistoryEmpty, map[string]any{"User": label}), barNone))
 	}
 	var lines []string
 	for _, c := range cases {
@@ -474,7 +474,7 @@ func (b *Bot) handleHistory(data discord.SlashCommandInteractionData, e *handler
 	container := discord.NewContainer(
 		discord.NewTextDisplay("### "+b.t(l, i18n.ModHistoryTitle, map[string]any{"User": label})),
 		discord.NewTextDisplay(strings.Join(lines, "\n")),
-	).WithAccentColor(colorBrand)
+	)
 	if total > len(cases) {
 		container = container.AddComponents(discord.NewTextDisplay("-# " + b.t(l, i18n.ModHistoryMore, map[string]any{"Shown": len(cases), "Total": total})))
 	}
@@ -493,7 +493,7 @@ func (b *Bot) handleCaseView(data discord.SlashCommandInteractionData, e *handle
 	}
 	c, err := b.mod.GetCase(e.Ctx, mc.guildID, data.Int("number"))
 	if errors.Is(err, moderation.ErrCaseNotFound) {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(discord.Locale(mc.locale), i18n.ModErrCaseNotFound, map[string]any{"Number": data.Int("number")}), colorDanger))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(discord.Locale(mc.locale), i18n.ModErrCaseNotFound, map[string]any{"Number": data.Int("number")}), barFailed))
 	}
 	if err != nil {
 		return err
@@ -511,11 +511,11 @@ func (b *Bot) handleCaseReason(data discord.SlashCommandInteractionData, e *hand
 	_, err := b.mod.UpdateReason(e.Ctx, mc.guildID, n, data.String("reason"))
 	switch {
 	case errors.Is(err, moderation.ErrCaseNotFound):
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.ModErrCaseNotFound, map[string]any{"Number": n}), colorDanger))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.ModErrCaseNotFound, map[string]any{"Number": n}), barFailed))
 	case err != nil:
 		return b.replyNow(e, b.errorCard(mc, err, ""))
 	}
-	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.ModReplyReasonUpdated, map[string]any{"Number": n}), colorSuccess))
+	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.ModReplyReasonUpdated, map[string]any{"Number": n}), barPass))
 }
 
 func (b *Bot) handleCaseDelete(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -527,10 +527,10 @@ func (b *Bot) handleCaseDelete(data discord.SlashCommandInteractionData, e *hand
 	n := data.Int("number")
 	_, err := b.mod.DeleteCase(e.Ctx, mc.guildID, n, mc.actor.ID)
 	if errors.Is(err, moderation.ErrCaseNotFound) {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.ModErrCaseNotFound, map[string]any{"Number": n}), colorDanger))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.ModErrCaseNotFound, map[string]any{"Number": n}), barFailed))
 	}
 	if err != nil {
 		return err
 	}
-	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.ModReplyCaseDeleted, map[string]any{"Number": n}), colorSuccess))
+	return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.ModReplyCaseDeleted, map[string]any{"Number": n}), barPass))
 }

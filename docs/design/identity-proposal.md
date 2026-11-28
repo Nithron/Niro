@@ -8,6 +8,7 @@
 - Decisions 3 and 5 below are answered: the preview stays in Discord's look, framed and labelled. Niro is no longer last: all three products lay their foundations now; the visible screens follow in the order nOS, nAI, Niro. The family bar and the marks are switched on by a setting of the hosted deployment, off by default.
 - Phase 1 (steps 1 and 2) is done on branch `ui/identity`. Phase 2 (step 3) starts after the website session's review.
 - **2026-11-28:** Thiago picked the mark: D, "In view" (decision 34). The kit is in `assets/brand`, on one sheet in `docs/design/brand/kit.html`.
+- **2026-11-28:** step 4, the Discord side, is built. Bars take the three status roles, at one value each that reads on both Discord themes (decision 35); neutral messages have no bar, and the new emoji are live. Step 5 is built too: transcripts are a Niro page in the line identity, in both themes, with the token values checked against `line.css`.
 
 For Thiago's approval. Nothing changes in Niro until this proposal is approved. Niro is last in the order (nOS, then nAI). It follows the chapter for applications (nithron-site, DESIGN-APPS.md) and the line direction (DESIGN-V3.md). Written 2026-11-27.
 

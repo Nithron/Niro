@@ -59,7 +59,7 @@ describe('message builder', () => {
     expect(screen.getByText('Hi').tagName).toBe('STRONG')
 
     await userEvent.click(screen.getByLabelText('Colour bar'))
-    expect(last.accentColor).toBe(0x4cb8ff)
+    expect(last.accentColor).toBe(0x84888e)
     await userEvent.click(screen.getByLabelText('Colour bar'))
     expect(last.accentColor).toBeUndefined()
   })

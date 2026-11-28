@@ -13,14 +13,6 @@ import (
 	"github.com/nithron/niro/internal/i18n"
 )
 
-// Brand colours (the concept A palette, assets/brand/superseded/concept-a/palette.json;
-// the colour roles of the Nithron identity replace them in a later release).
-const (
-	colorBrand   = 0x4CB8FF
-	colorSuccess = 0x3DDBA6
-	colorDanger  = 0xFF6B6B
-)
-
 var errNotInGuild = errors.New("interaction outside a guild")
 
 func (b *Bot) t(locale discord.Locale, k i18n.Key, data map[string]any) string {
@@ -37,7 +29,7 @@ func (b *Bot) handlePing(_ discord.SlashCommandInteractionData, e *handler.Comma
 	return e.CreateMessage(discord.MessageCreate{
 		Flags: ephemeralV2(),
 		Components: []discord.LayoutComponent{
-			discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiOK) + " " + text)).WithAccentColor(colorSuccess),
+			discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiOK) + " " + text)).WithAccentColor(barPass),
 		},
 	})
 }
@@ -49,7 +41,7 @@ func (b *Bot) handleAbout(_ discord.SlashCommandInteractionData, e *handler.Comm
 
 	container := discord.NewContainer(
 		discord.NewTextDisplay("## " + title + "\n" + body),
-	).WithAccentColor(colorBrand)
+	)
 	container = withLinks(container,
 		link{b.t(loc, i18n.CmdAboutDashboard, nil), b.deps.DashboardURL.String()},
 		link{b.t(loc, i18n.CmdAboutWebsite, nil), "https://nithron.com"},
@@ -91,7 +83,7 @@ func (b *Bot) handleModules(_ discord.SlashCommandInteractionData, e *handler.Co
 		discord.NewTextDisplay(strings.Join(lines, "\n")),
 		discord.NewSmallSeparator(),
 		discord.NewTextDisplay("-# "+b.t(loc, i18n.CmdModulesFooter, nil)),
-	).WithAccentColor(colorBrand)
+	)
 	dashboard := b.deps.DashboardURL.JoinPath("guilds", guildID.String()).String()
 	container = withLinks(container, link{b.t(loc, i18n.CmdModulesManage, nil), dashboard})
 
@@ -108,7 +100,7 @@ func (b *Bot) handleError(e *handler.InteractionEvent, err error) {
 	msg := discord.MessageCreate{
 		Flags: ephemeralV2(),
 		Components: []discord.LayoutComponent{
-			discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiError) + " " + b.t(e.Locale(), key, nil))).WithAccentColor(colorDanger),
+			discord.NewContainer(discord.NewTextDisplay(b.emojis.Get(EmojiError) + " " + b.t(e.Locale(), key, nil))).WithAccentColor(barFailed),
 		},
 	}
 	if rerr := e.CreateMessage(msg); rerr != nil {

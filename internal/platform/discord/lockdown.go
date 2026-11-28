@@ -107,7 +107,7 @@ func truncateRunes(s string, n int) string {
 func (b *Bot) postNotice(channelID snowflake.ID, text string) snowflake.ID {
 	m, err := b.client.Rest.CreateMessage(channelID, discord.MessageCreate{
 		Flags:           discord.MessageFlagIsComponentsV2,
-		Components:      []discord.LayoutComponent{discord.NewContainer(discord.NewTextDisplay(text)).WithAccentColor(colorWarning)},
+		Components:      []discord.LayoutComponent{discord.NewContainer(discord.NewTextDisplay(text)).WithAccentColor(barEarlier)},
 		AllowedMentions: noPings,
 	})
 	if err != nil {
@@ -133,10 +133,10 @@ func (b *Bot) handleLockdownChannel(data discord.SlashCommandInteractionData, e 
 	mention := "<#" + chID.String() + ">"
 
 	if _, _, ok := b.lockable(mc.guildID, chID); !ok {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownBadChannel, nil), colorDanger))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownBadChannel, nil), barFailed))
 	}
 	if ow, _, _ := b.lockable(mc.guildID, chID); ow.Deny.Has(discord.PermissionSendMessages) {
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownAlready, map[string]any{"Channel": mention}), colorBrand))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownAlready, map[string]any{"Channel": mention}), barNone))
 	}
 	if err := e.DeferCreateMessage(true); err != nil {
 		return err
@@ -147,9 +147,9 @@ func (b *Bot) handleLockdownChannel(data discord.SlashCommandInteractionData, e 
 		if notice != 0 {
 			_ = b.client.Rest.DeleteMessage(chID, notice)
 		}
-		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownFailed, map[string]any{"Count": 1}), colorDanger))
+		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownFailed, map[string]any{"Count": 1}), barFailed))
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.LockdownDoneChannel, map[string]any{"Channel": mention}), colorSuccess))
+	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.LockdownDoneChannel, map[string]any{"Channel": mention}), barPass))
 }
 
 func (b *Bot) lockNotice(guildID snowflake.ID, reason string) string {
@@ -192,7 +192,7 @@ func (b *Bot) handleLockdownServer(data discord.SlashCommandInteractionData, e *
 	if failed > 0 {
 		text += "\n" + b.t(l, i18n.LockdownFailed, map[string]any{"Count": failed})
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, text, colorSuccess))
+	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, text, barPass))
 }
 
 // forEachChannel runs fn on channels with a little parallelism (each channel
@@ -244,12 +244,12 @@ func (b *Bot) handleUnlockChannel(data discord.SlashCommandInteractionData, e *h
 		}
 		if err := b.unlockChannel(e.Ctx, st, mc.actor.Name+": unlock"); err != nil {
 			b.log.Warn("unlock failed", "channel_id", chID, "err", err)
-			return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownFailed, map[string]any{"Count": 1}), colorDanger))
+			return b.replyNow(e, b.infoCard(mc.locale, EmojiError, b.t(l, i18n.LockdownFailed, map[string]any{"Count": 1}), barFailed))
 		}
 		b.postNotice(chID, b.deps.Catalog.T(b.guildLocale(mc.guildID), i18n.LockdownUnlockedNotice, nil))
-		return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.LockdownUnlockedChannel, map[string]any{"Channel": mention}), colorSuccess))
+		return b.replyNow(e, b.infoCard(mc.locale, EmojiOK, b.t(l, i18n.LockdownUnlockedChannel, map[string]any{"Channel": mention}), barPass))
 	}
-	return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownNotLocked, map[string]any{"Channel": mention}), colorBrand))
+	return b.replyNow(e, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownNotLocked, map[string]any{"Channel": mention}), barNone))
 }
 
 func (b *Bot) handleUnlockServer(_ discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -266,7 +266,7 @@ func (b *Bot) handleUnlockServer(_ discord.SlashCommandInteractionData, e *handl
 		return err
 	}
 	if len(locks) == 0 {
-		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownNone, nil), colorBrand))
+		return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiInfo, b.t(l, i18n.LockdownNone, nil), barNone))
 	}
 	byID := map[snowflake.ID]guardian.LockState{}
 	ids := make([]snowflake.ID, 0, len(locks))
@@ -282,5 +282,5 @@ func (b *Bot) handleUnlockServer(_ discord.SlashCommandInteractionData, e *handl
 	if failed > 0 {
 		text += "\n" + b.t(l, i18n.LockdownFailed, map[string]any{"Count": failed})
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, text, colorSuccess))
+	return replyDeferred(e.UpdateInteractionResponse, b.infoCard(mc.locale, EmojiOK, text, barPass))
 }

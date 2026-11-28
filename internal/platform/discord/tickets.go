@@ -204,7 +204,7 @@ func (tp ticketsPlatform) Announce(ctx context.Context, t tickets.Ticket, a tick
 	if row != nil {
 		comps = append(comps, discord.NewActionRow(row...))
 	}
-	_, err := tp.client.Rest.CreateMessage(t.ChannelID, documentMessage(discord.NewContainer(comps...).WithAccentColor(colorBrand), nil), rest.WithCtx(ctx))
+	_, err := tp.client.Rest.CreateMessage(t.ChannelID, documentMessage(discord.NewContainer(comps...), nil), rest.WithCtx(ctx))
 	return err
 }
 
@@ -383,7 +383,7 @@ func (tp ticketsPlatform) PostTranscript(ctx context.Context, channelID snowflak
 	data := map[string]any{"Number": t.Number, "Category": escapeMarkdown(t.CategoryLabel),
 		"User": userRef(t.OpenerID, t.OpenerName), "ClosedBy": userRef(t.ClosedBy, t.ClosedByName)}
 	if len(html) > maxTranscriptFile {
-		card := discord.NewContainer(discord.NewTextDisplay(tp.p.t(l, i18n.TicketTranscriptBig, data))).WithAccentColor(colorWarning)
+		card := discord.NewContainer(discord.NewTextDisplay(tp.p.t(l, i18n.TicketTranscriptBig, data))).WithAccentColor(barEarlier)
 		_, err := tp.client.Rest.CreateMessage(channelID, documentMessage(card, nil), rest.WithCtx(ctx))
 		return err
 	}
@@ -391,7 +391,7 @@ func (tp ticketsPlatform) PostTranscript(ctx context.Context, channelID snowflak
 	card := discord.NewContainer(
 		discord.NewTextDisplay(tp.p.t(l, i18n.TicketTranscriptPosted, data)),
 		discord.NewFileComponent("attachment://"+name),
-	).WithAccentColor(colorBrand)
+	)
 	m := documentMessage(card, nil)
 	m.Files = []*discord.File{discord.NewFile(name, "", bytes.NewReader(html))}
 	_, err = tp.client.Rest.CreateMessage(channelID, m, rest.WithCtx(ctx))
@@ -470,30 +470,30 @@ func (b *Bot) ticketError(l discord.Locale, err error) (string, int) {
 		for _, c := range le.Channels {
 			chans = append(chans, "<#"+c.String()+">")
 		}
-		return b.t(l, i18n.TicketLimit, map[string]any{"Channels": strings.Join(chans, " ")}), colorWarning
+		return b.t(l, i18n.TicketLimit, map[string]any{"Channels": strings.Join(chans, " ")}), barEarlier
 	case errors.Is(err, tickets.ErrModuleOff):
-		return b.t(l, i18n.TicketDisabled, nil), colorBrand
+		return b.t(l, i18n.TicketDisabled, nil), barNone
 	case errors.Is(err, tickets.ErrPanelNotFound):
-		return b.t(l, i18n.TicketPanelGone, nil), colorBrand
+		return b.t(l, i18n.TicketPanelGone, nil), barNone
 	case errors.Is(err, tickets.ErrCategoryRemoved):
-		return b.t(l, i18n.TicketCategoryRemoved, nil), colorBrand
+		return b.t(l, i18n.TicketCategoryRemoved, nil), barNone
 	case errors.Is(err, tickets.ErrNotStaff):
-		return b.t(l, i18n.TicketNotStaff, nil), colorWarning
+		return b.t(l, i18n.TicketNotStaff, nil), barEarlier
 	case errors.Is(err, tickets.ErrWrongStatus):
-		return b.t(l, i18n.TicketWrongStatus, nil), colorWarning
+		return b.t(l, i18n.TicketWrongStatus, nil), barEarlier
 	case errors.Is(err, tickets.ErrNotFound):
-		return b.t(l, i18n.TicketNotATicket, nil), colorWarning
+		return b.t(l, i18n.TicketNotATicket, nil), barEarlier
 	case errors.Is(err, tickets.ErrProtectedMember):
-		return b.t(l, i18n.TicketProtected, nil), colorWarning
+		return b.t(l, i18n.TicketProtected, nil), barEarlier
 	case errors.Is(err, tickets.ErrNoTranscript):
-		return b.t(l, i18n.TicketNoTranscript, nil), colorWarning
+		return b.t(l, i18n.TicketNoTranscript, nil), barEarlier
 	}
 	b.log.Warn("ticket action failed", "err", err)
 	var re *rest.Error
 	if errors.As(err, &re) && re.Message != "" {
-		return b.t(l, i18n.TicketFailed, map[string]any{"Error": escapeMarkdown(re.Message)}), colorDanger
+		return b.t(l, i18n.TicketFailed, map[string]any{"Error": escapeMarkdown(re.Message)}), barFailed
 	}
-	return b.t(l, i18n.ErrorGeneric, nil), colorDanger
+	return b.t(l, i18n.ErrorGeneric, nil), barFailed
 }
 
 func (b *Bot) closedText(l discord.Locale, p tickets.CloseProblems) string {
@@ -509,9 +509,9 @@ func (b *Bot) closedText(l discord.Locale, p tickets.CloseProblems) string {
 
 func (b *Bot) closedReply(l discord.Locale, p tickets.CloseProblems) discord.ContainerComponent {
 	if p.TranscriptFailed || p.HideFailed {
-		return b.ticketReply(l, b.closedText(l, p), colorWarning, EmojiWarn)
+		return b.ticketReply(l, b.closedText(l, p), barEarlier, EmojiWarn)
 	}
-	return b.ticketReply(l, b.closedText(l, p), colorSuccess, EmojiOK)
+	return b.ticketReply(l, b.closedText(l, p), barPass, EmojiOK)
 }
 
 func (b *Bot) ticketReply(l discord.Locale, text string, color int, emoji string) discord.ContainerComponent {
@@ -582,7 +582,7 @@ func (b *Bot) openTicket(ctx context.Context, update func(discord.MessageUpdate,
 		text, color := b.ticketError(l, err)
 		return replyDeferred(update, b.ticketReply(l, text, color, EmojiInfo))
 	}
-	return replyDeferred(update, b.ticketReply(l, b.t(l, i18n.TicketOpened, map[string]any{"Channel": "<#" + t.ChannelID.String() + ">"}), colorSuccess, EmojiOK))
+	return replyDeferred(update, b.ticketReply(l, b.t(l, i18n.TicketOpened, map[string]any{"Channel": "<#" + t.ChannelID.String() + ">"}), barPass, EmojiOK))
 }
 
 func ticketID(e *handler.ComponentEvent) (snowflake.ID, int64, *discord.ResolvedMember, bool) {
@@ -607,7 +607,7 @@ func (b *Bot) ticketAction(e *handler.ComponentEvent, fn func(gid snowflake.ID, 
 		text, color := b.ticketError(e.Locale(), err)
 		return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(e.Locale(), text, color, EmojiInfo))
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(e.Locale(), b.t(e.Locale(), i18n.TicketDone, nil), colorSuccess, EmojiOK))
+	return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(e.Locale(), b.t(e.Locale(), i18n.TicketDone, nil), barPass, EmojiOK))
 }
 
 func (b *Bot) handleTicketClaim(_ discord.ButtonInteractionData, e *handler.ComponentEvent) error {
@@ -694,7 +694,7 @@ func (b *Bot) ticketCmd(e *handler.CommandEvent, fn func(gid snowflake.ID, t tic
 	if text == "" {
 		text = b.t(l, i18n.TicketDone, nil)
 	}
-	return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(l, text, colorSuccess, EmojiOK))
+	return replyDeferred(e.UpdateInteractionResponse, b.ticketReply(l, text, barPass, EmojiOK))
 }
 
 func (b *Bot) handleTicketAddCmd(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {

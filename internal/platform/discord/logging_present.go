@@ -46,21 +46,6 @@ func fitCard(s string) string {
 	return s
 }
 
-func logColor(k logging.Kind) int {
-	switch k {
-	case logging.KindMessageDelete, logging.KindMessageBulkDelete, logging.KindMemberBan, logging.KindChannelDelete,
-		logging.KindRoleDelete, logging.KindGuardianAction:
-		return colorDanger
-	case logging.KindMessageEdit, logging.KindMemberTimeout, logging.KindAutoModAction, logging.KindMemberNick:
-		return colorWarning
-	case logging.KindMemberLeave, logging.KindMemberKick:
-		return colorOrange
-	case logging.KindMemberJoin, logging.KindMemberUnban, logging.KindChannelCreate, logging.KindRoleCreate:
-		return colorSuccess
-	}
-	return colorBrand
-}
-
 func logEmoji(e *Emojis, k logging.Kind) string {
 	switch k.Category() {
 	case logging.CategoryModeration, logging.CategoryGuardian, logging.CategoryAutoMod:
@@ -396,7 +381,7 @@ func (p presenter) logCard(l string, e logging.Entry, guildName, channelName str
 		comps = append(comps, discord.NewFileComponent("attachment://"+file.Name))
 	}
 	comps = append(comps, discord.NewSmallSeparator(), discord.NewTextDisplay("-# "+strings.Join(footer, " · ")))
-	return discord.NewContainer(comps...).WithAccentColor(logColor(e.Kind)), file
+	return discord.NewContainer(comps...), file // no bar: a log entry has no colour of its own
 }
 
 func (p presenter) addChanges(l string, e logging.Entry, lines *[]string) {
