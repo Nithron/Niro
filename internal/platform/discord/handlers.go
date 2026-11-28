@@ -13,7 +13,8 @@ import (
 	"github.com/nithron/niro/internal/i18n"
 )
 
-// Brand colours (assets/brand/palette.json).
+// Brand colours (the concept A palette, assets/brand/superseded/concept-a/palette.json;
+// the colour roles of the Nithron identity replace them in a later release).
 const (
 	colorBrand   = 0x4CB8FF
 	colorSuccess = 0x3DDBA6

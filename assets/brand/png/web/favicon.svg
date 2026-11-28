@@ -1,10 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <title>Niro icon</title>
-  <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="64" y1="64" x2="448" y2="448"><stop offset="0" stop-color="#4CB8FF"/><stop offset="1" stop-color="#3DDBA6"/></linearGradient></defs>
-  <rect width="512" height="512" rx="112" fill="#0B0E13"/>
-  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="44">
-    <path d="M144 180 L88 256 L144 332" stroke="url(#g)"/>
-    <path d="M368 180 L424 256 L368 332" stroke="url(#g)"/>
-    <path d="M214 336 V176 L298 336 V176" stroke="#E6EDF7"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" shape-rendering="crispEdges" role="img" aria-label="Niro"><style>.g{fill:#f6f7f8}.m{fill:#131517}@media (prefers-color-scheme:dark){.g{fill:#0c0d0f}.m{fill:#eceef0}}</style><rect width="16" height="16" class="g"/><path class="m" d="M1 1h4v1h-4zM11 1h4v1h-4zM1 2h4v1h-4zM11 2h4v1h-4zM1 3h2v1h-2zM13 3h2v1h-2zM1 4h2v1h-2zM13 4h2v1h-2zM6 6h4v1h-4zM6 7h4v1h-4zM6 8h4v1h-4zM6 9h4v1h-4zM1 11h2v1h-2zM13 11h2v1h-2zM1 12h2v1h-2zM13 12h2v1h-2zM1 13h4v1h-4zM11 13h4v1h-4zM1 14h4v1h-4zM11 14h4v1h-4z"/></svg>
