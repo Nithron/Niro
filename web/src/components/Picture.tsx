@@ -1,13 +1,13 @@
 import { clsx } from 'clsx'
 
 /**
- * The one place for the product's pixel pictures: the mark, sign-in, and the pictures of empty screens. They are
+ * The one place for the product's pixel pictures: sign-in and the pictures of empty screens (the mark is NiroMark). They are
  * drawn once for nOS, nAI and Niro by the website session and issued as files; until then every slot is empty
  * and renders nothing, so a screen stays words and one action. Do not draw pictures here.
  *
  * A picture is shown at whole-number sizes only, crisp (image-rendering: pixelated).
  */
-export type PictureName = 'mark' | 'signIn' | 'noServers' | 'noCases' | 'noDetections' | 'noRules' | 'noPanels' | 'noTickets'
+export type PictureName = 'signIn' | 'noServers' | 'noCases' | 'noDetections' | 'noRules' | 'noPanels' | 'noTickets'
 
 const pictures: Partial<Record<PictureName, { src: string; width: number; height: number }>> = {}
 

@@ -6,6 +6,7 @@ import { logout, logoutEverywhere, type User } from '../api/client'
 import { signedOut } from '../queryClient'
 import { isNithronSite } from '../deployment'
 import { Icon } from './Icon'
+import { NiroMark } from './NiroMark'
 import { GuildIcon } from './ui'
 
 export function Layout({ user, children }: { user: User; children: ReactNode }) {
@@ -111,6 +112,17 @@ export function FamilyBar() {
 }
 
 /** The product's name at the head of the page, in the pixel face: 24 px in the header, 48 px on sign-in. */
+/**
+ * The product's name in the pixel face, with the mark before it on Nithron's own deployment. The pixel face's cap is 7
+ * of its 8 units and the mark's ink 14 of its 16, so a 32 px name pairs with a 32 px mark and a 48 px one with 48.
+ */
 export function ProductName({ large = false }: { large?: boolean }) {
-  return <span className={large ? 'pixel pixel-48 block' : 'pixel pixel-24 block'}>Niro</span>
+  const size = large ? 48 : 32
+  return (
+    <span className="flex items-center gap-3">
+      {/* One mark unit up (2 or 3 px), so the mark's ink and the name's capitals share a top and a bottom. */}
+      {isNithronSite() && <NiroMark size={size} className={large ? 'relative -top-[3px]' : 'relative -top-0.5'} />}
+      <span className={large ? 'pixel pixel-48 block' : 'pixel pixel-32 block'}>Niro</span>
+    </span>
+  )
 }
