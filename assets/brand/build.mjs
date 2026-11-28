@@ -123,7 +123,7 @@ const typed = (t, str, x, y, s, fill, delay, id) => {
 };
 const BASE_CSS = '@keyframes b{50%{opacity:0}}@media (prefers-reduced-motion:reduce){[class^=c]{display:none}[class^=k]{animation:none!important;display:none}}';
 
-const HERO_LINES = [['guardian', 'hacked accounts, scam links, raids', 'green'], ['modules', 'moderation, logs, roles, tickets', 'blue'], ['hosted', 'niro.nithron.com', 'violet']];
+const HERO_LINES = [['guardian', 'hacked accounts, scam links, raids', 'cyan'], ['modules', 'moderation, logs, roles, tickets', 'blue'], ['hosted', 'niro.nithron.com', 'violet']];
 const hero = (t) => {
   const h = 286;
   const line = typed(t, 'Keeps a Discord server in order.', 26, 152, 2, t.ink, 0.6, 1);
