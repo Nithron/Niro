@@ -4,6 +4,13 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### Niro's mark: "In view"
+
+- **The mark:** Niro has a new mark: four corners holding a square in view, drawn on a 16 by 16 pixel grid in ink. It replaces the `<N>` brackets.
+- **Dashboard:** the mark appears beside the name at the top left and on the sign-in screen (on Nithron's own deployment only). The tab icon follows the light or dark theme.
+- **Discord:** a new avatar, profile banner and seven application emoji are ready in `assets/brand`. The live bot keeps its current ones until they are uploaded.
+- **README:** the README is set in pixel pictures, with a banner, section headers and one card per module, in light and dark.
+
 ### Dashboard in the Nithron identity (foundations)
 
 - **Look:** the dashboard takes on the Nithron identity. It has one ground with hairlines between panels, square panels, ink for the main action and line buttons for the rest. There is no brand colour, gradient, shadow or glass. It follows the system's light or dark theme.

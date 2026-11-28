@@ -7,6 +7,7 @@
 - The tokens package is under the NCL v1.0, so Niro carries `line.css` (vendored whole).
 - Decisions 3 and 5 below are answered: the preview stays in Discord's look, framed and labelled. Niro is no longer last: all three products lay their foundations now; the visible screens follow in the order nOS, nAI, Niro. The family bar and the marks are switched on by a setting of the hosted deployment, off by default.
 - Phase 1 (steps 1 and 2) is done on branch `ui/identity`. Phase 2 (step 3) starts after the website session's review.
+- **2026-11-28:** Thiago picked the mark: D, "In view" (decision 34). The kit is in `assets/brand`, on one sheet in `docs/design/brand/kit.html`.
 
 For Thiago's approval. Nothing changes in Niro until this proposal is approved. Niro is last in the order (nOS, then nAI). It follows the chapter for applications (nithron-site, DESIGN-APPS.md) and the line direction (DESIGN-V3.md). Written 2026-11-27.
 
@@ -87,7 +88,7 @@ Every step is checked at AA in both themes. Playwright and Vitest keep running. 
 
 Collected while he was away on 2026-11-27. The safe default was taken for each and is noted; nothing below is pushed, merged or deployed.
 
-1. **Push and merge `ui/identity`.** It is local only, branched from `m5-hardening` (PR #10, not merged). Default: it stays local until you have seen it. Once M5 is approved, do you want it as its own PR after #10?
+1. **Answered 2026-11-27:** #10 merged into `main` and #11 into `m5-hardening`; `m5-hardening` still has to reach `main` with his word. **Push and merge `ui/identity`.** It is local only, branched from `m5-hardening` (PR #10, not merged). Default: it stays local until you have seen it. Once M5 is approved, do you want it as its own PR after #10?
 2. **The ESLint colour rule.** A config-protection hook in the coding session blocks edits to `web/eslint.config.js`. The Vitest test in `src/test/identity.test.ts` does the same check in CI. Default: the test only. Allow the edit if you want the lint rule too.
 3. **Monaspace Neon at 511 KB.** It is the complete upstream variable font, kept whole because of the reserved name. It loads on first use and is then cached for good. Default: keep it whole until the pixel display face takes over some of its uses.
 4. **A self-hosted copy's name.** With `NIRO_NITHRON_SITE` off, the dashboard shows no family bar and no logo, but still says "Niro" in type and in its texts. TRADEMARK_POLICY.md asks self-hosters to use their own brand. Default: unchanged. Should a self-hoster be able to set their own name (a setting), or is that their fork's job?
