@@ -11,6 +11,7 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 - **Guardian alerts:** an alert waiting for a moderator, or a raid in progress, has the gold bar. Restored or ended has the done bar. Banned and kept have none.
 - **Emoji:** the seven emoji are the new pixel symbols.
 - **Message builder:** a new colour bar starts at a neutral grey instead of the old brand blue.
+- **Ticket transcripts:** transcripts are Niro's own page instead of a copy of Discord's look. The page uses ink on one ground with ruled messages, and times and IDs in a mono face. It follows the reader's light or dark theme and still loads nothing. Transcripts saved before this release keep their old look.
 
 ### Niro's mark: "In view"
 

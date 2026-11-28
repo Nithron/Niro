@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -34,40 +35,82 @@ type TranscriptInfo struct {
 // MaxTranscriptMessages caps a transcript (a ticket rarely has more).
 const MaxTranscriptMessages = 5000
 
+// transcriptTokens are the Nithron tokens the page uses, light and dark, with
+// the values of the vendored line.css (transcript_test.go keeps them equal).
+// The page loads nothing, so the faces are the system's own.
+var transcriptTokens = struct{ light, dark [][2]string }{
+	light: [][2]string{{"page", "#f6f7f8"}, {"ink", "#131517"}, {"ink-2", "#4c5056"}, {"dim", "#62666c"}, {"hairline", "#dfe1e4"}, {"rule", "#c2c5ca"}, {"status-earlier-text", "#916304"}},
+	dark:  [][2]string{{"page", "#0c0d0f"}, {"ink", "#eceef0"}, {"ink-2", "#a9adb3"}, {"dim", "#84888e"}, {"hairline", "#1f2124"}, {"rule", "#34373c"}, {"status-earlier-text", "#f0c551"}},
+}
+
+func cssVars(vals [][2]string) string {
+	var b strings.Builder
+	for _, v := range vals {
+		b.WriteString("--")
+		b.WriteString(v[0])
+		b.WriteByte(':')
+		b.WriteString(v[1])
+		b.WriteByte(';')
+	}
+	return b.String()
+}
+
+// transcriptStyle is the page in the Nithron line identity: one ground, ruled
+// rows, ink text, times and IDs in the mono face, both themes by the system.
+var transcriptStyle = `:root{color-scheme:light dark;` + cssVars(transcriptTokens.light) +
+	`--font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;--font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{` + cssVars(transcriptTokens.dark) + `}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:400 1.0625rem/1.5 var(--font-sans)}
+.w{max-width:60rem;margin:0 auto;padding:48px 24px}
+header{padding-bottom:24px;border-bottom:1px solid var(--rule)}
+.k{margin:0 0 8px;color:var(--dim);font:400 .8125rem/1.5 var(--font-mono)}
+h1{margin:0 0 16px;font-size:1.25rem;line-height:1.25;font-weight:560;letter-spacing:-.012em}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 24px;margin:0;font-size:.9375rem}
+dt{color:var(--dim)}dd{margin:0;overflow-wrap:anywhere}
+.mono,time{font-family:var(--font-mono);font-size:.875rem}
+ol{list-style:none;margin:0;padding:0}
+li{padding:12px 0;border-bottom:1px solid var(--hairline)}
+.h{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.a{font-weight:560}.bot,.l{color:var(--dim);font:400 .8125rem/1.5 var(--font-mono)}
+time,.id{color:var(--dim)}
+.c{margin-top:2px;white-space:pre-wrap;overflow-wrap:anywhere}
+.f{color:var(--ink-2);font-size:.9375rem}
+.note{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--hairline);color:var(--status-earlier-text)}
+.sq{flex:none;width:10px;height:10px;border:2px solid currentColor}
+.e{padding:12px 0;color:var(--dim)}
+footer{padding-top:24px;color:var(--dim);font-size:.875rem}`
+
 // The template escapes every value (html/template); the page has no
 // scripts, no external resources and is served with a sandbox CSP.
 var transcriptTmpl = template.Must(template.New("t").Funcs(template.FuncMap{
-	"ts": func(t time.Time) string { return t.UTC().Format("2006-01-02 15:04 UTC") },
+	"ts":    func(t time.Time) string { return t.UTC().Format("2006-01-02 15:04 UTC") },
+	"iso":   func(t time.Time) string { return t.UTC().Format(time.RFC3339) },
+	"style": func() template.CSS { return template.CSS(transcriptStyle) },
 }).Parse(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>Ticket #{{.Info.Ticket.Number}} · {{.Info.Server}}</title>
-<style>
-body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#1e1f22;color:#dbdee1}
-header{padding:20px 24px;background:#2b2d31;border-bottom:1px solid #3f4147}
-h1{font-size:20px;margin:0 0 8px}dl{display:grid;grid-template-columns:auto 1fr;gap:2px 16px;margin:0;font-size:13px}
-dt{color:#949ba4}dd{margin:0}main{padding:12px 24px}
-.m{padding:6px 0;border-bottom:1px solid #2b2d31}.a{font-weight:600}.bot{font-size:11px;background:#5865f2;color:#fff;border-radius:3px;padding:0 4px;margin-left:4px}
-.t{color:#949ba4;font-size:12px;margin-left:8px}.c{white-space:pre-wrap;word-wrap:break-word}.f{color:#949ba4;font-size:13px}
-.note{color:#f5b83d;padding:8px 0}footer{padding:16px 24px;color:#949ba4;font-size:12px}
-</style></head><body>
-<header><h1>Ticket #{{.Info.Ticket.Number}} · {{.Info.Ticket.CategoryLabel}}</h1>
+<style>{{style}}</style></head><body><div class="w">
+<header><p class="k">Ticket transcript</p>
+<h1>Ticket #{{.Info.Ticket.Number}}{{if .Info.Ticket.CategoryLabel}} · {{.Info.Ticket.CategoryLabel}}{{end}}</h1>
 <dl><dt>Server</dt><dd>{{.Info.Server}}</dd>
-<dt>Opened by</dt><dd>{{.Info.Ticket.OpenerName}} ({{.Info.Ticket.OpenerID}}) · {{ts .Info.Ticket.CreatedAt}}</dd>
+<dt>Opened by</dt><dd>{{.Info.Ticket.OpenerName}} <span class="mono id">{{.Info.Ticket.OpenerID}}</span> · <time datetime="{{iso .Info.Ticket.CreatedAt}}">{{ts .Info.Ticket.CreatedAt}}</time></dd>
 {{if .Info.Ticket.ClaimedByName}}<dt>Claimed by</dt><dd>{{.Info.Ticket.ClaimedByName}}</dd>{{end}}
-<dt>Closed by</dt><dd>{{.Info.Ticket.ClosedByName}} · {{ts .Info.ClosedAt}}</dd>
+<dt>Closed by</dt><dd>{{.Info.Ticket.ClosedByName}} · <time datetime="{{iso .Info.ClosedAt}}">{{ts .Info.ClosedAt}}</time></dd>
 {{if .Info.Ticket.CloseReason}}<dt>Reason</dt><dd>{{.Info.Ticket.CloseReason}}</dd>{{end}}
-<dt>Messages</dt><dd>{{len .Messages}}</dd></dl></header>
+<dt>Messages</dt><dd class="mono">{{len .Messages}}</dd></dl></header>
 <main>
-{{if .Info.Truncated}}<p class="note">This ticket had more than {{.Max}} messages; only the first {{.Max}} are kept.</p>{{end}}
-{{range .Messages}}<div class="m"><span class="a">{{.AuthorName}}</span>{{if .AuthorBot}}<span class="bot">BOT</span>{{end}}<span class="t">{{ts .At}}</span>
+{{if .Info.Truncated}}<p class="note"><span class="sq" aria-hidden="true"></span>This ticket had more than {{.Max}} messages; only the first {{.Max}} are kept.</p>{{end}}
+{{if .Messages}}<ol>
+{{range .Messages}}<li><div class="h"><span class="a">{{.AuthorName}}</span>{{if .AuthorBot}}<span class="bot">bot</span>{{end}}<time datetime="{{iso .At}}">{{ts .At}}</time></div>
 {{if .Content}}<div class="c">{{.Content}}</div>{{end}}
-{{range .Attachments}}<div class="f">📎 {{.}}</div>{{end}}</div>
-{{end}}
+{{range .Attachments}}<div class="f"><span class="l">File</span> {{.}}</div>{{end}}</li>
+{{end}}</ol>{{else}}<p class="e">No messages.</p>{{end}}
 </main>
-<footer>Transcript by Niro. Kept until {{ts .Expires}}, then deleted.</footer>
-</body></html>
+<footer>Transcript by Niro. Kept until <time datetime="{{iso .Expires}}">{{ts .Expires}}</time>, then deleted.</footer>
+</div></body></html>
 `))
 
 // RenderTranscript writes the transcript page and returns it gzip-compressed.
