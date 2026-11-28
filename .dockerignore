@@ -10,7 +10,8 @@ web/dist
 .env.*
 !.env.example
 deploy/backups
-assets/brand/concepts
+assets/brand/superseded
+assets/brand/readme
 docs
 web/test-results
 web/playwright-report

@@ -32,6 +32,8 @@ x-niro: &niro
     NIRO_VALKEY_ADDR: valkey:6379
     NIRO_VALKEY_PASSWORD: ${VALKEY_PASSWORD:?}
     NIRO_TRUSTED_PROXIES: 172.31.251.0/24
+    # Nithron's own deployment: the dashboard shows the Nithron family bar and Niro's marks.
+    NIRO_NITHRON_SITE: "true"
   networks: [niro]
 
 services:

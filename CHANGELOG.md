@@ -4,6 +4,25 @@ All notable changes to Niro. Versions follow [Semantic Versioning](https://semve
 
 ## Unreleased
 
+### Niro's mark: "In view"
+
+- **The mark:** Niro has a new mark: four corners holding a square in view, drawn on a 16 by 16 pixel grid in ink. It replaces the `<N>` brackets.
+- **Dashboard:** the mark appears beside the name at the top left and on the sign-in screen (on Nithron's own deployment only). The tab icon follows the light or dark theme.
+- **Discord:** a new avatar, profile banner and seven application emoji are ready in `assets/brand`. The live bot keeps its current ones until they are uploaded.
+- **README:** the README is set in pixel pictures, with a banner, section headers and one card per module, in light and dark.
+
+### Dashboard in the Nithron identity (foundations)
+
+- **Look:** the dashboard takes on the Nithron identity. It has one ground with hairlines between panels, square panels, ink for the main action and line buttons for the rest. There is no brand colour, gradient, shadow or glass. It follows the system's light or dark theme.
+- **Status:** a state is a mark and a word: a filled square for ok, an open square for a warning, a cross for a failure. A case's action (warn, timeout, kick, ban) is a word with no colour.
+- **Fonts:** Mona Sans and Monaspace Neon now ship with the dashboard, so nothing is loaded from another server.
+- **Confirming:** deleting a case, a rule or a panel, banning from Detections and starting raid mode now ask in Niro's own dialog instead of the browser's. The dialog's title names what happens, and its sentence says what follows.
+- **Screens:** Servers, Modules, Detections, the security audit, AutoMod rules, role and ticket panels are ruled lists instead of separate cards, and Cases and Tickets are ruled tables. Sign-in is words and one button. The screens use one type scale, with values in the mono face.
+- **Pixel details:** check boxes, list bullets, switches, server icons and avatars are square. The message builder's limits show as a row of blocks. Raid mode shows a blinking square while it is on. Loading shows a block cursor.
+- **Grounds:** the dashboard uses the soft near-black and near-white of the Nithron tokens (0.4.0).
+- **Pixel identity:** icons come from the shared Nithron pixel set, at 16 px. They mark back, move up and down, add, remove, external links and the account menu. States use the set's marks: the filled square, the open square, the cross, and the running mark for raid mode. "Niro" at the top left, the large numbers (servers with Niro, modules on, cases), empty screens, loading words and the meters' numbers are set in Nithron Pixel, the shared pixel face.
+- **Self-hosted copies:** the Nithron family bar and Niro's logo appear only where `NIRO_NITHRON_SITE=true` (Nithron's own deployment). Other copies show the name in type.
+
 ### M5: Hardening and launch
 
 - **Rate limits:** the dashboard API limits requests per user and per IP, and the login flow per IP. Over the limit, the dashboard says to wait a moment. Behind a reverse proxy, set `NIRO_TRUSTED_PROXIES`.

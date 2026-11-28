@@ -1,25 +1,14 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { WelcomeSettings } from '../api/client'
 import { useGuild, useGuildMeta, useMe, useModules, useSaveWelcomeSettings, useWelcomeSettings } from '../api/queries'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview } from '../components/builder/MessagePreview'
 import { renderVariables, type PreviewVars } from '../components/builder/vars'
-import { Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow } from '../components/ui'
+import { Button, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow } from '../components/ui'
 
 const MAX_AUTO_ROLES = 10
 
-function Section({ title, help, children }: { title: string; help?: string; children: ReactNode }) {
-  return (
-    <Card className="grid gap-4">
-      <div>
-        <h3 className="font-semibold">{title}</h3>
-        {help && <p className="mt-1 text-xs text-muted">{help}</p>}
-      </div>
-      {children}
-    </Card>
-  )
-}
 
 export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
   const { t } = useTranslation()
@@ -66,13 +55,13 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
 
   return (
     <div className="max-w-5xl">
-      <h2 className="text-lg font-semibold">{t('welcomeSettings.title')}</h2>
+      <h2 className="text-panel">{t('welcomeSettings.title')}</h2>
       <p className="mt-1 text-muted">{t('welcomeSettings.subtitle')}</p>
-      {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('welcomeSettings.moduleOff')}</p>}
+      {moduleOff && <Notice className="mt-4">{t('welcomeSettings.moduleOff')}</Notice>}
       <p className="mt-4 text-sm text-muted">{t('welcomeSettings.guardianNote')}</p>
 
       <div className="mt-6 grid gap-4">
-        <Section title={t('welcomeSettings.welcome')}>
+        <Panel title={t('welcomeSettings.welcome')}>
           <SwitchRow label={t('welcomeSettings.welcomeEnabled')} checked={draft.welcomeEnabled} onCheckedChange={(v) => set('welcomeEnabled', v)} />
           {draft.welcomeEnabled && (
             <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
@@ -86,9 +75,9 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
               <MessagePreview doc={renderVariables(draft.welcomeMessage, vars(draft.welcomeChannelId))} />
             </div>
           )}
-        </Section>
+        </Panel>
 
-        <Section title={t('welcomeSettings.dm')} help={t('welcomeSettings.dmHelp')}>
+        <Panel title={t('welcomeSettings.dm')} help={t('welcomeSettings.dmHelp')}>
           <SwitchRow label={t('welcomeSettings.dmEnabled')} checked={draft.dmEnabled} onCheckedChange={(v) => set('dmEnabled', v)} />
           {draft.dmEnabled && (
             <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
@@ -96,9 +85,9 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
               <MessagePreview doc={renderVariables(draft.dmMessage, vars(draft.welcomeChannelId))} />
             </div>
           )}
-        </Section>
+        </Panel>
 
-        <Section title={t('welcomeSettings.goodbye')}>
+        <Panel title={t('welcomeSettings.goodbye')}>
           <SwitchRow label={t('welcomeSettings.goodbyeEnabled')} checked={draft.goodbyeEnabled} onCheckedChange={(v) => set('goodbyeEnabled', v)} />
           {draft.goodbyeEnabled && (
             <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
@@ -111,9 +100,9 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
               <MessagePreview doc={renderVariables(draft.goodbyeMessage, vars(draft.goodbyeChannelId))} />
             </div>
           )}
-        </Section>
+        </Panel>
 
-        <Section title={t('welcomeSettings.autoRoles')} help={t('welcomeSettings.autoRolesHelp')}>
+        <Panel title={t('welcomeSettings.autoRoles')} help={t('welcomeSettings.autoRolesHelp')}>
           <div className="grid gap-2 sm:grid-cols-2">
             {roles.map((r) => {
               const on = draft.autoRoleIds.includes(r.id)
@@ -132,14 +121,14 @@ export function WelcomeSettingsPage({ guildId }: { guildId: string }) {
               )
             })}
           </div>
-        </Section>
+        </Panel>
       </div>
 
-      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+      <div className="sticky bottom-0 mt-6 flex items-center gap-4 border-t border-border bg-bg py-4">
         <Button onClick={() => save.mutate(draft, { onSuccess: () => setEdits(null) })} disabled={!dirty || invalid || save.isPending}>
           {save.isPending ? t('common.saving') : t('common.save')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+        {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
     </div>

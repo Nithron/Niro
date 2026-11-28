@@ -16,7 +16,7 @@ You may NOT:
 - Use Trademarks or brand assets except as allowed by the Trademark Policy.
 
 ## Updates & Telemetry
-- Updates may require an active subscription/license. We may disable update access when subscriptions lapse.
+- Updates may require an active subscription/license. Nithron may disable update access when subscriptions lapse.
 - Niro ships with no telemetry. Any telemetry added in future will be **opt-in** and documented.
 
 ## Ownership

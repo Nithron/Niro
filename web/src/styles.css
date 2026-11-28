@@ -1,39 +1,60 @@
 @import "tailwindcss";
+/* The Nithron line tokens. Unlayered, so their --font-sans and --font-mono win over Tailwind's defaults. */
+@import "./vendor/nithron-tokens/line.css";
 
-/* Brand tokens (assets/brand/palette.json). Dark is the default; the light
-   theme follows the system preference. */
-:root {
-  --bg: #0b0e13;
-  --surface: #121622;
-  --surface-2: #181d2b;
-  --border: #232a3a;
-  --fg: #e6edf7;
-  --muted: #9aa7b8;
-  --brand: #4cb8ff;
-  --brand-2: #3ddba6;
-  --success: #3ddba6;
-  --warning: #f5b83d;
-  --danger: #ff6b6b;
-  --on-brand: #0b0e13;
-  color-scheme: dark;
+/* The two faces, shipped with the dashboard: the upstream releases unchanged, Mona Sans v2.0.27 and Monaspace
+   Neon v1.400, both variable (src/assets/fonts). Vite hashes them, so they are cached for good; their licence
+   texts are in public/fonts and travel with every build. */
+@font-face {
+  font-family: "Mona Sans Variable";
+  src: url("./assets/fonts/MonaSansVF-opsz-wght.woff2") format("woff2");
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f5f7fa;
-    --surface: #ffffff;
-    --surface-2: #eef2f6;
-    --border: #dde3ea;
-    --fg: #121418;
-    --muted: #5b6576;
-    --brand: #0b8fe0;
-    --brand-2: #0ea57d;
-    --success: #0ea57d;
-    --warning: #b7791f;
-    --danger: #c22424;
-    --on-brand: #ffffff;
-    color-scheme: light;
-  }
+@font-face {
+  font-family: "Nithron Pixel";
+  /* From public/fonts, not hashed: at 2 KB Vite would inline it as a data: URL, which the API's CSP (font-src 'self') refuses. */
+  src: url("/fonts/nithron-pixel.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Neon";
+  src: url("./assets/fonts/MonaspaceNeonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Niro's names on the tokens. This is the one place where Niro's variables meet the identity; no component
+   holds a colour value. The interface has no hue: what was the brand colour is ink. The three states are
+   named as Niro's domain names them: ok, warning and failed. Declared again under [data-theme] so a part
+   of the page with a pinned theme takes that theme's values. */
+:root,
+[data-theme] {
+  --bg: var(--page);
+  --surface: var(--page);
+  --surface-2: var(--page);
+  --border: var(--hairline);
+  --fg: var(--ink);
+  --muted: var(--ink-2);
+  --brand: var(--ink);
+  --on-brand: var(--page);
+  --hover: color-mix(in srgb, var(--ink) 9%, transparent);
+
+  --ok: var(--status-pass);
+  --ok-text: var(--status-pass-text);
+  --ok-tint: var(--status-pass-tint);
+  --warning: var(--status-earlier);
+  --warning-text: var(--status-earlier-text);
+  --warning-tint: var(--status-earlier-tint);
+  --failed: var(--status-failed);
+  --failed-text: var(--status-failed-text);
+  --failed-tint: var(--status-failed-tint);
 }
 
 @theme inline {
@@ -41,15 +62,47 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
+  --color-edge: var(--edge);
+  --color-rule: var(--rule);
   --color-fg: var(--fg);
   --color-muted: var(--muted);
+  --color-dim: var(--dim);
   --color-brand: var(--brand);
-  --color-brand-2: var(--brand-2);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-danger: var(--danger);
   --color-on-brand: var(--on-brand);
-  --font-sans: "Mona Sans", Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-hover: var(--hover);
+  --color-ok: var(--ok);
+  --color-ok-text: var(--ok-text);
+  --color-ok-tint: var(--ok-tint);
+  --color-warning: var(--warning);
+  --color-warning-text: var(--warning-text);
+  --color-warning-tint: var(--warning-tint);
+  --color-failed: var(--failed);
+  --color-failed-text: var(--failed-text);
+  --color-failed-tint: var(--failed-tint);
+  --radius-ctl: var(--radius-control);
+  --radius-chip: var(--radius-small);
+
+  /* The interface's half of the type scale, under names of their own so they never shadow the tokens. */
+  --text-screen: var(--text-h3);
+  --text-screen--line-height: var(--leading-h3);
+  --text-screen--letter-spacing: var(--tracking-h3);
+  --text-screen--font-weight: var(--weight-h3);
+  --text-panel: var(--text-title);
+  --text-panel--line-height: var(--leading-title);
+  --text-panel--letter-spacing: var(--tracking-title);
+  --text-panel--font-weight: var(--weight-title);
+  --text-ui: var(--text-small);
+  --text-ui--line-height: var(--leading-small);
+  --text-help: var(--text-fine);
+  --text-help--line-height: var(--leading-fine);
+  --text-caption: var(--text-label);
+  --text-caption--line-height: var(--leading-label);
+  --text-data: var(--text-mono);
+  --text-data--line-height: var(--leading-mono);
+  --text-big: var(--text-number);
+  --text-big--line-height: var(--leading-number);
+  --text-big--letter-spacing: var(--tracking-number);
+  --text-big--font-weight: var(--weight-number);
 }
 
 html,
@@ -58,12 +111,122 @@ body {
   color: var(--fg);
 }
 
+/* An application keeps the browser's 16 px root; interface text is the scale's small step. */
 body {
   font-family: var(--font-sans);
+  font-size: var(--text-small);
+  line-height: var(--leading-small);
   -webkit-font-smoothing: antialiased;
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: var(--line-focus) solid var(--ink);
   outline-offset: 2px;
+}
+
+/* Nithron Pixel, the pixel display face (--font-pixel), for the product's name, a screen's one large number,
+   the words of an empty or loading screen and the number beside a block meter. Nothing else. It is sharp only
+   at whole multiples of 8 px and left aligned on whole pixels, so it comes in these sizes and no other. */
+.pixel {
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 400;
+  font-style: normal;
+  font-synthesis: none;
+  letter-spacing: 0;
+  font-kerning: none;
+  font-variant-ligatures: none;
+}
+
+.pixel-24 {
+  font-size: 24px;
+}
+
+.pixel-32 {
+  font-size: 32px;
+}
+
+.pixel-48 {
+  font-size: 48px;
+}
+
+/* A pixel element is never blurred: whole pixels, no smoothing. */
+.pixelated {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+/* Check boxes are squares on whole pixels: a 1 px edge, an ink square inside when checked. */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--edge);
+  border-radius: 0;
+  background: var(--page);
+}
+
+input[type="checkbox"]::before,
+input[type="radio"]::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--ink);
+  visibility: hidden;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  border-color: var(--ink);
+}
+
+input[type="checkbox"]:checked::before,
+input[type="radio"]:checked::before {
+  visibility: visible;
+}
+
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.5;
+}
+
+/* List bullets are small squares. */
+ul.list-disc {
+  list-style-type: square;
+}
+
+/* The sites' cursor: it blinks while something loads, and stands still under reduced motion. */
+@keyframes niro-cursor {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cursor {
+  animation: niro-cursor var(--loop-cursor) steps(1) infinite;
+}
+
+/* A lamp for something live (raid mode running): a square that blinks. */
+.lamp {
+  animation: niro-cursor var(--loop-lamp) steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

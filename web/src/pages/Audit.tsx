@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import type { AuditFinding } from '../api/client'
 import { useAudit } from '../api/queries'
-import { Badge, Button, Card, ErrorState, Spinner } from '../components/ui'
+import { Badge, Button, ErrorState, Spinner, Status } from '../components/ui'
 
-const tone = { critical: 'danger', high: 'danger', medium: 'warning', info: 'brand' } as const
+// A cross for "fix this", an open square for "check this"; information is a word with no mark.
+const tone = { critical: 'failed', high: 'failed', medium: 'warning', info: 'neutral' } as const
 
 function FindingText({ f }: { f: AuditFinding }) {
   const { t } = useTranslation()
@@ -17,13 +18,13 @@ export function AuditPage({ guildId }: { guildId: string }) {
   const audit = useAudit(guildId)
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">{t('audit.title')}</h2>
+          <h2 className="text-panel">{t('audit.title')}</h2>
           <p className="mt-1 text-muted">{t('audit.subtitle')}</p>
         </div>
-        <Button variant="secondary" onClick={() => void audit.refetch()} disabled={audit.isFetching}>
+        <Button variant="line" onClick={() => void audit.refetch()} disabled={audit.isFetching}>
           {t('audit.rerun')}
         </Button>
       </div>
@@ -31,28 +32,24 @@ export function AuditPage({ guildId }: { guildId: string }) {
         {audit.isPending && <Spinner />}
         {audit.isError && <ErrorState onRetry={() => void audit.refetch()} />}
         {audit.data && (
-          <ul className="grid gap-2">
+          <ul className="divide-y divide-border border-y border-border">
             {audit.data.findings.length === 0 && (
-              <Card>
-                <p className="text-success">{t('audit.clean')}</p>
-              </Card>
+              <li className="py-4">
+                <Status state="ok">{t('audit.clean')}</Status>
+              </li>
             )}
             {audit.data.findings.map((f, i) => (
-              <li key={i}>
-                <Card className="flex items-start gap-3 p-4">
-                  <Badge tone={tone[f.severity]}>{t(`audit.severity.${f.severity}`)}</Badge>
-                  <p className="text-sm">
-                    <FindingText f={f} />
-                  </p>
-                </Card>
+              <li key={i} className="grid grid-cols-[6rem_1fr] items-baseline gap-3 py-4">
+                <Badge tone={tone[f.severity]}>{t(`audit.severity.${f.severity}`)}</Badge>
+                <p className="text-sm">
+                  <FindingText f={f} />
+                </p>
               </li>
             ))}
             {!audit.data.webhooksChecked && (
-              <li>
-                <Card className="flex items-start gap-3 p-4">
-                  <Badge tone="brand">{t('audit.severity.info')}</Badge>
-                  <p className="text-sm">{t('audit.webhooksUnchecked')}</p>
-                </Card>
+              <li className="grid grid-cols-[6rem_1fr] items-baseline gap-3 py-4">
+                <Badge>{t('audit.severity.info')}</Badge>
+                <p className="text-sm">{t('audit.webhooksUnchecked')}</p>
               </li>
             )}
           </ul>

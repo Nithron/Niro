@@ -42,7 +42,7 @@ Active Patreon subscribers get:
 Email **licensing@nithron.com** with:
 - Company name, use case (internal/MSP), expected instance count, support needs.
 
-We offer:
+Nithron offers:
 - Per-instance or annual subscription (updates + support SLAs).
 - Reseller/MSP rights (hosted service, managed deployments).
 - Optional white-label branding rights.

@@ -65,7 +65,7 @@ export function DiscordMarkdown({ text }: { text: string }) {
 type Rule = { re: RegExp; render: (m: RegExpExecArray, key: number) => ReactNode }
 
 function Mention({ children }: { children: ReactNode }) {
-  return <span className="rounded bg-brand/20 px-0.5 text-brand">{children}</span>
+  return <span className="rounded bg-[#5865f2]/30 px-0.5 text-[#c9cdfb]">{children}</span>
 }
 
 const rules: Rule[] = [
@@ -84,7 +84,7 @@ const rules: Rule[] = [
   {
     re: /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/,
     render: (m, k) => (
-      <span key={k} className="text-brand underline" title={m[2]}>
+      <span key={k} className="text-[#00a8fc] underline" title={m[2]}>
         {m[1]}
       </span>
     ),

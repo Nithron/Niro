@@ -4,22 +4,23 @@ import { useTranslation } from 'react-i18next'
 import { ApiError, type ModuleState } from '../api/client'
 import { useGuild, useModules, useSetModule } from '../api/queries'
 import { DeleteServerData } from '../components/DeleteServerData'
-import { Card, ErrorState, GuildIcon, Spinner, Switch } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { ErrorState, GuildIcon, Spinner, Status, Switch } from '../components/ui'
 import i18n from '../i18n'
 import { InviteButton } from './Servers'
 
 const tabs = [
-  { to: '/guilds/$guildId', key: 'tabs.modules', exact: true },
-  { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', exact: false },
-  { to: '/guilds/$guildId/cases', key: 'tabs.cases', exact: false },
-  { to: '/guilds/$guildId/automod', key: 'tabs.automod', exact: false },
-  { to: '/guilds/$guildId/guardian', key: 'tabs.guardian', exact: true },
-  { to: '/guilds/$guildId/guardian/detections', key: 'tabs.detections', exact: false },
-  { to: '/guilds/$guildId/guardian/audit', key: 'tabs.audit', exact: false },
-  { to: '/guilds/$guildId/logging', key: 'tabs.logging', exact: false },
-  { to: '/guilds/$guildId/roles', key: 'tabs.roles', exact: false },
-  { to: '/guilds/$guildId/welcome', key: 'tabs.welcome', exact: false },
-  { to: '/guilds/$guildId/tickets', key: 'tabs.tickets', exact: false },
+  { to: '/guilds/$guildId', key: 'tabs.modules', icon: 'app', exact: true },
+  { to: '/guilds/$guildId/moderation', key: 'tabs.moderation', icon: 'moderation', exact: false },
+  { to: '/guilds/$guildId/cases', key: 'tabs.cases', icon: 'case', exact: false },
+  { to: '/guilds/$guildId/automod', key: 'tabs.automod', icon: 'filter', exact: false },
+  { to: '/guilds/$guildId/guardian', key: 'tabs.guardian', icon: 'shield', exact: true },
+  { to: '/guilds/$guildId/guardian/detections', key: 'tabs.detections', icon: 'detections', exact: false },
+  { to: '/guilds/$guildId/guardian/audit', key: 'tabs.audit', icon: 'checklist', exact: false },
+  { to: '/guilds/$guildId/logging', key: 'tabs.logging', icon: 'history', exact: false },
+  { to: '/guilds/$guildId/roles', key: 'tabs.roles', icon: 'role', exact: false },
+  { to: '/guilds/$guildId/welcome', key: 'tabs.welcome', icon: 'welcome', exact: false },
+  { to: '/guilds/$guildId/tickets', key: 'tabs.tickets', icon: 'ticket', exact: false },
 ] as const
 
 /** Server header, tabs, and the active tab (or an invite if Niro isn't there). */
@@ -29,8 +30,9 @@ export function GuildLayout({ guildId }: { guildId: string }) {
 
   return (
     <section>
-      <Link to="/" className="text-sm text-muted hover:text-fg">
-        ← {t('guild.back')}
+      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted hover:text-fg">
+        <Icon name="back" />
+        {t('guild.back')}
       </Link>
 
       {guild.isPending && <Spinner />}
@@ -46,33 +48,42 @@ export function GuildLayout({ guildId }: { guildId: string }) {
       {guild.data && (
         <>
           <div className="mt-4 flex items-center gap-4">
-            <GuildIcon name={guild.data.name} url={guild.data.iconUrl} size={56} />
-            <h1 className="text-2xl font-semibold">{guild.data.name}</h1>
+            <GuildIcon name={guild.data.name} url={guild.data.iconUrl} size={32} />
+            <h1 className="text-screen">{guild.data.name}</h1>
           </div>
 
           {!guild.data.botPresent ? (
             <>
-            <Card className="mt-8 max-w-md">
-              <h2 className="font-semibold">{t('guild.notInServerTitle')}</h2>
+            <div className="mt-8 border-y border-border py-6">
+              <h2 className="text-panel">{t('guild.notInServerTitle')}</h2>
               <p className="mt-1 text-muted">{t('guild.notInServerBody')}</p>
               <div className="mt-4">
                 <InviteButton guildId={guildId} />
               </div>
-            </Card>
+            </div>
             {guild.data.owner && <DeleteServerData guildId={guildId} guildName={guild.data.name} />}
             </>
           ) : (
             <>
-              <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-border" aria-label={guild.data.name}>
+              <nav className="mt-6 flex flex-wrap gap-x-1 border-b border-border" aria-label={guild.data.name}>
                 {tabs.map((tab) => (
                   <Link
                     key={tab.to}
                     to={tab.to}
                     params={{ guildId }}
                     activeOptions={{ exact: tab.exact }}
-                    className="-mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-brand data-[status=active]:text-fg"
+                    className="group -mb-px border-b-2 border-transparent px-4 py-2 text-sm whitespace-nowrap text-muted hover:text-fg data-[status=active]:border-fg data-[status=active]:text-fg"
                   >
-                    {t(tab.key)}
+                    {/* A hidden copy at the heavier weight holds the width, so the row does not shift when the current tab changes. */}
+                    <span className="inline-flex items-center gap-2">
+                    <Icon name={tab.icon} />
+                    <span className="inline-grid justify-items-center">
+                      <span aria-hidden className="invisible col-start-1 row-start-1 font-[560]">
+                        {t(tab.key)}
+                      </span>
+                      <span className="col-start-1 row-start-1 group-data-[status=active]:font-[560]">{t(tab.key)}</span>
+                    </span>
+                    </span>
                   </Link>
                 ))}
               </nav>
@@ -93,17 +104,23 @@ export function ModulesPage({ guildId }: { guildId: string }) {
   const guild = useGuild(guildId)
   return (
     <div>
-      <h2 className="text-lg font-semibold">{t('guild.modulesTitle')}</h2>
+      <h2 className="text-panel">{t('guild.modulesTitle')}</h2>
       <p className="mt-1 text-muted">{t('guild.modulesSubtitle')}</p>
       <div className="mt-4">
         {modules.isPending && <Spinner />}
         {modules.isError && <ErrorState onRetry={() => void modules.refetch()} />}
         {modules.data && (
-          <ul className="grid gap-3">
+          <>
+          <p className="mb-4 flex items-baseline gap-3">
+              <span className="pixel pixel-32">{modules.data.filter((m) => m.enabled).length}</span>
+              <span className="text-muted">{t('guild.modulesOn', { total: modules.data.length })}</span>
+            </p>
+          <ul className="divide-y divide-border border-y border-border">
             {modules.data.map((m) => (
               <ModuleRow key={m.id} guildId={guildId} module={m} />
             ))}
           </ul>
+          </>
         )}
       </div>
       {guild.data?.owner && <DeleteServerData guildId={guildId} guildName={guild.data.name} />}
@@ -132,15 +149,18 @@ function ModuleRow({ guildId, module }: { guildId: string; module: ModuleState }
   }
 
   return (
-    <li>
-      <Card className="flex items-start justify-between gap-6">
+    <li className="flex items-start justify-between gap-6 py-4">
         <div>
-          <p className="font-semibold">{name}</p>
+          <p className="font-[560]">{name}</p>
           <p className="mt-1 text-sm text-muted">{moduleText(module.id, 'description')}</p>
-          {status === 'saved' && <p className="mt-2 text-xs text-success">{t('guild.saved')}</p>}
+          {status === 'saved' && (
+            <p className="mt-2 text-xs">
+              <Status state="ok">{t('guild.saved')}</Status>
+            </p>
+          )}
           {status === 'failed' && (
-            <p role="alert" className="mt-2 text-xs text-danger">
-              {t('guild.saveFailed')}
+            <p role="alert" className="mt-2 text-xs">
+              <Status state="failed">{t('guild.saveFailed')}</Status>
             </p>
           )}
         </div>
@@ -151,9 +171,8 @@ function ModuleRow({ guildId, module }: { guildId: string; module: ModuleState }
             disabled={module.alwaysOn || setModule.isPending}
             label={name}
           />
-          {module.alwaysOn && <span className="text-xs text-muted">{t('guild.alwaysOn')}</span>}
+          {module.alwaysOn && <span className="text-help text-muted">{t('guild.alwaysOn')}</span>}
         </div>
-      </Card>
     </li>
   )
 }

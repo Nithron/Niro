@@ -1,6 +1,6 @@
 # App Directory listing
 
-Copy for the production application's App Directory page (Developer Portal → App Directory). Assets come from the brand pack in `assets/brand/` (concept A).
+Copy for the production application's App Directory page (Developer Portal → App Directory). Assets come from the brand pack in `assets/brand/` (mark D, "In view").
 
 ## Short description
 

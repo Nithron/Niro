@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Niro brand kit: mark D, In view</title>
+<style>
+@font-face{font-family:"Nithron Pixel";src:url("../../../web/public/fonts/nithron-pixel.woff2") format("woff2")}
+:root{--page:#f6f7f8;--ink:#131517;--ink-2:#4c5056;--hair:#c2c5ca}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.5 system-ui,sans-serif}
+main{width:1360px;margin:0 auto;padding:40px 40px 64px}
+h1,h2{font-family:"Nithron Pixel",monospace;font-weight:400;letter-spacing:0;margin:0}
+h1{font-size:32px;line-height:40px}
+h2{font-size:16px;line-height:24px;margin:48px 0 16px;padding-top:16px;border-top:1px solid var(--hair)}
+p{margin:4px 0;color:var(--ink-2);max-width:72ch}
+.row{display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}
+.cell{display:flex;flex-direction:column;gap:8px}
+.cell small,.emo small{font:12px/1 ui-monospace,monospace;color:var(--ink-2)}
+.ground{padding:24px;display:flex;gap:24px;align-items:flex-end}
+.dark{background:#0c0d0f}.light{background:#f6f7f8;outline:1px solid var(--hair)}
+img{image-rendering:pixelated;display:block}
+.circle{border-radius:50%}
+.tab{display:flex;align-items:center;gap:8px;padding:8px 12px;width:200px;font:13px system-ui;border-radius:8px 8px 0 0}
+.emo{display:flex;gap:28px;padding:16px 20px}
+.emo span{display:flex;align-items:center;gap:8px}
+.popout{position:relative;width:340px;background:#232428;border-radius:8px;overflow:hidden;padding-bottom:56px}
+.popout .av{position:absolute;left:16px;top:76px;border:6px solid #232428;border-radius:50%}
+.popout b{position:absolute;left:24px;bottom:16px;color:#f2f3f5;font:600 18px system-ui}
+</style></head>
+<body><main>
+<h1>Niro brand kit</h1>
+<p>Mark D, "In view": four corners holding the "in order" square in view. Picked by Thiago on 2026-11-28. Every file is built by <code>assets/brand/build.mjs</code> from <code>assets/brand/mark.json</code>, the Nithron Pixel face and the Nithron pixel icons. All pixels are whole: each grid unit is a whole number of output pixels.</p>
+
+<h2>The mark, 16 to 512</h2>
+<div class="ground light"><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-16.png" width="16" height="16" alt=""><small>16</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-32.png" width="32" height="32" alt=""><small>32</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-48.png" width="48" height="48" alt=""><small>48</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-64.png" width="64" height="64" alt=""><small>64</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-128.png" width="128" height="128" alt=""><small>128</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-light-256.png" width="256" height="256" alt=""><small>256</small></div></div>
+<div class="ground dark"><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-16.png" width="16" height="16" alt=""><small style="color:#a9adb3">16</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-32.png" width="32" height="32" alt=""><small style="color:#a9adb3">32</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-48.png" width="48" height="48" alt=""><small style="color:#a9adb3">48</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-64.png" width="64" height="64" alt=""><small style="color:#a9adb3">64</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-128.png" width="128" height="128" alt=""><small style="color:#a9adb3">128</small></div><div class="cell"><img src="../../../assets/brand/png/mark/mark-on-dark-256.png" width="256" height="256" alt=""><small style="color:#a9adb3">256</small></div></div>
+<p>Also at 512. Ink only, on a ground of the page's colour. Clear space: two grid units on every side, beyond the one the grid already holds.</p>
+
+<h2>Web: favicon and app icons</h2>
+<div class="row">
+<div class="tab light"><img src="../../../assets/brand/png/web/icon-16.png" width="16" height="16" alt=""> Niro Dashboard</div>
+<div class="tab dark" style="color:#eceef0"><img src="../../../assets/brand/png/web/icon-16.png" width="16" height="16" alt=""> Niro Dashboard</div>
+<div class="cell"><img src="../../../assets/brand/png/web/icon-32.png" width="32" height="32" alt=""><small>32</small></div>
+<div class="cell"><img src="../../../assets/brand/png/web/icon-48.png" width="48" height="48" alt=""><small>48</small></div>
+<div class="cell"><img src="../../../assets/brand/png/web/apple-touch-icon.png" width="180" height="180" alt=""><small>apple-touch-icon 180</small></div>
+<div class="cell"><img src="../../../assets/brand/png/web/icon-192.png" width="192" height="192" alt=""><small>icon-192</small></div>
+</div>
+<p>favicon.svg follows the reader's theme (light ground or dark ground); favicon.ico holds 16, 32 and 48 on the dark ground.</p>
+
+<h2>Discord: avatar and app icon</h2>
+<div class="row">
+<div class="cell"><img src="../../../assets/brand/png/discord/avatar-512.png" width="256" height="256" alt=""><small>avatar-512, shown at 256</small></div>
+<div class="cell"><img class="circle" src="../../../assets/brand/png/discord/avatar-512.png" width="128" height="128" alt=""><small>as Discord crops it, 128</small></div>
+<div class="cell"><img class="circle" src="../../../assets/brand/png/discord/avatar-512.png" width="40" height="40" alt="" style="image-rendering:auto"><small>40, in chat</small></div>
+<div class="cell"><img src="../../../assets/brand/png/discord/dev-app-icon-1024.png" width="128" height="128" alt=""><small>Niro Dev (development app), 128</small></div>
+</div>
+
+<h2>Discord: profile banner, 680 by 240</h2>
+<div class="row">
+<div class="cell"><img src="../../../assets/brand/png/discord/profile-banner-1360x480.png" width="680" height="240" alt=""><small>profile-banner-1360x480 (2x)</small></div>
+<div class="cell"><div class="popout"><img src="../../../assets/brand/png/discord/profile-banner-680x240.png" width="340" height="120" alt="" style="image-rendering:auto"><img class="av" src="../../../assets/brand/png/discord/avatar-512.png" width="80" height="80" alt="" style="image-rendering:auto"><b>Niro</b></div><small>in a profile pop-out (approximate)</small></div>
+</div>
+<div class="row" style="margin-top:16px"><div class="cell"><img src="../../../assets/brand/png/discord/dev-profile-banner-1360x480.png" width="680" height="240" alt=""><small>Niro Dev banner</small></div></div>
+
+<h2>Discord: the seven application emoji, 128 on the 16 grid</h2>
+<p>One grey (the dark theme's dim, #84888e) that reads at 3:1 or more on every Discord ground. The states are told apart by shape, as in the dashboard.</p>
+<div class="emo" style="background:#313338"><span><img src="../../../assets/brand/png/discord/emojis/niro.png" width="22" height="22" alt=""><small style="color:#a9adb3">:niro:</small></span><span><img src="../../../assets/brand/png/discord/emojis/shield.png" width="22" height="22" alt=""><small style="color:#a9adb3">:shield:</small></span><span><img src="../../../assets/brand/png/discord/emojis/lock.png" width="22" height="22" alt=""><small style="color:#a9adb3">:lock:</small></span><span><img src="../../../assets/brand/png/discord/emojis/ok.png" width="22" height="22" alt=""><small style="color:#a9adb3">:ok:</small></span><span><img src="../../../assets/brand/png/discord/emojis/warn.png" width="22" height="22" alt=""><small style="color:#a9adb3">:warn:</small></span><span><img src="../../../assets/brand/png/discord/emojis/error.png" width="22" height="22" alt=""><small style="color:#a9adb3">:error:</small></span><span><img src="../../../assets/brand/png/discord/emojis/info.png" width="22" height="22" alt=""><small style="color:#a9adb3">:info:</small></span></div><div class="emo" style="background:#ffffff"><span><img src="../../../assets/brand/png/discord/emojis/niro.png" width="22" height="22" alt=""><small style="color:#4c5056">:niro:</small></span><span><img src="../../../assets/brand/png/discord/emojis/shield.png" width="22" height="22" alt=""><small style="color:#4c5056">:shield:</small></span><span><img src="../../../assets/brand/png/discord/emojis/lock.png" width="22" height="22" alt=""><small style="color:#4c5056">:lock:</small></span><span><img src="../../../assets/brand/png/discord/emojis/ok.png" width="22" height="22" alt=""><small style="color:#4c5056">:ok:</small></span><span><img src="../../../assets/brand/png/discord/emojis/warn.png" width="22" height="22" alt=""><small style="color:#4c5056">:warn:</small></span><span><img src="../../../assets/brand/png/discord/emojis/error.png" width="22" height="22" alt=""><small style="color:#4c5056">:error:</small></span><span><img src="../../../assets/brand/png/discord/emojis/info.png" width="22" height="22" alt=""><small style="color:#4c5056">:info:</small></span></div><div class="emo" style="background:#070709"><span><img src="../../../assets/brand/png/discord/emojis/niro.png" width="22" height="22" alt=""><small style="color:#a9adb3">:niro:</small></span><span><img src="../../../assets/brand/png/discord/emojis/shield.png" width="22" height="22" alt=""><small style="color:#a9adb3">:shield:</small></span><span><img src="../../../assets/brand/png/discord/emojis/lock.png" width="22" height="22" alt=""><small style="color:#a9adb3">:lock:</small></span><span><img src="../../../assets/brand/png/discord/emojis/ok.png" width="22" height="22" alt=""><small style="color:#a9adb3">:ok:</small></span><span><img src="../../../assets/brand/png/discord/emojis/warn.png" width="22" height="22" alt=""><small style="color:#a9adb3">:warn:</small></span><span><img src="../../../assets/brand/png/discord/emojis/error.png" width="22" height="22" alt=""><small style="color:#a9adb3">:error:</small></span><span><img src="../../../assets/brand/png/discord/emojis/info.png" width="22" height="22" alt=""><small style="color:#a9adb3">:info:</small></span></div><div class="emo" style="background:#313338"><span><img src="../../../assets/brand/png/discord/emojis/niro.png" width="48" height="48" alt=""><small style="color:#a9adb3">:niro:</small></span><span><img src="../../../assets/brand/png/discord/emojis/shield.png" width="48" height="48" alt=""><small style="color:#a9adb3">:shield:</small></span><span><img src="../../../assets/brand/png/discord/emojis/lock.png" width="48" height="48" alt=""><small style="color:#a9adb3">:lock:</small></span><span><img src="../../../assets/brand/png/discord/emojis/ok.png" width="48" height="48" alt=""><small style="color:#a9adb3">:ok:</small></span><span><img src="../../../assets/brand/png/discord/emojis/warn.png" width="48" height="48" alt=""><small style="color:#a9adb3">:warn:</small></span><span><img src="../../../assets/brand/png/discord/emojis/error.png" width="48" height="48" alt=""><small style="color:#a9adb3">:error:</small></span><span><img src="../../../assets/brand/png/discord/emojis/info.png" width="48" height="48" alt=""><small style="color:#a9adb3">:info:</small></span></div>
+
+<h2>GitHub social preview, 1280 by 640</h2>
+<img src="../../../assets/brand/png/social/github-social-preview.png" width="1280" height="640" alt="">
+
+<h2>README pictures</h2>
+<div class="row"><img src="../../../assets/brand/readme/hero-light.svg" width="846" alt=""></div>
+<div class="row" style="margin-top:12px;background:#0c0d0f;padding:12px"><img src="../../../assets/brand/readme/hero-dark.svg" width="846" alt=""></div>
+<div class="row" style="margin-top:12px"><img src="../../../assets/brand/readme/card-moderation-light.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-guardian-light.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-automod-light.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-logging-light.svg" width="410" alt=""></div>
+<div class="row" style="margin-top:12px;background:#0c0d0f;padding:12px"><img src="../../../assets/brand/readme/card-roles-dark.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-welcome-dark.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-tickets-dark.svg" width="410" alt=""><img src="../../../assets/brand/readme/card-dashboard-dark.svg" width="410" alt=""></div>
+</main></body></html>

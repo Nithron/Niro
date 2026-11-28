@@ -8,5 +8,9 @@ It may include third-party components under their respective licenses; see sourc
 
 Licensed under the Nithron Community License (NCL) v1.0 — see LICENSE.
 
+The dashboard includes:
+- the Nithron design tokens (@nithron/tokens, web/src/vendor/nithron-tokens), the Nithron pixel icons (@nithron/icons, web/src/vendor/nithron-icons) and the Nithron Pixel display face (web/public/fonts/nithron-pixel.woff2), under the same licence;
+- Mona Sans, Copyright 2022 The Mona Sans Project Authors (https://github.com/github/mona-sans), with Reserved Font Name "Mona", and Monaspace Neon, Copyright (c) 2023 GitHub (https://github.com/githubnext/monaspace), with Reserved Font Name "Monaspace". Both are licensed under the SIL Open Font License 1.1 and shipped unmodified; the licence texts are in web/public/fonts and in every build.
+
 Trademarks: “Nithron”, “NithronOS”, “nOS”, “NithronAI”, “nAI”, “Niro” and associated logos are trademarks of Nithron. All other marks are the property of their respective owners.
 “Discord” is a trademark of Discord Inc. Niro is not affiliated with or endorsed by Discord Inc.

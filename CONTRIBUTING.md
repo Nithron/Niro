@@ -12,7 +12,7 @@ Thanks for your interest! Issues, ideas, docs and code are all welcome.
 
 ## Before you start
 
-Open an issue before large changes, so we can agree on the approach. The [build plan](docs/plan.md) shows what
+Open an issue before large changes, so the approach can be agreed first. The [build plan](docs/plan.md) shows what
 is planned per release, and the [decisions log](docs/decisions.md) why things are the way they are.
 
 ## Development

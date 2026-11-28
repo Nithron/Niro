@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TicketCategory, TicketPanel, TicketSettings } from '../api/client'
 import {
@@ -14,7 +14,9 @@ import {
 import { emptyDocument } from '../components/builder/document'
 import { MessageBuilder } from '../components/builder/MessageBuilder'
 import { MessagePreview, PreviewButton } from '../components/builder/MessagePreview'
-import { Badge, Button, Card, ErrorState, Field, RequestError, Select, Spinner, SwitchRow, TextInput } from '../components/ui'
+import { Icon } from '../components/Icon'
+import { Badge, Button, Empty, ErrorState, Field, Notice, Panel, RequestError, Select, Spinner, Status, SwitchRow, TextInput, useConfirm } from '../components/ui'
+import { formatDateTime } from '../format'
 
 const MAX_PANELS = 10
 const MAX_CATEGORIES = 5
@@ -41,6 +43,7 @@ export function TicketsPage({ guildId }: { guildId: string }) {
   const panels = useTicketPanels(guildId)
   const modules = useModules(guildId, true)
   const remove = useDeleteTicketPanel(guildId)
+  const [confirm, confirmDialog] = useConfirm()
   const meta = useGuildMeta(guildId)
   const [editing, setEditing] = useState<TicketPanel | null>(null)
 
@@ -51,48 +54,54 @@ export function TicketsPage({ guildId }: { guildId: string }) {
   const channelName = (id: string) => meta.data?.channels.find((c) => c.id === id)?.name ?? id
 
   return (
-    <div className="grid max-w-4xl gap-6">
+    <div className="grid gap-6">
       <div>
-        <h2 className="text-lg font-semibold">{t('tickets.title')}</h2>
+        <h2 className="text-panel">{t('tickets.title')}</h2>
         <p className="mt-1 text-muted">{t('tickets.subtitle')}</p>
-        {moduleOff && <p className="mt-4 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">{t('tickets.moduleOff')}</p>}
+        {moduleOff && <Notice className="mt-4">{t('tickets.moduleOff')}</Notice>}
       </div>
 
       <TicketSettingsCard guildId={guildId} />
 
       <section className="grid gap-3">
         <div className="flex items-center justify-between gap-4">
-          <h3 className="font-semibold">{t('tickets.panels')}</h3>
+          <h3 className="font-[560]">{t('tickets.panels')}</h3>
           <Button onClick={() => setEditing(newPanel())} disabled={panels.data.items.length >= MAX_PANELS}>
+            <Icon name="add" />
             {t('tickets.newPanel')}
           </Button>
         </div>
-        {panels.data.items.length === 0 && <Card className="text-muted">{t('tickets.noPanels')}</Card>}
+        {panels.data.items.length === 0 && <Empty>{t('tickets.noPanels')}</Empty>}
+        <ul className="divide-y divide-border border-y border-border empty:hidden">
         {panels.data.items.map((p) => (
-          <Card key={p.id} className="flex flex-wrap items-center justify-between gap-3">
+          <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div>
-              <p className="font-medium">{p.name}</p>
-              <p className="text-sm text-muted">
-                #{channelName(p.channelId)} · {p.categories.map((c) => c.label).join(', ')}
+              <p className="font-[560]">{p.name}</p>
+              <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted">
+                <Icon name="channel" />
+                {channelName(p.channelId)} · {p.categories.map((c) => c.label).join(', ')}
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               {!p.messageId && <Badge tone="warning">{t('rolePanels.notPosted')}</Badge>}
-              <Button variant="secondary" onClick={() => setEditing(p)}>
+              <Button variant="line" size="compact" onClick={() => setEditing(p)}>
                 {t('common.edit')}
               </Button>
               <Button
-                variant="secondary"
-                onClick={() => {
-                  if (p.id && window.confirm(t('tickets.confirmDelete', { name: p.name }))) remove.mutate(p.id)
+                variant="line"
+                size="compact"
+                onClick={async () => {
+                  if (p.id && (await confirm({ message: t('tickets.confirmDelete', { name: p.name }), action: t('tickets.deleteAction') }))) remove.mutate(p.id)
                 }}
               >
                 {t('common.delete')}
               </Button>
             </div>
-          </Card>
+          </li>
         ))}
+        </ul>
         <RequestError error={remove.error} />
+        {confirmDialog}
       </section>
 
       <TicketList guildId={guildId} />
@@ -111,10 +120,9 @@ function TicketSettingsCard({ guildId }: { guildId: string }) {
   const dirty = JSON.stringify(draft) !== JSON.stringify(settings.data)
   const textChannels = (meta.data?.channels ?? []).filter((c) => c.type === 'text' || c.type === 'announcement')
   return (
-    <Card className="grid gap-4">
-      <h3 className="font-semibold">{t('tickets.transcripts')}</h3>
-      <p className="text-xs text-muted">{t('tickets.transcriptsHelp')}</p>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <Panel title={t('tickets.transcripts')}>
+      <p className="text-help text-muted">{t('tickets.transcriptsHelp')}</p>
+      <div className="grid max-w-md gap-4">
         <Field label={t('tickets.retention')} help={t('tickets.retentionHelp')} htmlFor="t-retention">
           <TextInput
             id="t-retention"
@@ -140,10 +148,10 @@ function TicketSettingsCard({ guildId }: { guildId: string }) {
         <Button onClick={() => save.mutate(draft, { onSuccess: () => setEdits(null) })} disabled={!dirty || draft.retentionDays < 1 || draft.retentionDays > 365 || save.isPending}>
           {save.isPending ? t('common.saving') : t('common.save')}
         </Button>
-        {save.isSuccess && !dirty && <span className="text-sm text-success">{t('common.saved')}</span>}
+        {save.isSuccess && !dirty && <Status state="ok" className="text-sm">{t('common.saved')}</Status>}
         <RequestError error={save.error} />
       </div>
-    </Card>
+    </Panel>
   )
 }
 
@@ -155,7 +163,7 @@ function TicketList({ guildId }: { guildId: string }) {
   return (
     <section className="grid gap-3">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="font-semibold">{t('tickets.list')}</h3>
+        <h3 className="font-[560]">{t('tickets.list')}</h3>
         <Select aria-label={t('tickets.filterStatus')} value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className="w-auto">
           <option value="">{t('tickets.allStatuses')}</option>
           <option value="open">{t('tickets.status.open')}</option>
@@ -165,11 +173,11 @@ function TicketList({ guildId }: { guildId: string }) {
       </div>
       {list.isError && <ErrorState onRetry={() => void list.refetch()} />}
       {list.isPending && <Spinner />}
-      {!list.isPending && items.length === 0 && <Card className="text-muted">{t('tickets.noTickets')}</Card>}
+      {!list.isPending && items.length === 0 && <Empty>{t('tickets.noTickets')}</Empty>}
       {items.length > 0 && (
-        <Card className="overflow-x-auto p-0">
+        <div className="overflow-x-auto border-t border-border">
           <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-muted">
+            <thead className="font-mono text-caption text-muted">
               <tr>
                 <th className="px-4 py-2">#</th>
                 <th className="px-4 py-2">{t('tickets.category')}</th>
@@ -188,14 +196,16 @@ function TicketList({ guildId }: { guildId: string }) {
                   <td className="px-4 py-2">{tk.categoryLabel}</td>
                   <td className="px-4 py-2">{tk.openerName}</td>
                   <td className="px-4 py-2">
-                    <Badge tone={tk.status === 'closed' ? 'neutral' : tk.status === 'claimed' ? 'brand' : 'success'}>{t(`tickets.status.${tk.status}`)}</Badge>
-                    {tk.claimedByName && <span className="ml-2 text-xs text-muted">{tk.claimedByName}</span>}
+                    <Badge tone={tk.status === 'open' ? 'warning' : 'neutral'}>{t(`tickets.status.${tk.status}`)}</Badge>
+                    {tk.claimedByName && <span className="ml-2 text-help text-muted">{tk.claimedByName}</span>}
                   </td>
-                  <td className="px-4 py-2 text-muted">{new Date(tk.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-2 font-mono text-data text-muted">{formatDateTime(tk.createdAt)}</td>
                   <td className="px-4 py-2">
                     {tk.hasTranscript && (
-                      <a className="text-brand underline" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
+                      <a className="inline-flex items-center gap-1 underline underline-offset-2" href={`/api/v1/guilds/${guildId}/tickets/${tk.number}/transcript`} target="_blank" rel="noopener noreferrer">
+                        <Icon name="transcript" />
                         {t('tickets.transcript')}
+                        <Icon name="external-link" />
                       </a>
                     )}
                   </td>
@@ -203,10 +213,10 @@ function TicketList({ guildId }: { guildId: string }) {
               ))}
             </tbody>
           </table>
-        </Card>
+        </div>
       )}
       {list.hasNextPage && (
-        <Button variant="secondary" onClick={() => void list.fetchNextPage()} disabled={list.isFetchingNextPage}>
+        <Button variant="line" onClick={() => void list.fetchNextPage()} disabled={list.isFetchingNextPage}>
           {t('common.loadMore')}
         </Button>
       )}
@@ -214,14 +224,6 @@ function TicketList({ guildId }: { guildId: string }) {
   )
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <Card className="grid gap-4">
-      <h3 className="font-semibold">{title}</h3>
-      {children}
-    </Card>
-  )
-}
 
 function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; initial: TicketPanel; onDone: () => void }) {
   const { t } = useTranslation()
@@ -244,8 +246,8 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
   return (
     <div className="grid max-w-5xl gap-6 lg:grid-cols-[1fr_22rem]">
       <div className="grid gap-4">
-        <h2 className="text-lg font-semibold">{initial.id ? t('tickets.editPanel') : t('tickets.newPanelTitle')}</h2>
-        <Section title={t('tickets.panel')}>
+        <h2 className="text-panel">{initial.id ? t('tickets.editPanel') : t('tickets.newPanelTitle')}</h2>
+        <Panel title={t('tickets.panel')}>
           <Field label={t('rolePanels.name')} help={t('rolePanels.nameHelp')} htmlFor="tp-name">
             <TextInput id="tp-name" value={p.name} maxLength={100} onChange={(e) => set('name', e.target.value)} />
           </Field>
@@ -260,11 +262,11 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
             </Select>
           </Field>
           <MessageBuilder id="tp-msg" value={p.message} onChange={(m) => set('message', m)} reserved={1 + p.categories.length} />
-        </Section>
+        </Panel>
 
         {p.categories.map((c, i) => (
-          <Section key={i} title={t('tickets.categoryN', { n: i + 1 })}>
-            <div className="grid gap-4 sm:grid-cols-[1fr_5rem]">
+          <Panel key={i} title={t('tickets.categoryN', { n: i + 1 })}>
+            <div className="grid max-w-md gap-4">
               <Field label={t('tickets.buttonLabel')} htmlFor={`tc-${i}-label`}>
                 <TextInput id={`tc-${i}-label`} value={c.label} maxLength={80} onChange={(e) => setCat(i, { label: e.target.value })} />
               </Field>
@@ -272,7 +274,7 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
                 <TextInput id={`tc-${i}-emoji`} value={c.emoji ?? ''} placeholder="🎫" onChange={(e) => setCat(i, { emoji: e.target.value || undefined })} />
               </Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid max-w-md gap-4">
               <Field label={t('tickets.mode')} help={t(`tickets.modeHelp.${c.mode}`)} htmlFor={`tc-${i}-mode`}>
                 <Select id={`tc-${i}-mode`} value={c.mode} onChange={(e) => setCat(i, { mode: e.target.value as TicketCategory['mode'] })}>
                   <option value="thread">{t('tickets.modes.thread')}</option>
@@ -325,22 +327,24 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
               {c.questions.map((q, j) => {
                 const setQ = (patch: Partial<typeof q>) => setCat(i, { questions: c.questions.map((x, k) => (k === j ? { ...x, ...patch } : x)) })
                 return (
-                  <div key={j} className="grid gap-2 rounded-lg border border-border p-3">
+                  <div key={j} className="grid gap-2 border border-border p-3">
                     <TextInput aria-label={t('tickets.questionN', { n: j + 1 })} value={q.label} maxLength={45} placeholder={t('tickets.question')} onChange={(e) => setQ({ label: e.target.value })} />
                     <TextInput aria-label={t('tickets.hintN', { n: j + 1 })} value={q.placeholder ?? ''} maxLength={100} placeholder={t('tickets.hint')} onChange={(e) => setQ({ placeholder: e.target.value || undefined })} />
                     <div className="flex flex-wrap gap-6">
                       <SwitchRow label={t('tickets.long')} checked={q.long} onCheckedChange={(v) => setQ({ long: v })} />
                       <SwitchRow label={t('tickets.required')} checked={q.required} onCheckedChange={(v) => setQ({ required: v })} />
-                      <Button type="button" variant="secondary" onClick={() => setCat(i, { questions: c.questions.filter((_, k) => k !== j) })}>
-                        {t('builder.remove')}
+                      <Button type="button" variant="line" onClick={() => setCat(i, { questions: c.questions.filter((_, k) => k !== j) })}>
+                        <Icon name="remove" />
+                {t('builder.remove')}
                       </Button>
                     </div>
                   </div>
                 )
               })}
               {c.questions.length < MAX_QUESTIONS && (
-                <Button type="button" variant="secondary" onClick={() => setCat(i, { questions: [...c.questions, { label: '', long: false, required: true }] })}>
-                  {t('tickets.addQuestion')}
+                <Button type="button" variant="line" onClick={() => setCat(i, { questions: [...c.questions, { label: '', long: false, required: true }] })}>
+                  <Icon name="add" />
+            {t('tickets.addQuestion')}
                 </Button>
               )}
             </fieldset>
@@ -349,23 +353,25 @@ function TicketPanelEditor({ guildId, initial, onDone }: { guildId: string; init
               <MessageBuilder id={`tc-${i}-opening`} value={c.opening} onChange={(d) => setCat(i, { opening: d })} reserved={3} />
             </div>
             {p.categories.length > 1 && (
-              <Button type="button" variant="secondary" onClick={() => setP((prev) => ({ ...prev, categories: prev.categories.filter((_, j) => j !== i) }))}>
+              <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, categories: prev.categories.filter((_, j) => j !== i) }))}>
+                <Icon name="remove" />
                 {t('tickets.removeCategory')}
               </Button>
             )}
-          </Section>
+          </Panel>
         ))}
         {p.categories.length < MAX_CATEGORIES && (
-          <Button type="button" variant="secondary" onClick={() => setP((prev) => ({ ...prev, categories: [...prev.categories, newCategory()] }))}>
+          <Button type="button" variant="line" onClick={() => setP((prev) => ({ ...prev, categories: [...prev.categories, newCategory()] }))}>
+            <Icon name="add" />
             {t('tickets.addCategory')}
           </Button>
         )}
 
-        <div className="sticky bottom-0 flex items-center gap-4 border-t border-border bg-bg/90 py-4 backdrop-blur">
+        <div className="sticky bottom-0 flex items-center gap-4 border-t border-border bg-bg py-4">
           <Button onClick={() => save.mutate(p, { onSuccess: onDone })} disabled={!ready || save.isPending}>
             {save.isPending ? t('common.saving') : t('rolePanels.saveAndPost')}
           </Button>
-          <Button variant="secondary" onClick={onDone}>
+          <Button variant="line" onClick={onDone}>
             {t('common.cancel')}
           </Button>
           <RequestError error={save.error} />
